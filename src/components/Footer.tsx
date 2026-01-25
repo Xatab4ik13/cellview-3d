@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin } from 'lucide-react';
 
 const Footer = () => {
@@ -9,7 +10,7 @@ const Footer = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
           {/* Brand */}
           <div className="space-y-4">
-            <a href="/" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-lg">S</span>
               </div>
@@ -17,7 +18,7 @@ const Footer = () => {
                 <span className="font-bold text-xl text-background">Storage</span>
                 <span className="font-bold text-xl text-primary">Box</span>
               </div>
-            </a>
+            </Link>
             <p className="text-background/70 text-sm">
               Современные кладовые помещения для хранения ваших вещей с круглосуточным доступом и онлайн-видеонаблюдением.
             </p>
@@ -28,18 +29,18 @@ const Footer = () => {
             <h3 className="font-semibold mb-4">Навигация</h3>
             <ul className="space-y-2">
               {[
-                { href: '#catalog', label: 'Каталог ячеек' },
-                { href: '#pricing', label: 'Цены' },
-                { href: '#features', label: 'Преимущества' },
-                { href: '#contacts', label: 'Контакты' },
+                { href: '/catalog', label: 'Каталог ячеек' },
+                { href: '/3d-map', label: '3D-карта' },
+                { href: '/pricing', label: 'Цены' },
+                { href: '/contacts', label: 'Контакты' },
               ].map((link) => (
                 <li key={link.href}>
-                  <a 
-                    href={link.href}
+                  <Link 
+                    to={link.href}
                     className="text-background/70 hover:text-background transition-colors text-sm"
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -86,11 +87,11 @@ const Footer = () => {
             © {currentYear} StorageBox. Все права защищены.
           </p>
           <div className="flex gap-6">
+            <Link to="/faq" className="text-sm text-background/50 hover:text-background transition-colors">
+              FAQ
+            </Link>
             <a href="/privacy" className="text-sm text-background/50 hover:text-background transition-colors">
               Политика конфиденциальности
-            </a>
-            <a href="/terms" className="text-sm text-background/50 hover:text-background transition-colors">
-              Условия использования
             </a>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Box, Shield, Clock, Eye } from 'lucide-react';
+import { ArrowRight, Box, Shield, Clock, Eye, Maximize } from 'lucide-react';
 import StorageUnit3D from './StorageUnit3D';
 
 const Hero = () => {
@@ -60,13 +61,18 @@ const Hero = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="hero" size="lg">
-                Выбрать ячейку
-                <ArrowRight className="w-5 h-5" />
-              </Button>
-              <Button variant="heroSecondary" size="lg">
-                Рассчитать стоимость
-              </Button>
+              <Link to="/3d-map">
+                <Button variant="hero" size="lg">
+                  Открыть 3D-карту
+                  <Maximize className="w-5 h-5" />
+                </Button>
+              </Link>
+              <Link to="/catalog">
+                <Button variant="heroSecondary" size="lg">
+                  Каталог ячеек
+                  <ArrowRight className="w-5 h-5" />
+                </Button>
+              </Link>
             </div>
 
             {/* Price hint */}
@@ -87,14 +93,23 @@ const Hero = () => {
               {/* 3D Controls hint */}
               <div className="absolute bottom-4 left-4 right-4 flex justify-center">
                 <div className="glass px-4 py-2 rounded-full text-sm text-muted-foreground">
-                  🖱️ Вращайте и приближайте для просмотра • Кликните на ячейку для выбора
+                  🖱️ Вращайте и приближайте для просмотра
                 </div>
               </div>
+              
+              {/* Link to full 3D map */}
+              <Link 
+                to="/3d-map" 
+                className="absolute top-4 right-4 glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-primary/20 transition-colors flex items-center gap-2"
+              >
+                <Maximize className="w-4 h-4" />
+                Полная карта
+              </Link>
             </div>
             
             {/* Selected cell info */}
             {selectedCell && (
-              <div className="absolute top-4 right-4 glass p-4 rounded-xl shadow-lg animate-scale-in">
+              <div className="absolute top-4 left-4 glass p-4 rounded-xl shadow-lg animate-scale-in">
                 <p className="text-sm text-muted-foreground">Выбрана ячейка</p>
                 <p className="text-2xl font-bold text-primary">№{selectedCell}</p>
               </div>
