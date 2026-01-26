@@ -10,7 +10,7 @@ const Contacts = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="pt-20">
+      <main className="pt-32 lg:pt-36">
         <section className="py-12 lg:py-20">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
@@ -57,8 +57,8 @@ const Contacts = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Email</h3>
-                      <a href="mailto:info@storagebox.ru" className="text-muted-foreground hover:text-primary transition-colors">
-                        info@storagebox.ru
+                      <a href="mailto:info@kladovka78.ru" className="text-muted-foreground hover:text-primary transition-colors">
+                        info@kladovka78.ru
                       </a>
                     </div>
                   </div>
@@ -69,8 +69,8 @@ const Contacts = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Telegram</h3>
-                      <a href="https://t.me/storagebox" className="text-muted-foreground hover:text-primary transition-colors">
-                        @storagebox
+                      <a href="https://t.me/kladovka78" className="text-muted-foreground hover:text-primary transition-colors">
+                        @kladovka78
                       </a>
                     </div>
                   </div>
