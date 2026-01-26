@@ -20,17 +20,14 @@ const heroSlides = [
   {
     image: storageHero1,
     title: 'Надёжная защита ваших вещей',
-    subtitle: 'Современная система безопасности и круглосуточное видеонаблюдение',
   },
   {
     image: storageHero2,
-    title: 'Доступ в любое время',
-    subtitle: 'Приходите когда удобно — склад работает 24 часа в сутки, 7 дней в неделю',
+    title: 'Доступ 24/7',
   },
   {
     image: storageHero3,
     title: 'Ваш личный код доступа',
-    subtitle: 'Только вы имеете доступ к своей кладовке с уникальным PIN-кодом',
   },
 ];
 
@@ -142,7 +139,7 @@ const Hero = () => {
                   key={index}
                   src={slide.image}
                   alt={slide.title}
-                  className={`w-full h-[400px] lg:h-[600px] object-cover absolute inset-0 transition-opacity duration-700 ${
+                  className={`w-full h-[500px] lg:h-[700px] object-cover absolute inset-0 transition-opacity duration-700 ${
                     currentSlide === index ? 'opacity-100' : 'opacity-0'
                   }`}
                 />
@@ -151,17 +148,14 @@ const Hero = () => {
               <img
                 src={heroSlides[0].image}
                 alt=""
-                className="w-full h-[400px] lg:h-[600px] object-cover invisible"
+                className="w-full h-[500px] lg:h-[700px] object-cover invisible"
               />
               
               {/* Text overlay with semi-transparent purple background */}
-              <div className="absolute bottom-6 left-6 right-6">
-                <div className="bg-primary/80 backdrop-blur-sm px-6 py-4 rounded-2xl transition-all duration-500">
-                  <p className="text-primary-foreground text-lg lg:text-xl font-bold mb-1">
+              <div className="absolute bottom-6 left-6">
+                <div className="bg-primary/80 backdrop-blur-sm px-5 py-3 rounded-xl transition-all duration-500">
+                  <p className="text-primary-foreground text-base lg:text-lg font-bold">
                     {heroSlides[currentSlide].title}
-                  </p>
-                  <p className="text-primary-foreground/90 text-sm lg:text-base">
-                    {heroSlides[currentSlide].subtitle}
                   </p>
                 </div>
               </div>
