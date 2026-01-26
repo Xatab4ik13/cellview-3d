@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react';
 import { storageCells } from '@/data/storageCells';
 import { StorageCell, FilterOptions } from '@/types/storage';
 import CellCard from './CellCard';
+import CellCardVariantA from './CellCardVariantA';
+import CellCardVariantB from './CellCardVariantB';
 import CellModal from './CellModal';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -226,13 +228,34 @@ const CatalogSection = () => {
               ? 'grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
               : 'space-y-4'
           }>
-            {filteredCells.map((cell) => (
-              <CellCard 
-                key={cell.id} 
-                cell={cell} 
-                onSelect={handleSelectCell}
-              />
-            ))}
+            {filteredCells.map((cell) => {
+              // Вариант A для ячейки 1, Вариант B для ячейки 3
+              if (cell.number === 1) {
+                return (
+                  <CellCardVariantA 
+                    key={cell.id} 
+                    cell={cell} 
+                    onSelect={handleSelectCell}
+                  />
+                );
+              }
+              if (cell.number === 3) {
+                return (
+                  <CellCardVariantB 
+                    key={cell.id} 
+                    cell={cell} 
+                    onSelect={handleSelectCell}
+                  />
+                );
+              }
+              return (
+                <CellCard 
+                  key={cell.id} 
+                  cell={cell} 
+                  onSelect={handleSelectCell}
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-16">
