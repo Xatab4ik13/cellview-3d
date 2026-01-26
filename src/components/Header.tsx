@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Phone, MapPin, HelpCircle, User, MessageCircle } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -23,17 +24,8 @@ const Header = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">К</span>
-              </div>
-              <div className="flex flex-col">
-                <div>
-                  <span className="font-bold text-xl text-foreground">Кладовка</span>
-                  <span className="font-bold text-xl text-primary">78</span>
-                </div>
-                <span className="text-xs text-muted-foreground hidden sm:block">Склад для дома и бизнеса</span>
-              </div>
+            <Link to="/" className="flex items-center">
+              <img src={logo} alt="Кладовка78" className="h-10 lg:h-12 w-auto" />
             </Link>
 
             {/* City selector - Desktop */}

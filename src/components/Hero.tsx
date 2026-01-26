@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Phone, MapPin, Shield, Clock, Video, Key } from 'lucide-react';
 import storageCellImage from '@/assets/storage-cell-2.jpg';
+import logo from '@/assets/logo.png';
 
 const sizeOptions = [
   { label: 'Маленький', range: '0,5 - 6 м²' },
@@ -124,8 +125,8 @@ const Hero = () => {
               </div>
 
               {/* Logo overlay */}
-              <div className="absolute top-6 right-6 bg-primary px-4 py-2 rounded-xl">
-                <span className="text-primary-foreground font-bold">Кладовка78</span>
+              <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl">
+                <img src={logo} alt="Кладовка78" className="h-8 w-auto" />
               </div>
             </div>
           </div>

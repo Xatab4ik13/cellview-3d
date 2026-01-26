@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin, Clock, MessageCircle } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -26,14 +27,8 @@ const Footer = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">К</span>
-              </div>
-              <div>
-                <span className="font-bold text-xl text-background">Кладовка</span>
-                <span className="font-bold text-xl text-accent">78</span>
-              </div>
+            <Link to="/" className="flex items-center">
+              <img src={logo} alt="Кладовка78" className="h-10 w-auto brightness-0 invert" />
             </Link>
             <p className="text-background/70 text-sm leading-relaxed">
               Склад для дома и бизнеса. Современные кладовые помещения для хранения ваших вещей с круглосуточным доступом.
