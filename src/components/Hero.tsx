@@ -25,7 +25,7 @@ const Hero = () => {
   ];
 
   return (
-    <section className="relative min-h-screen pt-20 lg:pt-24 overflow-hidden bg-background">
+    <section className="relative min-h-screen pt-32 lg:pt-36 overflow-hidden bg-background">
       <div className="container mx-auto px-4 py-8 lg:py-12">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left side - Content */}

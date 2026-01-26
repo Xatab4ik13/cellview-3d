@@ -6,7 +6,7 @@ const Catalog = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="pt-20">
+      <main className="pt-32 lg:pt-36">
         <CatalogSection />
       </main>
       <Footer />
