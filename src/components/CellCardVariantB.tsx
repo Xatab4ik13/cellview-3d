@@ -51,95 +51,148 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
       </div>
 
       {/* Isometric projection with dimensions */}
-      <div className="relative py-8 px-6 bg-gradient-to-b from-secondary/50 to-muted/30">
-        <div className="flex justify-center items-center">
+      <div className="relative py-6 px-4 bg-gradient-to-b from-secondary/50 to-muted/30">
+        <div className="flex justify-center items-end">
           <div className="relative">
-            {/* Isometric cell shape */}
+            {/* Isometric cell shape - larger size */}
             <svg 
-              viewBox="0 0 160 180" 
-              className="w-[140px] h-[160px] transition-transform duration-300 group-hover:scale-110"
+              viewBox="0 0 200 220" 
+              className="w-[200px] h-[220px] transition-transform duration-300 group-hover:scale-105"
             >
-              {/* Back face (depth) */}
+              {/* Floor/Ground plane */}
+              <polygon 
+                points="20,180 100,210 180,180 100,150"
+                fill="hsl(var(--muted))"
+                stroke="hsl(var(--border))"
+                strokeWidth="1"
+              />
+              <text x="100" y="195" textAnchor="middle" className="text-[10px] fill-muted-foreground font-medium">
+                ПОЛ
+              </text>
+              
+              {/* Back face (depth) - shadow */}
               <polygon 
                 points={isTall 
-                  ? "80,10 130,30 130,130 80,150 30,130 30,30" 
-                  : "80,30 130,50 130,120 80,140 30,120 30,50"
+                  ? "100,20 160,45 160,155 100,180 40,155 40,45" 
+                  : "100,40 160,65 160,145 100,170 40,145 40,65"
                 }
-                className={cell.isAvailable ? 'fill-primary/30' : 'fill-muted'}
-                stroke="hsl(var(--primary))"
-                strokeWidth="1"
+                className="fill-muted/50"
+              />
+              
+              {/* Left face */}
+              <polygon 
+                points={isTall 
+                  ? "40,45 100,20 100,130 40,155" 
+                  : "40,65 100,40 100,130 40,155"
+                }
+                className={cell.isAvailable ? 'fill-primary' : 'fill-muted-foreground/40'}
+                stroke="hsl(var(--primary-foreground))"
+                strokeWidth="0.5"
                 strokeOpacity="0.3"
               />
               
-              {/* Front face */}
+              {/* Right face */}
               <polygon 
                 points={isTall 
-                  ? "30,30 80,10 80,110 30,130" 
-                  : "30,50 80,30 80,110 30,130"
+                  ? "100,20 160,45 160,155 100,130" 
+                  : "100,40 160,65 160,155 100,130"
                 }
-                className={cell.isAvailable ? 'fill-primary' : 'fill-muted-foreground/40'}
-              />
-              
-              {/* Side face */}
-              <polygon 
-                points={isTall 
-                  ? "80,10 130,30 130,130 80,110" 
-                  : "80,30 130,50 130,130 80,110"
-                }
-                className={cell.isAvailable ? 'fill-primary/80' : 'fill-muted-foreground/30'}
+                className={cell.isAvailable ? 'fill-primary/70' : 'fill-muted-foreground/30'}
+                stroke="hsl(var(--primary-foreground))"
+                strokeWidth="0.5"
+                strokeOpacity="0.3"
               />
               
               {/* Top face */}
               <polygon 
                 points={isTall 
-                  ? "30,30 80,10 130,30 80,50" 
-                  : "30,50 80,30 130,50 80,70"
+                  ? "40,45 100,20 160,45 100,70" 
+                  : "40,65 100,40 160,65 100,90"
                 }
                 className={cell.isAvailable ? 'fill-accent' : 'fill-muted/80'}
+                stroke="hsl(var(--accent-foreground))"
+                strokeWidth="0.5"
+                strokeOpacity="0.3"
               />
               
-              {/* Door lines on front face */}
+              {/* Door lines on left face */}
               <line 
-                x1="45" y1={isTall ? "50" : "65"} 
-                x2="65" y2={isTall ? "40" : "55"} 
-                stroke={cell.isAvailable ? "hsl(var(--primary-foreground))" : "hsl(var(--background))"}
-                strokeWidth="2"
-                strokeOpacity="0.3"
+                x1="55" y1={isTall ? "65" : "80"} 
+                x2="85" y2={isTall ? "50" : "65"} 
+                stroke="hsl(var(--primary-foreground))"
+                strokeWidth="1.5"
+                strokeOpacity="0.25"
               />
               <line 
-                x1="45" y1={isTall ? "70" : "80"} 
-                x2="65" y2={isTall ? "60" : "70"} 
-                stroke={cell.isAvailable ? "hsl(var(--primary-foreground))" : "hsl(var(--background))"}
-                strokeWidth="2"
-                strokeOpacity="0.3"
+                x1="55" y1={isTall ? "90" : "100"} 
+                x2="85" y2={isTall ? "75" : "85"} 
+                stroke="hsl(var(--primary-foreground))"
+                strokeWidth="1.5"
+                strokeOpacity="0.25"
               />
               <line 
-                x1="45" y1={isTall ? "90" : "95"} 
-                x2="65" y2={isTall ? "80" : "85"} 
-                stroke={cell.isAvailable ? "hsl(var(--primary-foreground))" : "hsl(var(--background))"}
-                strokeWidth="2"
-                strokeOpacity="0.3"
+                x1="55" y1={isTall ? "115" : "120"} 
+                x2="85" y2={isTall ? "100" : "105"} 
+                stroke="hsl(var(--primary-foreground))"
+                strokeWidth="1.5"
+                strokeOpacity="0.25"
               />
               
               {/* Handle */}
               <circle 
-                cx="70" cy={isTall ? "75" : "85"} r="4"
+                cx="88" cy={isTall ? "95" : "100"} r="5"
                 className={cell.isAvailable ? 'fill-accent' : 'fill-muted'}
+                stroke="hsl(var(--accent-foreground))"
+                strokeWidth="1"
               />
-            </svg>
-
-            {/* Dimension labels */}
-            <div className="absolute -left-2 top-1/2 -translate-y-1/2 -translate-x-full">
-              <div className="bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-lg shadow-md">
+              
+              {/* ===== DIMENSION LINES INSIDE ===== */}
+              
+              {/* Height dimension line (on left face, vertical) */}
+              <line 
+                x1="48" y1={isTall ? "50" : "70"} 
+                x2="48" y2="152" 
+                stroke="hsl(var(--foreground))"
+                strokeWidth="1"
+                strokeDasharray="3,2"
+              />
+              <line x1="45" y1={isTall ? "50" : "70"} x2="51" y2={isTall ? "50" : "70"} stroke="hsl(var(--foreground))" strokeWidth="1"/>
+              <line x1="45" y1="152" x2="51" y2="152" stroke="hsl(var(--foreground))" strokeWidth="1"/>
+              <rect x="35" y={isTall ? "95" : "105"} width="26" height="16" rx="3" fill="hsl(var(--background))" stroke="hsl(var(--border))" strokeWidth="0.5"/>
+              <text x="48" y={isTall ? "107" : "117"} textAnchor="middle" className="text-[11px] fill-foreground font-bold">
                 {cell.height}м
-              </div>
-            </div>
-            
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 translate-y-full">
-              <div className="bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded-lg shadow-md">
-                {cell.width}×{cell.depth}м
-              </div>
-            </div>
+              </text>
+              
+              {/* Width dimension line (on top face) */}
+              <line 
+                x1={isTall ? "50" : "50"} y1={isTall ? "38" : "55"} 
+                x2={isTall ? "95" : "95"} y2={isTall ? "25" : "45"} 
+                stroke="hsl(var(--foreground))"
+                strokeWidth="1"
+                strokeDasharray="3,2"
+              />
+              <line x1="47" y1={isTall ? "40" : "57"} x2="53" y2={isTall ? "36" : "53"} stroke="hsl(var(--foreground))" strokeWidth="1"/>
+              <line x1="92" y1={isTall ? "27" : "47"} x2="98" y2={isTall ? "23" : "43"} stroke="hsl(var(--foreground))" strokeWidth="1"/>
+              <rect x="58" y={isTall ? "22" : "40"} width="28" height="14" rx="3" fill="hsl(var(--background))" stroke="hsl(var(--border))" strokeWidth="0.5"/>
+              <text x="72" y={isTall ? "33" : "51"} textAnchor="middle" className="text-[10px] fill-foreground font-bold">
+                {cell.width}м
+              </text>
+              
+              {/* Depth dimension line (on top face, right side) */}
+              <line 
+                x1={isTall ? "105" : "105"} y1={isTall ? "25" : "45"} 
+                x2={isTall ? "150" : "150"} y2={isTall ? "38" : "58"} 
+                stroke="hsl(var(--foreground))"
+                strokeWidth="1"
+                strokeDasharray="3,2"
+              />
+              <line x1="102" y1={isTall ? "23" : "43"} x2="108" y2={isTall ? "27" : "47"} stroke="hsl(var(--foreground))" strokeWidth="1"/>
+              <line x1="147" y1={isTall ? "36" : "56"} x2="153" y2={isTall ? "40" : "60"} stroke="hsl(var(--foreground))" strokeWidth="1"/>
+              <rect x="114" y={isTall ? "22" : "42"} width="28" height="14" rx="3" fill="hsl(var(--background))" stroke="hsl(var(--border))" strokeWidth="0.5"/>
+              <text x="128" y={isTall ? "33" : "53"} textAnchor="middle" className="text-[10px] fill-foreground font-bold">
+                {cell.depth}м
+              </text>
+            </svg>
           </div>
         </div>
       </div>
