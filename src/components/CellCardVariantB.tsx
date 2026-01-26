@@ -20,6 +20,14 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
   const boxHeight = Math.min(cell.height * scale, 175);
   const boxDepth = Math.min(cell.depth * scale * 0.5, 70); // глубина под углом 45°
   
+  // Динамическое центрирование проекции
+  const svgWidth = 300;
+  const svgHeight = 280;
+  const totalProjectionWidth = boxWidth + boxDepth; // общая ширина с учетом глубины
+  const totalProjectionHeight = boxHeight + boxDepth * 0.5; // общая высота с учетом глубины
+  const offsetX = (svgWidth - totalProjectionWidth) / 2 + 15; // +15 для места под размерную линию слева
+  const offsetY = (svgHeight - totalProjectionHeight) / 2 + boxDepth * 0.5 + 10; // смещение для верхней грани
+  
   return (
     <div 
       className={`group relative bg-card border-2 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl ${
@@ -69,7 +77,7 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
           <rect width="300" height="280" fill={`url(#grid-${cell.id})`} />
           
           {/* Центрируем проекцию - с отступами для размерных линий */}
-          <g transform="translate(60, 55)">
+          <g transform={`translate(${offsetX}, ${offsetY})`}>
             
             {/* ===== ПОЛ ===== */}
             <g>
