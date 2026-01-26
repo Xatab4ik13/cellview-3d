@@ -12,11 +12,7 @@ export interface StorageCell {
   isAvailable: boolean;
   hasSocket: boolean;
   hasShelves: boolean;
-  position: {
-    x: number;
-    y: number;
-    z: number;
-  };
+  photos: string[];
 }
 
 export interface FilterOptions {
