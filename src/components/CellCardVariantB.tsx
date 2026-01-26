@@ -14,19 +14,35 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
   const aspectRatio = cell.height / cell.width;
   const isTall = aspectRatio > 1.3;
   
-  // Масштабирование для отображения - УВЕЛИЧЕННЫЕ размеры
-  const scale = 70; // пикселей на метр (увеличено)
-  const boxWidth = Math.min(cell.width * scale, 140);
-  const boxHeight = Math.min(cell.height * scale, 175);
-  const boxDepth = Math.min(cell.depth * scale * 0.5, 70); // глубина под углом 45°
-  
-  // Динамическое центрирование проекции
+  // Масштабирование с учетом пропорций ячейки
   const svgWidth = 300;
   const svgHeight = 280;
-  const totalProjectionWidth = boxWidth + boxDepth; // общая ширина с учетом глубины
-  const totalProjectionHeight = boxHeight + boxDepth * 0.5; // общая высота с учетом глубины
-  const offsetX = (svgWidth - totalProjectionWidth) / 2 + 15; // +15 для места под размерную линию слева
-  const offsetY = (svgHeight - totalProjectionHeight) / 2 + boxDepth * 0.5 + 10; // смещение для верхней грани
+  const marginLeft = 55;  // место для размерной линии высоты
+  const marginRight = 60; // место для размерной линии глубины
+  const marginTop = 50;   // место для размерной линии глубины сверху
+  const marginBottom = 45; // место для размерной линии ширины
+  
+  const availableWidth = svgWidth - marginLeft - marginRight;
+  const availableHeight = svgHeight - marginTop - marginBottom;
+  
+  // Рассчитываем масштаб чтобы проекция поместилась с учетом глубины
+  const depthRatio = 0.5; // отношение видимой глубины к реальной
+  const projectedWidth = cell.width + cell.depth * depthRatio;
+  const projectedHeight = cell.height + cell.depth * depthRatio;
+  
+  const scaleX = availableWidth / projectedWidth;
+  const scaleY = availableHeight / projectedHeight;
+  const scale = Math.min(scaleX, scaleY, 70); // не больше 70px на метр
+  
+  const boxWidth = cell.width * scale;
+  const boxHeight = cell.height * scale;
+  const boxDepth = cell.depth * scale * depthRatio;
+  
+  // Центрирование проекции в доступной области
+  const totalProjectionWidth = boxWidth + boxDepth;
+  const totalProjectionHeight = boxHeight + boxDepth;
+  const offsetX = marginLeft + (availableWidth - totalProjectionWidth) / 2;
+  const offsetY = marginTop + (availableHeight - totalProjectionHeight) / 2 + boxDepth;
   
   return (
     <div 
