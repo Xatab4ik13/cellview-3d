@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Phone, MapPin, Shield, Clock, Video, Key } from 'lucide-react';
-import storageCellImage from '@/assets/storage-cell-2.jpg';
-import logo from '@/assets/logo.png';
+import { Shield, Clock, Video, Key } from 'lucide-react';
+import storageHero1 from '@/assets/storage-hero-1.jpg';
+import storageHero2 from '@/assets/storage-hero-2.jpg';
+import storageHero3 from '@/assets/storage-hero-3.jpg';
 
 const sizeOptions = [
   { label: 'Маленький', range: '0,5 - 6 м²' },
@@ -15,8 +16,34 @@ const locations = [
   { city: 'Санкт-Петербург', count: '1 склад' },
 ];
 
+const heroSlides = [
+  {
+    image: storageHero1,
+    title: 'Надёжная защита ваших вещей',
+    subtitle: 'Современная система безопасности и круглосуточное видеонаблюдение',
+  },
+  {
+    image: storageHero2,
+    title: 'Доступ в любое время',
+    subtitle: 'Приходите когда удобно — склад работает 24 часа в сутки, 7 дней в неделю',
+  },
+  {
+    image: storageHero3,
+    title: 'Ваш личный код доступа',
+    subtitle: 'Только вы имеете доступ к своей кладовке с уникальным PIN-кодом',
+  },
+];
+
 const Hero = () => {
   const [selectedSize, setSelectedSize] = useState<number | null>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   const features = [
     { icon: Shield, text: 'Безопасность' },
@@ -106,27 +133,52 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* Right side - Image */}
+          {/* Right side - Image Carousel */}
           <div className="order-1 lg:order-2 relative">
             <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-              <img 
-                src={storageCellImage} 
-                alt="Кладовки для хранения вещей" 
-                className="w-full h-[400px] lg:h-[600px] object-cover"
+              {/* Carousel images */}
+              {heroSlides.map((slide, index) => (
+                <img
+                  key={index}
+                  src={slide.image}
+                  alt={slide.title}
+                  className={`w-full h-[400px] lg:h-[600px] object-cover absolute inset-0 transition-opacity duration-700 ${
+                    currentSlide === index ? 'opacity-100' : 'opacity-0'
+                  }`}
+                />
+              ))}
+              {/* First image as base for layout */}
+              <img
+                src={heroSlides[0].image}
+                alt=""
+                className="w-full h-[400px] lg:h-[600px] object-cover invisible"
               />
               
-              {/* Overlay badge */}
+              {/* Text overlay with semi-transparent purple background */}
               <div className="absolute bottom-6 left-6 right-6">
-                <div className="bg-foreground/90 backdrop-blur-sm px-6 py-4 rounded-2xl">
-                  <p className="text-background text-lg font-bold">
-                    Индивидуальные кладовые для хранения
+                <div className="bg-primary/80 backdrop-blur-sm px-6 py-4 rounded-2xl transition-all duration-500">
+                  <p className="text-primary-foreground text-lg lg:text-xl font-bold mb-1">
+                    {heroSlides[currentSlide].title}
+                  </p>
+                  <p className="text-primary-foreground/90 text-sm lg:text-base">
+                    {heroSlides[currentSlide].subtitle}
                   </p>
                 </div>
               </div>
 
-              {/* Logo overlay */}
-              <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-sm px-5 py-3 rounded-xl">
-                <img src={logo} alt="Кладовка78" className="h-10 w-auto" />
+              {/* Slide indicators */}
+              <div className="absolute bottom-6 right-6 flex gap-2">
+                {heroSlides.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentSlide(index)}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      currentSlide === index 
+                        ? 'bg-accent w-6' 
+                        : 'bg-primary-foreground/50 hover:bg-primary-foreground/70'
+                    }`}
+                  />
+                ))}
               </div>
             </div>
           </div>
