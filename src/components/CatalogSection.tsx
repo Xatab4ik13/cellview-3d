@@ -1,8 +1,6 @@
 import { useState, useMemo } from 'react';
 import { storageCells } from '@/data/storageCells';
 import { StorageCell, FilterOptions } from '@/types/storage';
-import CellCard from './CellCard';
-import CellCardVariantA from './CellCardVariantA';
 import CellCardVariantB from './CellCardVariantB';
 import CellModal from './CellModal';
 import { Button } from '@/components/ui/button';
@@ -12,19 +10,23 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { 
   Filter, 
-  SortAsc, 
   Grid3X3, 
   List,
   Zap,
   Layers,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
+
+const ITEMS_PER_PAGE = 8;
 
 const CatalogSection = () => {
   const [selectedCell, setSelectedCell] = useState<StorageCell | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [currentPage, setCurrentPage] = useState(1);
   
   const [filters, setFilters] = useState<FilterOptions>({
     availableOnly: false,
@@ -46,6 +48,18 @@ const CatalogSection = () => {
     });
   }, [filters, priceRange, areaRange]);
   
+  // Пагинация
+  const totalPages = Math.ceil(filteredCells.length / ITEMS_PER_PAGE);
+  const paginatedCells = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredCells.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredCells, currentPage]);
+  
+  // Сброс страницы при изменении фильтров
+  const handleFilterChange = () => {
+    setCurrentPage(1);
+  };
+  
   const handleSelectCell = (cell: StorageCell) => {
     setSelectedCell(cell);
     setIsModalOpen(true);
@@ -59,6 +73,7 @@ const CatalogSection = () => {
     });
     setPriceRange([0, 10000]);
     setAreaRange([0, 20]);
+    setCurrentPage(1);
   };
   
   const activeFiltersCount = [
@@ -144,7 +159,10 @@ const CatalogSection = () => {
                 <Label>Цена, ₽/мес</Label>
                 <Slider
                   value={priceRange}
-                  onValueChange={(value) => setPriceRange(value as [number, number])}
+                  onValueChange={(value) => {
+                    setPriceRange(value as [number, number]);
+                    handleFilterChange();
+                  }}
                   min={0}
                   max={10000}
                   step={100}
@@ -160,7 +178,10 @@ const CatalogSection = () => {
                 <Label>Площадь, м²</Label>
                 <Slider
                   value={areaRange}
-                  onValueChange={(value) => setAreaRange(value as [number, number])}
+                  onValueChange={(value) => {
+                    setAreaRange(value as [number, number]);
+                    handleFilterChange();
+                  }}
                   min={0}
                   max={20}
                   step={0.5}
@@ -181,9 +202,10 @@ const CatalogSection = () => {
                   <Switch 
                     id="available"
                     checked={filters.availableOnly}
-                    onCheckedChange={(checked) => 
-                      setFilters(f => ({ ...f, availableOnly: checked }))
-                    }
+                    onCheckedChange={(checked) => {
+                      setFilters(f => ({ ...f, availableOnly: checked }));
+                      handleFilterChange();
+                    }}
                   />
                 </div>
                 
@@ -195,9 +217,10 @@ const CatalogSection = () => {
                   <Switch 
                     id="socket"
                     checked={filters.hasSocket}
-                    onCheckedChange={(checked) => 
-                      setFilters(f => ({ ...f, hasSocket: checked }))
-                    }
+                    onCheckedChange={(checked) => {
+                      setFilters(f => ({ ...f, hasSocket: checked }));
+                      handleFilterChange();
+                    }}
                   />
                 </div>
               </div>
@@ -211,9 +234,10 @@ const CatalogSection = () => {
                   <Switch 
                     id="shelves"
                     checked={filters.hasShelves}
-                    onCheckedChange={(checked) => 
-                      setFilters(f => ({ ...f, hasShelves: checked }))
-                    }
+                    onCheckedChange={(checked) => {
+                      setFilters(f => ({ ...f, hasShelves: checked }));
+                      handleFilterChange();
+                    }}
                   />
                 </div>
               </div>
@@ -222,13 +246,13 @@ const CatalogSection = () => {
         )}
 
         {/* Cells grid */}
-        {filteredCells.length > 0 ? (
+        {paginatedCells.length > 0 ? (
           <div className={
             viewMode === 'grid'
               ? 'grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
               : 'space-y-4'
           }>
-            {filteredCells.map((cell) => (
+            {paginatedCells.map((cell) => (
               <CellCardVariantB 
                 key={cell.id} 
                 cell={cell} 
@@ -247,6 +271,41 @@ const CatalogSection = () => {
             </p>
             <Button variant="outline" onClick={clearFilters}>
               Сбросить фильтры
+            </Button>
+          </div>
+        )}
+        
+        {/* Пагинация */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-10">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <Button
+                key={page}
+                variant={currentPage === page ? 'default' : 'outline'}
+                size="icon"
+                onClick={() => setCurrentPage(page)}
+                className="w-10 h-10"
+              >
+                {page}
+              </Button>
+            ))}
+            
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
         )}
