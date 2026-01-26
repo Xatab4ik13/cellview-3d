@@ -52,7 +52,7 @@ const Hero = () => {
   return (
     <section className="relative min-h-screen pt-32 lg:pt-36 overflow-hidden bg-background">
       <div className="container mx-auto px-4 py-8 lg:py-12">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+        <div className="grid lg:grid-cols-[minmax(400px,1fr)_1.4fr] gap-8 lg:gap-6 items-center">
           {/* Left side - Content */}
           <div className="space-y-6 lg:space-y-8 order-2 lg:order-1">
             <div className="space-y-4">
