@@ -56,7 +56,7 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
       {/* Диаметрическая проекция - МАКСИМАЛЬНЫЙ РАЗМЕР */}
       <div className="relative bg-gradient-to-br from-background via-secondary/20 to-muted/40">
         <svg 
-          viewBox="0 0 280 240" 
+          viewBox="0 0 300 280" 
           className="w-full"
           preserveAspectRatio="xMidYMid meet"
         >
@@ -66,10 +66,10 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
               <path d="M 20 0 L 0 0 0 20" fill="none" stroke="hsl(var(--border))" strokeWidth="0.5" opacity="0.3"/>
             </pattern>
           </defs>
-          <rect width="280" height="240" fill={`url(#grid-${cell.id})`} />
+          <rect width="300" height="280" fill={`url(#grid-${cell.id})`} />
           
-          {/* Центрируем проекцию - сдвинуто для максимального заполнения */}
-          <g transform="translate(55, 45)">
+          {/* Центрируем проекцию - с отступами для размерных линий */}
+          <g transform="translate(60, 55)">
             
             {/* ===== ПОЛ ===== */}
             <g>
