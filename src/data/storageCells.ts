@@ -3,6 +3,13 @@ import { StorageCell } from '@/types/storage';
 // Импорт фотографий ячеек
 import cell1Photo1 from '@/assets/cells/cell-1-photo-1.jpg';
 import cell1Photo2 from '@/assets/cells/cell-1-photo-2.jpg';
+import cell2Photo1 from '@/assets/cells/cell-2-photo-1.jpg';
+import cell2Photo2 from '@/assets/cells/cell-2-photo-2.jpg';
+import cell3Photo1 from '@/assets/cells/cell-3-photo-1.jpg';
+import cell3Photo2 from '@/assets/cells/cell-3-photo-2.jpg';
+import cell4Photo1 from '@/assets/cells/cell-4-photo-1.jpg';
+import cell4Photo2 from '@/assets/cells/cell-4-photo-2.jpg';
+import cell5Photo1 from '@/assets/cells/cell-5-photo-1.jpg';
 
 // Данные ячеек
 export const storageCells: StorageCell[] = [
@@ -21,6 +28,70 @@ export const storageCells: StorageCell[] = [
     hasSocket: false,
     hasShelves: false,
     photos: [cell1Photo1, cell1Photo2],
+  },
+  {
+    id: 'cell-2',
+    number: 2,
+    width: 1.25,
+    height: 2.5,
+    depth: 1.5,
+    area: 1.875,
+    volume: 4.69,
+    floor: 1,
+    tier: 1,
+    pricePerMonth: 3000,
+    isAvailable: true,
+    hasSocket: false,
+    hasShelves: false,
+    photos: [cell2Photo1, cell2Photo2],
+  },
+  {
+    id: 'cell-3',
+    number: 3,
+    width: 1.25,
+    height: 2.5,
+    depth: 1.5,
+    area: 1.875,
+    volume: 4.69,
+    floor: 1,
+    tier: 1,
+    pricePerMonth: 3000,
+    isAvailable: true,
+    hasSocket: false,
+    hasShelves: false,
+    photos: [cell3Photo1, cell3Photo2],
+  },
+  {
+    id: 'cell-4',
+    number: 4,
+    width: 1.1,
+    height: 2.5,
+    depth: 1.5,
+    area: 1.65,
+    volume: 4.13,
+    floor: 1,
+    tier: 1,
+    pricePerMonth: 2700,
+    isAvailable: true,
+    hasSocket: false,
+    hasShelves: false,
+    photos: [cell4Photo1, cell4Photo2],
+  },
+  {
+    id: 'cell-5',
+    number: 5,
+    width: 1.1,
+    height: 2.5,
+    depth: 1.5,
+    area: 1.65,
+    volume: 4.13,
+    floor: 1,
+    tier: 1,
+    pricePerMonth: 2700,
+    isAvailable: true,
+    hasSocket: false,
+    hasShelves: false,
+    photos: [cell5Photo1],
   },
 ];
 
