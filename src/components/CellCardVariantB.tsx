@@ -14,11 +14,11 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
   const aspectRatio = cell.height / cell.width;
   const isTall = aspectRatio > 1.3;
   
-  // Масштабирование для отображения (базовые размеры в пикселях)
-  const scale = 50; // пикселей на метр
-  const boxWidth = Math.min(cell.width * scale, 120);
-  const boxHeight = Math.min(cell.height * scale, 160);
-  const boxDepth = Math.min(cell.depth * scale * 0.5, 60); // глубина под углом 45°
+  // Масштабирование для отображения - УВЕЛИЧЕННЫЕ размеры
+  const scale = 70; // пикселей на метр (увеличено)
+  const boxWidth = Math.min(cell.width * scale, 140);
+  const boxHeight = Math.min(cell.height * scale, 175);
+  const boxDepth = Math.min(cell.depth * scale * 0.5, 70); // глубина под углом 45°
   
   return (
     <div 
@@ -53,23 +53,23 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
         </Badge>
       </div>
 
-      {/* Диаметрическая проекция - БОЛЬШАЯ */}
-      <div className="relative bg-gradient-to-br from-background via-secondary/20 to-muted/40 p-4">
+      {/* Диаметрическая проекция - МАКСИМАЛЬНЫЙ РАЗМЕР */}
+      <div className="relative bg-gradient-to-br from-background via-secondary/20 to-muted/40">
         <svg 
-          viewBox="0 0 320 280" 
-          className="w-full h-auto"
-          style={{ minHeight: '280px' }}
+          viewBox="0 0 280 240" 
+          className="w-full"
+          preserveAspectRatio="xMidYMid meet"
         >
           {/* Сетка фона */}
           <defs>
             <pattern id={`grid-${cell.id}`} width="20" height="20" patternUnits="userSpaceOnUse">
-              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="hsl(var(--border))" strokeWidth="0.5" opacity="0.5"/>
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="hsl(var(--border))" strokeWidth="0.5" opacity="0.3"/>
             </pattern>
           </defs>
-          <rect width="320" height="280" fill={`url(#grid-${cell.id})`} />
+          <rect width="280" height="240" fill={`url(#grid-${cell.id})`} />
           
-          {/* Центрируем проекцию */}
-          <g transform="translate(90, 30)">
+          {/* Центрируем проекцию - сдвинуто для максимального заполнения */}
+          <g transform="translate(55, 45)">
             
             {/* ===== ПОЛ ===== */}
             <g>
