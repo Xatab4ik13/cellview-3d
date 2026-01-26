@@ -10,16 +10,21 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Box, 
   Zap, 
   Grid3X3, 
   Video, 
   Calendar, 
   Check,
-  X 
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Environment } from '@react-three/drei';
+
+// Импортируем фото ячеек
+import cellPhoto1 from '@/assets/storage-cell-1.jpg';
+import cellPhoto2 from '@/assets/storage-cell-2.jpg';
+
+const cellPhotos = [cellPhoto1, cellPhoto2];
 
 interface CellModalProps {
   cell: StorageCell | null;
@@ -27,78 +32,9 @@ interface CellModalProps {
   onClose: () => void;
 }
 
-const SingleCellView = ({ cell }: { cell: StorageCell }) => {
-  return (
-    <>
-      {/* Floor */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
-        <planeGeometry args={[6, 6]} />
-        <meshStandardMaterial color="#d1d5db" roughness={0.9} />
-      </mesh>
-      
-      {/* Cell frame */}
-      <mesh position={[0, cell.height / 2, 0]}>
-        <boxGeometry args={[cell.width, cell.height, cell.depth]} />
-        <meshStandardMaterial color="#e5e7eb" metalness={0.3} roughness={0.7} transparent opacity={0.5} />
-      </mesh>
-      
-      {/* Door */}
-      <mesh position={[0, cell.height / 2, cell.depth / 2]}>
-        <boxGeometry args={[cell.width - 0.1, cell.height - 0.1, 0.05]} />
-        <meshStandardMaterial color="#8B5CF6" metalness={0.2} roughness={0.5} />
-      </mesh>
-      
-      {/* Door handle */}
-      <mesh position={[cell.width / 2 - 0.15, cell.height / 2, cell.depth / 2 + 0.05]}>
-        <boxGeometry args={[0.05, 0.15, 0.05]} />
-        <meshStandardMaterial color="#9ca3af" metalness={0.8} roughness={0.2} />
-      </mesh>
-      
-      {/* Interior walls */}
-      <mesh position={[0, cell.height / 2, -cell.depth / 2 + 0.02]}>
-        <planeGeometry args={[cell.width - 0.05, cell.height - 0.05]} />
-        <meshStandardMaterial color="#f5f5f4" />
-      </mesh>
-      <mesh position={[-cell.width / 2 + 0.02, cell.height / 2, 0]} rotation={[0, Math.PI / 2, 0]}>
-        <planeGeometry args={[cell.depth - 0.05, cell.height - 0.05]} />
-        <meshStandardMaterial color="#fafaf9" />
-      </mesh>
-      <mesh position={[cell.width / 2 - 0.02, cell.height / 2, 0]} rotation={[0, -Math.PI / 2, 0]}>
-        <planeGeometry args={[cell.depth - 0.05, cell.height - 0.05]} />
-        <meshStandardMaterial color="#fafaf9" />
-      </mesh>
-      
-      {/* Shelves if present */}
-      {cell.hasShelves && (
-        <>
-          <mesh position={[0, cell.height * 0.4, 0]}>
-            <boxGeometry args={[cell.width - 0.15, 0.02, cell.depth - 0.2]} />
-            <meshStandardMaterial color="#9ca3af" metalness={0.5} />
-          </mesh>
-          <mesh position={[0, cell.height * 0.7, 0]}>
-            <boxGeometry args={[cell.width - 0.15, 0.02, cell.depth - 0.2]} />
-            <meshStandardMaterial color="#9ca3af" metalness={0.5} />
-          </mesh>
-        </>
-      )}
-      
-      {/* Socket if present */}
-      {cell.hasSocket && (
-        <mesh position={[-cell.width / 2 + 0.05, 0.3, -cell.depth / 4]}>
-          <boxGeometry args={[0.02, 0.08, 0.05]} />
-          <meshStandardMaterial color="#ffffff" />
-        </mesh>
-      )}
-      
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[3, 5, 3]} intensity={0.8} castShadow />
-      <pointLight position={[0, cell.height - 0.1, 0]} intensity={0.3} color="#fff7ed" />
-    </>
-  );
-};
-
 const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month'>('month');
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   
   if (!cell) return null;
   
@@ -112,6 +48,14 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
     day: 'День',
     week: 'Неделя',
     month: 'Месяц',
+  };
+
+  const nextPhoto = () => {
+    setCurrentPhotoIndex((prev) => (prev + 1) % cellPhotos.length);
+  };
+
+  const prevPhoto = () => {
+    setCurrentPhotoIndex((prev) => (prev - 1 + cellPhotos.length) % cellPhotos.length);
   };
 
   return (
@@ -128,41 +72,58 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
         </DialogHeader>
 
         <div className="grid md:grid-cols-2 gap-6">
-          {/* 3D View */}
+          {/* Photo Gallery */}
           <div className="space-y-4">
-            <div className="aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-secondary to-muted border border-border">
-              <Canvas shadows>
-                <PerspectiveCamera makeDefault position={[3, 2.5, 4]} fov={45} />
-                <OrbitControls 
-                  enablePan={false}
-                  enableZoom={true}
-                  minDistance={2}
-                  maxDistance={8}
-                  target={[0, cell.height / 2, 0]}
-                />
-                <SingleCellView cell={cell} />
-                <Environment preset="warehouse" />
-              </Canvas>
+            <div className="relative aspect-square rounded-xl overflow-hidden bg-muted border border-border">
+              <img 
+                src={cellPhotos[currentPhotoIndex]} 
+                alt={`Ячейка №${cell.number} - фото ${currentPhotoIndex + 1}`}
+                className="w-full h-full object-cover"
+              />
+              
+              {/* Navigation arrows */}
+              {cellPhotos.length > 1 && (
+                <>
+                  <button
+                    onClick={prevPhoto}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors border border-border"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={nextPhoto}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors border border-border"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+              
+              {/* Photo counter */}
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-background/80 backdrop-blur-sm text-sm border border-border">
+                {currentPhotoIndex + 1} / {cellPhotos.length}
+              </div>
             </div>
             
-            <p className="text-sm text-center text-muted-foreground">
-              Используйте мышь для вращения и приближения 3D-модели
-            </p>
-            
-            {/* Video feeds placeholder */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="aspect-video bg-muted rounded-lg flex items-center justify-center border border-border">
-                <div className="text-center">
-                  <Video className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-xs text-muted-foreground">Камера 1</p>
-                </div>
-              </div>
-              <div className="aspect-video bg-muted rounded-lg flex items-center justify-center border border-border">
-                <div className="text-center">
-                  <Video className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-xs text-muted-foreground">Камера 2</p>
-                </div>
-              </div>
+            {/* Thumbnail gallery */}
+            <div className="flex gap-2 justify-center">
+              {cellPhotos.map((photo, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentPhotoIndex(index)}
+                  className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                    currentPhotoIndex === index 
+                      ? 'border-primary' 
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <img 
+                    src={photo} 
+                    alt={`Миниатюра ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
             </div>
           </div>
 
