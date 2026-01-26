@@ -213,18 +213,6 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
         </svg>
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 border-t border-border">
-        <div className="p-3 border-r border-border text-center bg-muted/20">
-          <p className="text-xl font-bold text-primary">{cell.area} м²</p>
-          <p className="text-xs text-muted-foreground">площадь</p>
-        </div>
-        <div className="p-3 text-center bg-muted/20">
-          <p className="text-xl font-bold text-primary">{cell.volume} м³</p>
-          <p className="text-xs text-muted-foreground">объём</p>
-        </div>
-      </div>
-
       {/* Features & Price */}
       <div className="p-4 space-y-3 border-t border-border">
         {/* Features */}
