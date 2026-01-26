@@ -1,119 +1,155 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Box, Shield, Clock, Eye, Maximize } from 'lucide-react';
-import StorageUnit3D from './StorageUnit3D';
+import { ArrowRight, Phone, MapPin, Shield, Clock, Video, Key } from 'lucide-react';
+import storageCellImage from '@/assets/storage-cell-2.jpg';
+
+const sizeOptions = [
+  { label: 'Маленький', range: '0,5 - 6 м²' },
+  { label: 'Средний', range: '6 - 15 м²' },
+  { label: 'Большой', range: 'от 15 м²' },
+];
+
+const locations = [
+  { city: 'Санкт-Петербург', count: '1 склад' },
+];
 
 const Hero = () => {
-  const [selectedCell, setSelectedCell] = useState<string | null>(null);
-  
+  const [selectedSize, setSelectedSize] = useState<number | null>(null);
+
   const features = [
-    { icon: Box, text: 'От 0.5 до 15 м²' },
-    { icon: Shield, text: 'Видеонаблюдение 24/7' },
-    { icon: Clock, text: 'Доступ круглосуточно' },
-    { icon: Eye, text: 'Онлайн просмотр' },
+    { icon: Shield, text: 'Безопасность' },
+    { icon: Video, text: 'Видеонаблюдение' },
+    { icon: Clock, text: 'Доступ 24/7' },
+    { icon: Key, text: 'Личный код' },
   ];
 
   return (
-    <section className="relative min-h-screen pt-20 lg:pt-24 overflow-hidden gradient-hero">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-0 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/5 rounded-full blur-3xl" />
-      </div>
-
+    <section className="relative min-h-screen pt-20 lg:pt-24 overflow-hidden bg-background">
       <div className="container mx-auto px-4 py-8 lg:py-12">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left side - Content */}
           <div className="space-y-6 lg:space-y-8 order-2 lg:order-1">
             <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full">
-                <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-                <span className="text-sm font-medium text-primary">Санкт-Петербург, ул. Алтайская, 21</span>
-              </div>
-              
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                Индивидуальные
-                <span className="text-gradient-primary block">кладовые ячейки</span>
-                для хранения
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-foreground">
+                Кладовка78 - хранение
+                <span className="block text-primary">вещей</span>
               </h1>
               
               <p className="text-lg text-muted-foreground max-w-lg">
-                Арендуйте персональную ячейку для хранения вещей с круглосуточным доступом и видеонаблюдением онлайн
+                Снять место недорого можно у нас!
+              </p>
+            </div>
+
+            {/* Size selector card */}
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-lg">
+              <h3 className="font-semibold text-foreground mb-4">Размер склада</h3>
+              
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                {sizeOptions.map((option, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedSize(index)}
+                    className={`p-3 rounded-xl border-2 transition-all text-center ${
+                      selectedSize === index 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <span className="block text-sm font-medium">{option.label}</span>
+                    <span className="block text-xs text-muted-foreground">{option.range}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Location */}
+              <div className="flex flex-wrap gap-4 mb-6">
+                {locations.map((loc, index) => (
+                  <div key={index} className="text-sm">
+                    <span className="font-semibold text-primary">{loc.city}</span>
+                    <span className="text-muted-foreground ml-2">{loc.count}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link to="/catalog" className="flex-1">
+                  <Button variant="default" size="lg" className="w-full">
+                    Забронировать склад
+                  </Button>
+                </Link>
+                <Button variant="accent" size="lg" className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90">
+                  Скидка 50%*
+                </Button>
+              </div>
+              
+              <p className="text-xs text-muted-foreground mt-3">
+                * Подробности уточняйте у менеджеров
               </p>
             </div>
 
             {/* Features grid */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {features.map((feature, index) => (
                 <div 
                   key={index}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border/50 shadow-sm"
-                  style={{ animationDelay: `${index * 100}ms` }}
+                  className="flex flex-col items-center gap-2 p-3 text-center"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <feature.icon className="w-5 h-5 text-primary" />
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <feature.icon className="w-6 h-6 text-primary" />
                   </div>
-                  <span className="text-sm font-medium">{feature.text}</span>
+                  <span className="text-xs font-medium text-muted-foreground">{feature.text}</span>
                 </div>
               ))}
             </div>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/3d-map">
-                <Button variant="hero" size="lg">
-                  Открыть 3D-карту
-                  <Maximize className="w-5 h-5" />
-                </Button>
-              </Link>
-              <Link to="/catalog">
-                <Button variant="heroSecondary" size="lg">
-                  Каталог ячеек
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </Link>
-            </div>
-
-            {/* Price hint */}
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-foreground">от 1 200 ₽</span>
-              <span className="text-muted-foreground">/ месяц</span>
-            </div>
           </div>
 
-          {/* Right side - 3D View */}
+          {/* Right side - Image */}
           <div className="order-1 lg:order-2 relative">
-            <div className="relative aspect-square lg:aspect-auto lg:h-[600px] rounded-3xl overflow-hidden shadow-2xl border border-border/50">
-              <StorageUnit3D 
-                selectedCell={selectedCell} 
-                onSelectCell={setSelectedCell} 
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl">
+              <img 
+                src={storageCellImage} 
+                alt="Кладовки для хранения вещей" 
+                className="w-full h-[400px] lg:h-[600px] object-cover"
               />
               
-              {/* 3D Controls hint */}
-              <div className="absolute bottom-4 left-4 right-4 flex justify-center">
-                <div className="glass px-4 py-2 rounded-full text-sm text-muted-foreground">
-                  🖱️ Вращайте и приближайте для просмотра
+              {/* Overlay badge */}
+              <div className="absolute bottom-6 left-6 right-6">
+                <div className="bg-foreground/90 backdrop-blur-sm px-6 py-4 rounded-2xl">
+                  <p className="text-background text-lg font-bold">
+                    Индивидуальные кладовые для хранения
+                  </p>
                 </div>
               </div>
-              
-              {/* Link to full 3D map */}
-              <Link 
-                to="/3d-map" 
-                className="absolute top-4 right-4 glass px-4 py-2 rounded-xl text-sm font-medium hover:bg-primary/20 transition-colors flex items-center gap-2"
-              >
-                <Maximize className="w-4 h-4" />
-                Полная карта
-              </Link>
-            </div>
-            
-            {/* Selected cell info */}
-            {selectedCell && (
-              <div className="absolute top-4 left-4 glass p-4 rounded-xl shadow-lg animate-scale-in">
-                <p className="text-sm text-muted-foreground">Выбрана ячейка</p>
-                <p className="text-2xl font-bold text-primary">№{selectedCell}</p>
+
+              {/* Logo overlay */}
+              <div className="absolute top-6 right-6 bg-primary px-4 py-2 rounded-xl">
+                <span className="text-primary-foreground font-bold">Кладовка78</span>
               </div>
-            )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Info bar */}
+      <div className="bg-primary py-4 mt-8">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-wrap justify-center gap-8 text-primary-foreground">
+            <div className="flex items-center gap-2">
+              <Phone className="w-5 h-5" />
+              <a href="tel:+78121234567" className="font-medium hover:underline">
+                +7 (812) 123-45-67
+              </a>
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              <span>СПб, ул. Алтайская, 21</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              <span>Доступ 24/7</span>
+            </div>
           </div>
         </div>
       </div>
