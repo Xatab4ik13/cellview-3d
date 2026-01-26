@@ -9,8 +9,9 @@ const Header = () => {
   const location = useLocation();
 
   const navLinks = [
-    { href: '/catalog', label: 'Адреса складов' },
-    { href: '/pricing', label: 'Стоимость' },
+    { href: '/catalog', label: 'Кладовки' },
+    { href: '/pricing', label: 'Цены' },
+    { href: '/docs', label: 'Документация' },
     { href: '/faq', label: 'Вопрос-ответ' },
     { href: '/contacts', label: 'Контакты' },
   ];
@@ -86,12 +87,12 @@ const Header = () => {
       {/* Bottom row - Navigation - Desktop */}
       <div className="hidden lg:block bg-background">
         <div className="container mx-auto px-4">
-          <nav className="flex items-center justify-center gap-8 h-12">
+          <nav className="flex items-center justify-between h-12">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
+                className={`text-sm font-semibold tracking-wide uppercase transition-colors hover:text-primary ${
                   isActive(link.href)
                     ? 'text-primary'
                     : 'text-foreground'
