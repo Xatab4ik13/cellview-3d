@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { StorageCell } from '@/types/storage';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,12 +20,6 @@ import {
   ChevronRight
 } from 'lucide-react';
 
-// Импортируем фото ячеек
-import cellPhoto1 from '@/assets/storage-cell-1.jpg';
-import cellPhoto2 from '@/assets/storage-cell-2.jpg';
-
-const cellPhotos = [cellPhoto1, cellPhoto2];
-
 interface CellModalProps {
   cell: StorageCell | null;
   isOpen: boolean;
@@ -36,7 +30,14 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month'>('month');
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   
+  // Сброс индекса фото при смене ячейки
+  useEffect(() => {
+    setCurrentPhotoIndex(0);
+  }, [cell?.id]);
+  
   if (!cell) return null;
+  
+  const photos = cell.photos;
   
   const prices = {
     day: Math.round(cell.pricePerMonth / 25),
@@ -51,11 +52,11 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
   };
 
   const nextPhoto = () => {
-    setCurrentPhotoIndex((prev) => (prev + 1) % cellPhotos.length);
+    setCurrentPhotoIndex((prev) => (prev + 1) % photos.length);
   };
 
   const prevPhoto = () => {
-    setCurrentPhotoIndex((prev) => (prev - 1 + cellPhotos.length) % cellPhotos.length);
+    setCurrentPhotoIndex((prev) => (prev - 1 + photos.length) % photos.length);
   };
 
   return (
@@ -76,13 +77,13 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
           <div className="space-y-4">
             <div className="relative aspect-square rounded-xl overflow-hidden bg-muted border border-border">
               <img 
-                src={cellPhotos[currentPhotoIndex]} 
+                src={photos[currentPhotoIndex]} 
                 alt={`Ячейка №${cell.number} - фото ${currentPhotoIndex + 1}`}
                 className="w-full h-full object-cover"
               />
               
               {/* Navigation arrows */}
-              {cellPhotos.length > 1 && (
+              {photos.length > 1 && (
                 <>
                   <button
                     onClick={prevPhoto}
@@ -101,13 +102,13 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
               
               {/* Photo counter */}
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-background/80 backdrop-blur-sm text-sm border border-border">
-                {currentPhotoIndex + 1} / {cellPhotos.length}
+                {currentPhotoIndex + 1} / {photos.length}
               </div>
             </div>
             
             {/* Thumbnail gallery */}
             <div className="flex gap-2 justify-center">
-              {cellPhotos.map((photo, index) => (
+              {photos.map((photo, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentPhotoIndex(index)}
