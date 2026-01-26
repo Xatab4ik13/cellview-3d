@@ -2,17 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
     /* Brand Colors - Purple/Violet from storage units */
-    --primary: 270 70% 55%;
+    --primary: 268 55% 45%;
     --primary-foreground: 0 0% 100%;
     
     /* Accent - Yellow/Gold from unit numbers */
-    --accent: 45 93% 58%;
-    --accent-foreground: 270 70% 20%;
+    --accent: 45 100% 50%;
+    --accent-foreground: 268 55% 20%;
+    
+    /* Secondary Green (like safe-box.ru) */
+    --secondary-green: 85 70% 45%;
+    --secondary-green-foreground: 0 0% 100%;
     
     /* Background - Clean white/light gray */
     --background: 0 0% 100%;
@@ -26,8 +30,8 @@
     --popover-foreground: 220 20% 15%;
     
     /* Secondary - Light purple tint */
-    --secondary: 270 30% 96%;
-    --secondary-foreground: 270 70% 35%;
+    --secondary: 268 30% 96%;
+    --secondary-foreground: 268 55% 35%;
     
     /* Muted - Soft gray */
     --muted: 220 14% 96%;
@@ -40,40 +44,44 @@
     /* Borders & Inputs */
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 270 70% 55%;
+    --ring: 268 55% 45%;
     
     --radius: 0.75rem;
     
     /* Sidebar */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 270 70% 55%;
+    --sidebar-primary: 268 55% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 270 30% 96%;
-    --sidebar-accent-foreground: 270 70% 35%;
+    --sidebar-accent: 268 30% 96%;
+    --sidebar-accent-foreground: 268 55% 35%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 270 70% 55%;
+    --sidebar-ring: 268 55% 45%;
     
     /* Custom Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(270, 70%, 55%) 0%, hsl(290, 60%, 45%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(45, 93%, 58%) 0%, hsl(35, 95%, 50%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(270, 30%, 98%) 0%, hsl(0, 0%, 100%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(268, 55%, 45%) 0%, hsl(280, 50%, 40%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(45, 100%, 50%) 0%, hsl(40, 100%, 45%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(0, 0%, 100%) 0%, hsl(220, 14%, 96%) 100%);
+    --gradient-green: linear-gradient(135deg, hsl(85, 70%, 45%) 0%, hsl(90, 60%, 40%) 100%);
     
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 hsl(220 20% 15% / 0.05);
     --shadow-md: 0 4px 6px -1px hsl(220 20% 15% / 0.1), 0 2px 4px -2px hsl(220 20% 15% / 0.1);
     --shadow-lg: 0 10px 15px -3px hsl(220 20% 15% / 0.1), 0 4px 6px -4px hsl(220 20% 15% / 0.1);
     --shadow-xl: 0 20px 25px -5px hsl(220 20% 15% / 0.1), 0 8px 10px -6px hsl(220 20% 15% / 0.1);
-    --shadow-primary: 0 10px 40px -10px hsl(270, 70%, 55%, 0.4);
-    --shadow-accent: 0 10px 40px -10px hsl(45, 93%, 58%, 0.4);
+    --shadow-primary: 0 10px 40px -10px hsl(268, 55%, 45%, 0.4);
+    --shadow-accent: 0 10px 40px -10px hsl(45, 100%, 50%, 0.4);
   }
 
-  .dark {
-    --primary: 270 70% 60%;
+.dark {
+    --primary: 268 55% 55%;
     --primary-foreground: 0 0% 100%;
     
-    --accent: 45 93% 58%;
-    --accent-foreground: 270 70% 15%;
+    --accent: 45 100% 50%;
+    --accent-foreground: 268 55% 15%;
+    
+    --secondary-green: 85 70% 50%;
+    --secondary-green-foreground: 0 0% 100%;
     
     --background: 220 20% 10%;
     --foreground: 0 0% 95%;
@@ -84,8 +92,8 @@
     --popover: 220 20% 13%;
     --popover-foreground: 0 0% 95%;
     
-    --secondary: 270 30% 20%;
-    --secondary-foreground: 270 30% 90%;
+    --secondary: 268 30% 20%;
+    --secondary-foreground: 268 30% 90%;
     
     --muted: 220 15% 18%;
     --muted-foreground: 220 10% 60%;
@@ -95,16 +103,16 @@
     
     --border: 220 15% 20%;
     --input: 220 15% 20%;
-    --ring: 270 70% 60%;
+    --ring: 268 55% 55%;
     
     --sidebar-background: 220 20% 10%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 270 70% 60%;
+    --sidebar-primary: 268 55% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 270 30% 20%;
-    --sidebar-accent-foreground: 270 30% 90%;
+    --sidebar-accent: 268 30% 20%;
+    --sidebar-accent-foreground: 268 30% 90%;
     --sidebar-border: 220 15% 20%;
-    --sidebar-ring: 270 70% 60%;
+    --sidebar-ring: 268 55% 55%;
   }
 }
 
@@ -119,7 +127,7 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Manrope', sans-serif;
   }
 }
 

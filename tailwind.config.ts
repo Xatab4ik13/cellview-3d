@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Montserrat', 'sans-serif'],
+        sans: ['Manrope', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -96,8 +96,8 @@ export default {
         "slide-in-right": "slide-in-right 0.5s ease-out forwards",
       },
       boxShadow: {
-        'primary': '0 10px 40px -10px hsl(270, 70%, 55%, 0.4)',
-        'accent': '0 10px 40px -10px hsl(45, 93%, 58%, 0.4)',
+        'primary': '0 10px 40px -10px hsl(268, 55%, 45%, 0.4)',
+        'accent': '0 10px 40px -10px hsl(45, 100%, 50%, 0.4)',
       },
     },
   },
