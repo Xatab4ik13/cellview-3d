@@ -10,39 +10,81 @@ interface CellCardProps {
 
 // Диаметрическая проекция с размерными линиями
 const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
-  // Определяем пропорции ячейки
-  const aspectRatio = cell.height / cell.width;
-  const isTall = aspectRatio > 1.3;
+  // Определяем размер ячейки по площади
+  const isSmall = cell.area < 2;       // маленькие (0.5-2 м²)
+  const isMedium = cell.area >= 2 && cell.area < 6;  // средние (2-6 м²)
+  const isLarge = cell.area >= 6;      // большие (6+ м²)
   
-  // Масштабирование с учетом пропорций ячейки
+  // SVG контейнер
   const svgWidth = 300;
   const svgHeight = 280;
-  const marginLeft = 55;  // место для размерной линии высоты
-  const marginRight = 60; // место для размерной линии глубины
-  const marginTop = 50;   // место для размерной линии глубины сверху
-  const marginBottom = 45; // место для размерной линии ширины
   
-  const availableWidth = svgWidth - marginLeft - marginRight;
-  const availableHeight = svgHeight - marginTop - marginBottom;
+  // Разные правила для разных размеров
+  let scale: number;
+  let marginLeft: number;
+  let marginRight: number;
+  let marginTop: number;
+  let marginBottom: number;
+  let labelSize: number;
+  let labelPadding: { width: number; height: number };
   
-  // Рассчитываем масштаб чтобы проекция поместилась с учетом глубины
-  const depthRatio = 0.5; // отношение видимой глубины к реальной
-  const projectedWidth = cell.width + cell.depth * depthRatio;
-  const projectedHeight = cell.height + cell.depth * depthRatio;
+  if (isSmall) {
+    // Маленькие кубические ячейки — максимальный размер
+    scale = 85;
+    marginLeft = 50;
+    marginRight = 55;
+    marginTop = 45;
+    marginBottom = 40;
+    labelSize = 13;
+    labelPadding = { width: 44, height: 20 };
+  } else if (isMedium) {
+    // Средние ячейки — сбалансированный размер
+    scale = 70;
+    marginLeft = 50;
+    marginRight = 55;
+    marginTop = 45;
+    marginBottom = 40;
+    labelSize = 12;
+    labelPadding = { width: 40, height: 18 };
+  } else {
+    // Большие/прямоугольные ячейки — уменьшенные плашки для большей проекции
+    scale = 55;
+    marginLeft = 45;
+    marginRight = 50;
+    marginTop = 40;
+    marginBottom = 38;
+    labelSize = 11;
+    labelPadding = { width: 36, height: 16 };
+  }
   
-  const scaleX = availableWidth / projectedWidth;
-  const scaleY = availableHeight / projectedHeight;
-  const scale = Math.min(scaleX, scaleY, 70); // не больше 70px на метр
-  
+  // Рассчитываем размеры бокса
+  const depthRatio = 0.5;
   const boxWidth = cell.width * scale;
   const boxHeight = cell.height * scale;
   const boxDepth = cell.depth * scale * depthRatio;
   
-  // Центрирование проекции в доступной области
-  const totalProjectionWidth = boxWidth + boxDepth;
-  const totalProjectionHeight = boxHeight + boxDepth;
-  const offsetX = marginLeft + (availableWidth - totalProjectionWidth) / 2;
-  const offsetY = marginTop + (availableHeight - totalProjectionHeight) / 2 + boxDepth;
+  // Проверяем, помещается ли в контейнер, если нет — адаптируем масштаб
+  const availableWidth = svgWidth - marginLeft - marginRight;
+  const availableHeight = svgHeight - marginTop - marginBottom;
+  const projectedWidth = boxWidth + boxDepth;
+  const projectedHeight = boxHeight + boxDepth;
+  
+  let finalScale = scale;
+  if (projectedWidth > availableWidth || projectedHeight > availableHeight) {
+    const scaleX = availableWidth / (cell.width + cell.depth * depthRatio);
+    const scaleY = availableHeight / (cell.height + cell.depth * depthRatio);
+    finalScale = Math.min(scaleX, scaleY);
+  }
+  
+  const finalBoxWidth = cell.width * finalScale;
+  const finalBoxHeight = cell.height * finalScale;
+  const finalBoxDepth = cell.depth * finalScale * depthRatio;
+  
+  // Центрирование
+  const totalWidth = finalBoxWidth + finalBoxDepth;
+  const totalHeight = finalBoxHeight + finalBoxDepth;
+  const offsetX = marginLeft + (availableWidth - totalWidth) / 2;
+  const offsetY = marginTop + (availableHeight - totalHeight) / 2 + finalBoxDepth;
   
   return (
     <div 
@@ -99,17 +141,17 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
             <g>
               {/* Плоскость пола */}
               <polygon 
-                points={`0,${boxHeight} ${boxDepth},${boxHeight - boxDepth * 0.5} ${boxWidth + boxDepth},${boxHeight - boxDepth * 0.5} ${boxWidth},${boxHeight}`}
+                points={`0,${finalBoxHeight} ${finalBoxDepth},${finalBoxHeight - finalBoxDepth * 0.5} ${finalBoxWidth + finalBoxDepth},${finalBoxHeight - finalBoxDepth * 0.5} ${finalBoxWidth},${finalBoxHeight}`}
                 fill="hsl(var(--muted))"
                 stroke="hsl(var(--border))"
                 strokeWidth="1.5"
               />
               {/* Надпись ПОЛ */}
               <text 
-                x={boxWidth / 2 + boxDepth / 2} 
-                y={boxHeight - boxDepth * 0.25 + 5} 
+                x={finalBoxWidth / 2 + finalBoxDepth / 2} 
+                y={finalBoxHeight - finalBoxDepth * 0.25 + 5} 
                 textAnchor="middle" 
-                className="text-[11px] fill-muted-foreground font-medium"
+                className="text-[10px] fill-muted-foreground font-medium"
               >
                 ПОЛ
               </text>
@@ -119,7 +161,7 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
             
             {/* Задняя грань (видна сверху-справа) */}
             <polygon 
-              points={`${boxDepth},${-boxDepth * 0.5} ${boxWidth + boxDepth},${-boxDepth * 0.5} ${boxWidth + boxDepth},${boxHeight - boxDepth * 0.5} ${boxDepth},${boxHeight - boxDepth * 0.5}`}
+              points={`${finalBoxDepth},${-finalBoxDepth * 0.5} ${finalBoxWidth + finalBoxDepth},${-finalBoxDepth * 0.5} ${finalBoxWidth + finalBoxDepth},${finalBoxHeight - finalBoxDepth * 0.5} ${finalBoxDepth},${finalBoxHeight - finalBoxDepth * 0.5}`}
               className={cell.isAvailable ? 'fill-primary/20' : 'fill-muted/60'}
               stroke="hsl(var(--primary))"
               strokeWidth="1"
@@ -128,7 +170,7 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
             
             {/* Верхняя грань */}
             <polygon 
-              points={`0,0 ${boxDepth},${-boxDepth * 0.5} ${boxWidth + boxDepth},${-boxDepth * 0.5} ${boxWidth},0`}
+              points={`0,0 ${finalBoxDepth},${-finalBoxDepth * 0.5} ${finalBoxWidth + finalBoxDepth},${-finalBoxDepth * 0.5} ${finalBoxWidth},0`}
               className={cell.isAvailable ? 'fill-accent' : 'fill-muted'}
               stroke="hsl(var(--accent-foreground))"
               strokeWidth="1"
@@ -137,7 +179,7 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
             
             {/* Боковая грань (правая) */}
             <polygon 
-              points={`${boxWidth},0 ${boxWidth + boxDepth},${-boxDepth * 0.5} ${boxWidth + boxDepth},${boxHeight - boxDepth * 0.5} ${boxWidth},${boxHeight}`}
+              points={`${finalBoxWidth},0 ${finalBoxWidth + finalBoxDepth},${-finalBoxDepth * 0.5} ${finalBoxWidth + finalBoxDepth},${finalBoxHeight - finalBoxDepth * 0.5} ${finalBoxWidth},${finalBoxHeight}`}
               className={cell.isAvailable ? 'fill-primary/60' : 'fill-muted-foreground/30'}
               stroke="hsl(var(--primary))"
               strokeWidth="1.5"
@@ -145,7 +187,7 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
             
             {/* Передняя грань */}
             <polygon 
-              points={`0,0 ${boxWidth},0 ${boxWidth},${boxHeight} 0,${boxHeight}`}
+              points={`0,0 ${finalBoxWidth},0 ${finalBoxWidth},${finalBoxHeight} 0,${finalBoxHeight}`}
               className={cell.isAvailable ? 'fill-primary' : 'fill-muted-foreground/40'}
               stroke="hsl(var(--primary))"
               strokeWidth="2"
@@ -155,10 +197,10 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
             {[0.2, 0.4, 0.6, 0.8].map((pos, i) => (
               <line 
                 key={i}
-                x1={boxWidth * 0.1} 
-                y1={boxHeight * pos} 
-                x2={boxWidth * 0.9} 
-                y2={boxHeight * pos} 
+                x1={finalBoxWidth * 0.1} 
+                y1={finalBoxHeight * pos} 
+                x2={finalBoxWidth * 0.9} 
+                y2={finalBoxHeight * pos} 
                 stroke="hsl(var(--primary-foreground))"
                 strokeWidth="1.5"
                 strokeOpacity="0.2"
@@ -167,9 +209,9 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
             
             {/* Ручка двери */}
             <circle 
-              cx={boxWidth * 0.85} 
-              cy={boxHeight * 0.5} 
-              r="6"
+              cx={finalBoxWidth * 0.85} 
+              cy={finalBoxHeight * 0.5} 
+              r={Math.max(4, finalScale * 0.08)}
               className={cell.isAvailable ? 'fill-accent' : 'fill-muted'}
               stroke="hsl(var(--accent-foreground))"
               strokeWidth="1.5"
@@ -180,16 +222,16 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
             {/* Высота (слева) */}
             <g className="dimension-line">
               {/* Выносные линии */}
-              <line x1="-5" y1="0" x2="-35" y2="0" stroke="hsl(var(--foreground))" strokeWidth="1" />
-              <line x1="-5" y1={boxHeight} x2="-35" y2={boxHeight} stroke="hsl(var(--foreground))" strokeWidth="1" />
+              <line x1="-5" y1="0" x2="-30" y2="0" stroke="hsl(var(--foreground))" strokeWidth="1" />
+              <line x1="-5" y1={finalBoxHeight} x2="-30" y2={finalBoxHeight} stroke="hsl(var(--foreground))" strokeWidth="1" />
               {/* Размерная линия */}
-              <line x1="-25" y1="5" x2="-25" y2={boxHeight - 5} stroke="hsl(var(--foreground))" strokeWidth="1.5" />
+              <line x1="-22" y1="5" x2="-22" y2={finalBoxHeight - 5} stroke="hsl(var(--foreground))" strokeWidth="1.5" />
               {/* Стрелки */}
-              <polygon points="-25,5 -22,12 -28,12" fill="hsl(var(--foreground))" />
-              <polygon points={`-25,${boxHeight - 5} -22,${boxHeight - 12} -28,${boxHeight - 12}`} fill="hsl(var(--foreground))" />
+              <polygon points="-22,5 -19,11 -25,11" fill="hsl(var(--foreground))" />
+              <polygon points={`-22,${finalBoxHeight - 5} -19,${finalBoxHeight - 11} -25,${finalBoxHeight - 11}`} fill="hsl(var(--foreground))" />
               {/* Значение */}
-              <rect x="-45" y={boxHeight / 2 - 12} width="40" height="20" rx="4" fill="hsl(var(--background))" stroke="hsl(var(--primary))" strokeWidth="1.5"/>
-              <text x="-25" y={boxHeight / 2 + 2} textAnchor="middle" className="text-[13px] fill-foreground font-bold">
+              <rect x={-22 - labelPadding.width / 2} y={finalBoxHeight / 2 - labelPadding.height / 2} width={labelPadding.width} height={labelPadding.height} rx="3" fill="hsl(var(--background))" stroke="hsl(var(--primary))" strokeWidth="1.5"/>
+              <text x="-22" y={finalBoxHeight / 2 + labelSize / 3} textAnchor="middle" className={`text-[${labelSize}px] fill-foreground font-bold`} style={{ fontSize: labelSize }}>
                 {cell.height}м
               </text>
             </g>
@@ -197,16 +239,16 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
             {/* Ширина (снизу) */}
             <g className="dimension-line">
               {/* Выносные линии */}
-              <line x1="0" y1={boxHeight + 5} x2="0" y2={boxHeight + 35} stroke="hsl(var(--foreground))" strokeWidth="1" />
-              <line x1={boxWidth} y1={boxHeight + 5} x2={boxWidth} y2={boxHeight + 35} stroke="hsl(var(--foreground))" strokeWidth="1" />
+              <line x1="0" y1={finalBoxHeight + 5} x2="0" y2={finalBoxHeight + 30} stroke="hsl(var(--foreground))" strokeWidth="1" />
+              <line x1={finalBoxWidth} y1={finalBoxHeight + 5} x2={finalBoxWidth} y2={finalBoxHeight + 30} stroke="hsl(var(--foreground))" strokeWidth="1" />
               {/* Размерная линия */}
-              <line x1="5" y1={boxHeight + 25} x2={boxWidth - 5} y2={boxHeight + 25} stroke="hsl(var(--foreground))" strokeWidth="1.5" />
+              <line x1="5" y1={finalBoxHeight + 22} x2={finalBoxWidth - 5} y2={finalBoxHeight + 22} stroke="hsl(var(--foreground))" strokeWidth="1.5" />
               {/* Стрелки */}
-              <polygon points={`5,${boxHeight + 25} 12,${boxHeight + 22} 12,${boxHeight + 28}`} fill="hsl(var(--foreground))" />
-              <polygon points={`${boxWidth - 5},${boxHeight + 25} ${boxWidth - 12},${boxHeight + 22} ${boxWidth - 12},${boxHeight + 28}`} fill="hsl(var(--foreground))" />
+              <polygon points={`5,${finalBoxHeight + 22} 11,${finalBoxHeight + 19} 11,${finalBoxHeight + 25}`} fill="hsl(var(--foreground))" />
+              <polygon points={`${finalBoxWidth - 5},${finalBoxHeight + 22} ${finalBoxWidth - 11},${finalBoxHeight + 19} ${finalBoxWidth - 11},${finalBoxHeight + 25}`} fill="hsl(var(--foreground))" />
               {/* Значение */}
-              <rect x={boxWidth / 2 - 22} y={boxHeight + 15} width="44" height="20" rx="4" fill="hsl(var(--background))" stroke="hsl(var(--primary))" strokeWidth="1.5"/>
-              <text x={boxWidth / 2} y={boxHeight + 29} textAnchor="middle" className="text-[13px] fill-foreground font-bold">
+              <rect x={finalBoxWidth / 2 - labelPadding.width / 2} y={finalBoxHeight + 22 - labelPadding.height / 2} width={labelPadding.width} height={labelPadding.height} rx="3" fill="hsl(var(--background))" stroke="hsl(var(--primary))" strokeWidth="1.5"/>
+              <text x={finalBoxWidth / 2} y={finalBoxHeight + 22 + labelSize / 3} textAnchor="middle" className={`text-[${labelSize}px] fill-foreground font-bold`} style={{ fontSize: labelSize }}>
                 {cell.width}м
               </text>
             </g>
@@ -214,21 +256,21 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
             {/* Глубина (сверху справа, по диагонали) */}
             <g className="dimension-line">
               {/* Выносные линии */}
-              <line x1={boxWidth + 3} y1="-3" x2={boxWidth + 15} y2="-15" stroke="hsl(var(--foreground))" strokeWidth="1" />
-              <line x1={boxWidth + boxDepth + 3} y1={-boxDepth * 0.5 - 3} x2={boxWidth + boxDepth + 15} y2={-boxDepth * 0.5 - 15} stroke="hsl(var(--foreground))" strokeWidth="1" />
+              <line x1={finalBoxWidth + 3} y1="-3" x2={finalBoxWidth + 12} y2="-12" stroke="hsl(var(--foreground))" strokeWidth="1" />
+              <line x1={finalBoxWidth + finalBoxDepth + 3} y1={-finalBoxDepth * 0.5 - 3} x2={finalBoxWidth + finalBoxDepth + 12} y2={-finalBoxDepth * 0.5 - 12} stroke="hsl(var(--foreground))" strokeWidth="1" />
               {/* Размерная линия */}
               <line 
-                x1={boxWidth + 12} y1="-12" 
-                x2={boxWidth + boxDepth + 8} y2={-boxDepth * 0.5 - 10} 
+                x1={finalBoxWidth + 10} y1="-10" 
+                x2={finalBoxWidth + finalBoxDepth + 6} y2={-finalBoxDepth * 0.5 - 8} 
                 stroke="hsl(var(--foreground))" 
                 strokeWidth="1.5" 
               />
               {/* Стрелки */}
-              <polygon points={`${boxWidth + 12},-12 ${boxWidth + 18},-8 ${boxWidth + 16},-16`} fill="hsl(var(--foreground))" />
-              <polygon points={`${boxWidth + boxDepth + 8},${-boxDepth * 0.5 - 10} ${boxWidth + boxDepth + 2},${-boxDepth * 0.5 - 6} ${boxWidth + boxDepth + 4},${-boxDepth * 0.5 - 14}`} fill="hsl(var(--foreground))" />
+              <polygon points={`${finalBoxWidth + 10},-10 ${finalBoxWidth + 15},-7 ${finalBoxWidth + 13},-14`} fill="hsl(var(--foreground))" />
+              <polygon points={`${finalBoxWidth + finalBoxDepth + 6},${-finalBoxDepth * 0.5 - 8} ${finalBoxWidth + finalBoxDepth + 1},${-finalBoxDepth * 0.5 - 5} ${finalBoxWidth + finalBoxDepth + 3},${-finalBoxDepth * 0.5 - 12}`} fill="hsl(var(--foreground))" />
               {/* Значение */}
-              <rect x={boxWidth + boxDepth / 2} y={-boxDepth * 0.25 - 28} width="44" height="20" rx="4" fill="hsl(var(--background))" stroke="hsl(var(--primary))" strokeWidth="1.5"/>
-              <text x={boxWidth + boxDepth / 2 + 22} y={-boxDepth * 0.25 - 14} textAnchor="middle" className="text-[13px] fill-foreground font-bold">
+              <rect x={finalBoxWidth + finalBoxDepth / 2} y={-finalBoxDepth * 0.25 - 24} width={labelPadding.width} height={labelPadding.height} rx="3" fill="hsl(var(--background))" stroke="hsl(var(--primary))" strokeWidth="1.5"/>
+              <text x={finalBoxWidth + finalBoxDepth / 2 + labelPadding.width / 2} y={-finalBoxDepth * 0.25 - 24 + labelPadding.height / 2 + labelSize / 3} textAnchor="middle" className={`text-[${labelSize}px] fill-foreground font-bold`} style={{ fontSize: labelSize }}>
                 {cell.depth}м
               </text>
             </g>
