@@ -92,8 +92,8 @@ const Header = () => {
               <Link
                 key={link.href}
                 to={link.href}
-                className={`relative text-sm font-semibold tracking-wide uppercase text-foreground
-                  after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 
+                className={`relative h-full flex items-center text-sm font-semibold tracking-wide uppercase text-foreground
+                  after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:-bottom-[1px] after:left-0 
                   after:bg-primary after:origin-center after:transition-transform after:duration-300 
                   hover:after:scale-x-100 ${
                   isActive(link.href) ? 'after:scale-x-100' : ''
