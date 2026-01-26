@@ -125,8 +125,8 @@ const Hero = () => {
               </div>
 
               {/* Logo overlay */}
-              <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl">
-                <img src={logo} alt="Кладовка78" className="h-8 w-auto" />
+              <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-sm px-5 py-3 rounded-xl">
+                <img src={logo} alt="Кладовка78" className="h-10 w-auto" />
               </div>
             </div>
           </div>

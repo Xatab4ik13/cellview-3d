@@ -28,7 +28,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center">
-              <img src={logo} alt="Кладовка78" className="h-10 w-auto brightness-0 invert" />
+              <img src={logo} alt="Кладовка78" className="h-12 w-auto brightness-0 invert" />
             </Link>
             <p className="text-background/70 text-sm leading-relaxed">
               Склад для дома и бизнеса. Современные кладовые помещения для хранения ваших вещей с круглосуточным доступом.
