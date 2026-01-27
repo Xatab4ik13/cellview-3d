@@ -83,16 +83,16 @@ const CatalogSection = () => {
   ].filter(Boolean).length;
 
   return (
-    <section id="catalog" className="py-16 lg:py-24 bg-background">
+    <section id="catalog" className="py-16 lg:py-24 section-purple">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
           <div>
-            <h2 className="text-3xl lg:text-4xl font-bold mb-2">
-              Каталог ячеек
+            <h2 className="heading-section text-foreground mb-2">
+              Каталог <span className="text-primary">ячеек</span>
             </h2>
-            <p className="text-muted-foreground">
-              {filteredCells.length} из {storageCells.length} ячеек
+            <p className="text-lg text-muted-foreground font-medium">
+              {filteredCells.length} из {storageCells.length} ячеек доступно
             </p>
           </div>
           
@@ -116,9 +116,9 @@ const CatalogSection = () => {
 
         {/* Filters panel */}
         {showFilters && (
-          <div className="mb-8 p-6 bg-card border border-border rounded-2xl animate-fade-in">
+          <div className="mb-8 p-6 bg-card border-2 border-border rounded-2xl shadow-lg animate-fade-in">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="font-semibold">Фильтры</h3>
+              <h3 className="font-bold text-lg">Фильтры</h3>
               {activeFiltersCount > 0 && (
                 <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1">
                   <X className="w-4 h-4" />

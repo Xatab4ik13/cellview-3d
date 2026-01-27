@@ -88,33 +88,35 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
   
   return (
     <div 
-      className={`group relative bg-card border-2 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl ${
+      className={`group relative bg-card border-2 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl ${
         cell.isAvailable 
-          ? 'border-primary/20 hover:border-primary cursor-pointer' 
+          ? 'border-primary/30 hover:border-primary hover:shadow-primary/20 cursor-pointer' 
           : 'border-border opacity-70'
       }`}
       onClick={() => cell.isAvailable && onSelect(cell)}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
+      {/* Header with accent stripe */}
+      <div className={`flex items-center justify-between px-4 py-3 border-b-2 ${
+        cell.isAvailable ? 'border-primary bg-primary/5' : 'border-border bg-muted/30'
+      }`}>
         <div className="flex items-center gap-3">
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
-            cell.isAvailable ? 'bg-primary' : 'bg-muted'
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${
+            cell.isAvailable ? 'gradient-primary shadow-primary' : 'bg-muted'
           }`}>
-            <span className={`font-bold text-xl ${
+            <span className={`font-extrabold text-xl ${
               cell.isAvailable ? 'text-primary-foreground' : 'text-muted-foreground'
             }`}>
               {cell.number}
             </span>
           </div>
           <div>
-            <p className="font-semibold text-foreground">Ячейка №{cell.number}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="font-bold text-foreground">Ячейка №{cell.number}</p>
+            <p className="text-xs text-muted-foreground font-medium">
               {cell.tier > 1 ? `${cell.tier} ярус` : '1 ярус'}
             </p>
           </div>
         </div>
-        <Badge variant={cell.isAvailable ? 'success' : 'secondary'}>
+        <Badge variant={cell.isAvailable ? 'success' : 'secondary'} className="font-semibold">
           {cell.isAvailable ? 'Свободна' : 'Занята'}
         </Badge>
       </div>
@@ -280,11 +282,11 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
       </div>
 
       {/* Features & Price */}
-      <div className="p-4 space-y-3 border-t border-border">
+      <div className="p-4 space-y-3 border-t-2 border-border bg-gradient-to-b from-background to-secondary/30">
         {/* Features */}
         {cell.hasShelves && (
           <div className="flex gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-accent-foreground bg-accent/30 px-3 py-1.5 rounded-full">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-accent-foreground bg-accent/40 px-3 py-1.5 rounded-full shadow-sm">
               <Grid3X3 className="w-3.5 h-3.5" />
               Полки
             </div>
@@ -294,14 +296,14 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
         {/* Price & CTA */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-2xl font-bold text-foreground">
+            <p className="text-2xl font-extrabold text-foreground">
               {calculatePrice(cell.volume).toLocaleString('ru-RU')}
-              <span className="text-base font-normal text-muted-foreground ml-1">₽/мес</span>
+              <span className="text-base font-medium text-muted-foreground ml-1">₽/мес</span>
             </p>
           </div>
           
           {cell.isAvailable ? (
-            <Button className="gap-2 bg-primary hover:bg-primary/90">
+            <Button className="gap-2 gradient-primary shadow-primary font-bold">
               Выбрать
               <ArrowRight className="w-4 h-4" />
             </Button>

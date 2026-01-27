@@ -96,8 +96,9 @@ export default {
         "slide-in-right": "slide-in-right 0.5s ease-out forwards",
       },
       boxShadow: {
-        'primary': '0 10px 40px -10px hsl(268, 55%, 45%, 0.4)',
-        'accent': '0 10px 40px -10px hsl(45, 100%, 50%, 0.4)',
+        'primary': '0 10px 40px -10px hsl(268, 70%, 50%, 0.5)',
+        'accent': '0 10px 40px -10px hsl(45, 100%, 50%, 0.5)',
+        'card': '0 4px 20px -4px hsl(268, 40%, 30%, 0.12)',
       },
     },
   },

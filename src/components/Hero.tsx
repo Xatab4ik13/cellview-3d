@@ -50,25 +50,25 @@ const Hero = () => {
   ];
 
   return (
-    <section className="relative pt-32 lg:pt-36 overflow-hidden bg-background">
+    <section className="relative pt-32 lg:pt-36 overflow-hidden gradient-hero">
       <div className="container mx-auto px-4 py-4 lg:py-6">
         <div className="grid lg:grid-cols-[minmax(400px,1fr)_1.4fr] gap-8 lg:gap-6 items-center">
           {/* Left side - Content */}
           <div className="space-y-6 lg:space-y-8 order-2 lg:order-1">
             <div className="space-y-4">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-foreground">
-                Кладовка78 - хранение
+              <h1 className="heading-display text-foreground">
+                Кладовка78 — хранение
                 <span className="block text-primary">вещей</span>
               </h1>
               
-              <p className="text-lg text-muted-foreground max-w-lg">
+              <p className="text-xl font-medium text-muted-foreground max-w-lg">
                 Снять место недорого можно у нас!
               </p>
             </div>
 
             {/* Size selector card */}
-            <div className="bg-card p-6 rounded-2xl border border-border shadow-lg">
-              <h3 className="font-semibold text-foreground mb-4">Размер склада</h3>
+            <div className="bg-card p-6 rounded-2xl border-2 border-border shadow-xl">
+              <h3 className="font-bold text-foreground mb-4 text-lg">Размер склада</h3>
               
               <div className="grid grid-cols-3 gap-3 mb-6">
                 {sizeOptions.map((option, index) => (
@@ -100,11 +100,11 @@ const Hero = () => {
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link to="/catalog" className="flex-1">
-                  <Button variant="default" size="lg" className="w-full">
+                  <Button variant="default" size="lg" className="w-full shadow-primary text-base font-bold">
                     Забронировать склад
                   </Button>
                 </Link>
-                <Button variant="accent" size="lg" className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90">
+                <Button variant="accent" size="lg" className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90 shadow-accent font-bold text-base">
                   Скидка 50%*
                 </Button>
               </div>
@@ -119,12 +119,12 @@ const Hero = () => {
               {features.map((feature, index) => (
                 <div 
                   key={index}
-                  className="flex flex-col items-center gap-2 p-3 text-center"
+                  className="flex flex-col items-center gap-2 p-4 text-center bg-card rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow"
                 >
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <feature.icon className="w-6 h-6 text-primary" />
+                  <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center shadow-primary">
+                    <feature.icon className="w-6 h-6 text-primary-foreground" />
                   </div>
-                  <span className="text-xs font-medium text-muted-foreground">{feature.text}</span>
+                  <span className="text-sm font-semibold text-foreground">{feature.text}</span>
                 </div>
               ))}
             </div>
