@@ -97,7 +97,7 @@ export const storageCells: StorageCell[] = [
     floor: 1,
     tier: 1,
     pricePerMonth: 3000,
-    isAvailable: true,
+    isAvailable: false,
     hasSocket: false,
     hasShelves: false,
     photos: [cell1Photo1, cell1Photo2],
