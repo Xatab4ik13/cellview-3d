@@ -79,6 +79,10 @@ import cell39Photo1 from '@/assets/cells/cell-39-photo-1.jpg';
 import cell39Photo2 from '@/assets/cells/cell-39-photo-2.jpg';
 import cell40Photo1 from '@/assets/cells/cell-40-photo-1.jpg';
 import cell40Photo2 from '@/assets/cells/cell-40-photo-2.jpg';
+import cell41Photo1 from '@/assets/cells/cell-41-photo-1.jpg';
+import cell41Photo2 from '@/assets/cells/cell-41-photo-2.jpg';
+import cell42Photo1 from '@/assets/cells/cell-42-photo-1.jpg';
+import cell42Photo2 from '@/assets/cells/cell-42-photo-2.jpg';
 
 // Данные ячеек
 export const storageCells: StorageCell[] = [
@@ -721,6 +725,38 @@ export const storageCells: StorageCell[] = [
     hasSocket: false,
     hasShelves: false,
     photos: [cell40Photo1, cell40Photo2],
+  },
+  {
+    id: 'cell-41',
+    number: 41,
+    width: 1.4,
+    height: 1.35,
+    depth: 1,
+    area: 1.4,
+    volume: 1.89,
+    floor: 1,
+    tier: 2,
+    pricePerMonth: 1900,
+    isAvailable: true,
+    hasSocket: false,
+    hasShelves: false,
+    photos: [cell41Photo1, cell41Photo2],
+  },
+  {
+    id: 'cell-42',
+    number: 42,
+    width: 1.4,
+    height: 1.1,
+    depth: 1,
+    area: 1.4,
+    volume: 1.54,
+    floor: 1,
+    tier: 1,
+    pricePerMonth: 1700,
+    isAvailable: true,
+    hasSocket: false,
+    hasShelves: false,
+    photos: [cell42Photo1, cell42Photo2],
   },
 ];
 
