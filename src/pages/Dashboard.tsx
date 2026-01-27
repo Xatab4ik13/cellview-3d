@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Key, CreditCard, Bell, FileText, LogOut } from 'lucide-react';
+import { User, Key, CreditCard, Bell, FileText, LogOut, Video } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProfileSection from '@/components/dashboard/ProfileSection';
@@ -10,6 +10,7 @@ import SubscriptionSection from '@/components/dashboard/SubscriptionSection';
 import PaymentsSection from '@/components/dashboard/PaymentsSection';
 import NotificationsSection from '@/components/dashboard/NotificationsSection';
 import InfoSection from '@/components/dashboard/InfoSection';
+import SurveillanceSection from '@/components/dashboard/SurveillanceSection';
 import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
@@ -32,6 +33,7 @@ const Dashboard = () => {
   const tabs = [
     { id: 'profile', label: 'Профиль', icon: User },
     { id: 'rentals', label: 'Моя аренда', icon: Key },
+    { id: 'surveillance', label: 'Камеры', icon: Video },
     { id: 'subscription', label: 'Подписка', icon: CreditCard },
     { id: 'payments', label: 'Платежи', icon: CreditCard },
     { id: 'notifications', label: 'Уведомления', icon: Bell },
@@ -93,6 +95,10 @@ const Dashboard = () => {
             
             <TabsContent value="rentals" className="mt-6">
               <RentalsSection />
+            </TabsContent>
+            
+            <TabsContent value="surveillance" className="mt-6">
+              <SurveillanceSection />
             </TabsContent>
             
             <TabsContent value="subscription" className="mt-6">
