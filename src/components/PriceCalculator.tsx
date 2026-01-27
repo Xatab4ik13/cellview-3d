@@ -45,11 +45,11 @@ const PriceCalculator = () => {
   };
 
   return (
-    <div className="bg-card border-2 border-primary/20 rounded-3xl p-6 lg:p-10 shadow-xl">
+    <div className="bg-card border-2 border-accent/30 rounded-3xl p-6 lg:p-10 shadow-xl">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
-        <div className="w-14 h-14 rounded-2xl gradient-primary shadow-primary flex items-center justify-center">
-          <Calculator className="w-7 h-7 text-primary-foreground" />
+        <div className="w-14 h-14 rounded-2xl gradient-accent shadow-accent flex items-center justify-center">
+          <Calculator className="w-7 h-7 text-accent-foreground" />
         </div>
         <div>
           <h2 className="text-2xl lg:text-3xl font-bold">Калькулятор стоимости</h2>
@@ -64,11 +64,11 @@ const PriceCalculator = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Box className="w-5 h-5 text-primary" />
+                <Box className="w-5 h-5 text-accent" />
                 <span className="font-semibold text-lg">Объём хранения</span>
               </div>
-              <div className="bg-primary/10 px-4 py-2 rounded-xl">
-                <span className="text-2xl font-bold text-primary">{volume.toFixed(1)}</span>
+              <div className="bg-accent/10 px-4 py-2 rounded-xl">
+                <span className="text-2xl font-bold text-accent">{volume.toFixed(1)}</span>
                 <span className="text-muted-foreground ml-1">м³</span>
               </div>
             </div>
@@ -163,18 +163,18 @@ const PriceCalculator = () => {
           </div>
 
           {/* Total */}
-          <div className="gradient-primary rounded-2xl p-6 shadow-primary">
+          <div className="gradient-accent rounded-2xl p-6 shadow-accent">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-primary-foreground/80">Итого за {getDurationLabel(duration)}:</span>
+              <span className="text-accent-foreground/80">Итого за {getDurationLabel(duration)}:</span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl lg:text-5xl font-extrabold text-primary-foreground">
+              <span className="text-4xl lg:text-5xl font-extrabold text-accent-foreground">
                 {calculations.totalPrice.toLocaleString('ru-RU')}
               </span>
-              <span className="text-xl text-primary-foreground/80">₽</span>
+              <span className="text-xl text-accent-foreground/80">₽</span>
             </div>
             {calculations.discount > 0 && (
-              <p className="text-primary-foreground/70 text-sm mt-2">
+              <p className="text-accent-foreground/70 text-sm mt-2">
                 Экономия {calculations.discountAmount.toLocaleString('ru-RU')} ₽
               </p>
             )}
