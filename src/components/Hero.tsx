@@ -131,7 +131,7 @@ const Hero = () => {
           </div>
 
           {/* Right side - Image Carousel */}
-          <div className="order-1 lg:order-2 relative space-y-4">
+          <div className="order-1 lg:order-2 relative">
             <div className="relative rounded-3xl overflow-hidden shadow-2xl">
               {/* Carousel images */}
               {heroSlides.map((slide, index) => (
@@ -173,19 +173,6 @@ const Hero = () => {
                     }`}
                   />
                 ))}
-              </div>
-            </div>
-
-            {/* Price info block */}
-            <div className="bg-card rounded-2xl border border-border p-4 lg:p-5 flex items-center gap-4 lg:gap-6 shadow-lg">
-              <div className="flex-shrink-0">
-                <p className="text-sm text-muted-foreground">Цена от</p>
-                <p className="text-2xl lg:text-3xl font-extrabold text-primary">990 ₽/мес</p>
-              </div>
-              <div className="border-l border-border pl-4 lg:pl-6">
-                <p className="text-sm lg:text-base text-muted-foreground">
-                  Ячейки от 1 м³ до 20 м³ с круглосуточным доступом и видеонаблюдением
-                </p>
               </div>
             </div>
           </div>
