@@ -123,13 +123,18 @@
 
   html {
     scroll-behavior: smooth;
-    /* Предотвращает сдвиг при открытии модальных окон */
-    scrollbar-gutter: stable;
+    overflow-y: scroll;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Manrope', sans-serif;
+  }
+  
+  /* Предотвращает сдвиг при открытии модальных окон Radix */
+  body[data-scroll-locked] {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
   }
 }
 
