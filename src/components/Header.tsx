@@ -1,12 +1,27 @@
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Phone, MapPin, HelpCircle, User, MessageCircle } from 'lucide-react';
 import logo from '@/assets/logo.png';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    setIsAuthenticated(!!user);
+  }, [location]);
+
+  const handleAccountClick = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    } else {
+      navigate('/auth');
+    }
+  };
 
   const navLinks = [
     { href: '/catalog', label: 'Кладовки' },
@@ -67,7 +82,11 @@ const Header = () => {
                 <button className="w-10 h-10 rounded-full border border-border hover:border-primary hover:text-primary flex items-center justify-center transition-colors">
                   <HelpCircle className="w-5 h-5" />
                 </button>
-                <button className="w-10 h-10 rounded-full border border-border hover:border-primary hover:text-primary flex items-center justify-center transition-colors">
+                <button 
+                  onClick={handleAccountClick}
+                  className="w-10 h-10 rounded-full border border-border hover:border-primary hover:text-primary flex items-center justify-center transition-colors"
+                  title={isAuthenticated ? 'Личный кабинет' : 'Войти'}
+                >
                   <User className="w-5 h-5" />
                 </button>
               </div>
