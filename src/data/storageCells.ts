@@ -69,6 +69,16 @@ import cell34Photo1 from '@/assets/cells/cell-34-photo-1.jpg';
 import cell34Photo2 from '@/assets/cells/cell-34-photo-2.jpg';
 import cell35Photo1 from '@/assets/cells/cell-35-photo-1.jpg';
 import cell35Photo2 from '@/assets/cells/cell-35-photo-2.jpg';
+import cell36Photo1 from '@/assets/cells/cell-36-photo-1.jpg';
+import cell36Photo2 from '@/assets/cells/cell-36-photo-2.jpg';
+import cell37Photo1 from '@/assets/cells/cell-37-photo-1.jpg';
+import cell37Photo2 from '@/assets/cells/cell-37-photo-2.jpg';
+import cell38Photo1 from '@/assets/cells/cell-38-photo-1.jpg';
+import cell38Photo2 from '@/assets/cells/cell-38-photo-2.jpg';
+import cell39Photo1 from '@/assets/cells/cell-39-photo-1.jpg';
+import cell39Photo2 from '@/assets/cells/cell-39-photo-2.jpg';
+import cell40Photo1 from '@/assets/cells/cell-40-photo-1.jpg';
+import cell40Photo2 from '@/assets/cells/cell-40-photo-2.jpg';
 
 // Данные ячеек
 export const storageCells: StorageCell[] = [
@@ -631,6 +641,86 @@ export const storageCells: StorageCell[] = [
     hasSocket: false,
     hasShelves: false,
     photos: [cell35Photo1, cell35Photo2],
+  },
+  {
+    id: 'cell-36',
+    number: 36,
+    width: 1.1,
+    height: 1.1,
+    depth: 1,
+    area: 1.1,
+    volume: 1.21,
+    floor: 1,
+    tier: 1,
+    pricePerMonth: 1500,
+    isAvailable: true,
+    hasSocket: false,
+    hasShelves: false,
+    photos: [cell36Photo1, cell36Photo2],
+  },
+  {
+    id: 'cell-37',
+    number: 37,
+    width: 1.1,
+    height: 1.35,
+    depth: 1,
+    area: 1.1,
+    volume: 1.49,
+    floor: 1,
+    tier: 2,
+    pricePerMonth: 1700,
+    isAvailable: true,
+    hasSocket: false,
+    hasShelves: false,
+    photos: [cell37Photo1, cell37Photo2],
+  },
+  {
+    id: 'cell-38',
+    number: 38,
+    width: 1.1,
+    height: 1.1,
+    depth: 1,
+    area: 1.1,
+    volume: 1.21,
+    floor: 1,
+    tier: 1,
+    pricePerMonth: 1500,
+    isAvailable: true,
+    hasSocket: false,
+    hasShelves: false,
+    photos: [cell38Photo1, cell38Photo2],
+  },
+  {
+    id: 'cell-39',
+    number: 39,
+    width: 1.1,
+    height: 1.35,
+    depth: 1,
+    area: 1.1,
+    volume: 1.49,
+    floor: 1,
+    tier: 2,
+    pricePerMonth: 1700,
+    isAvailable: true,
+    hasSocket: false,
+    hasShelves: false,
+    photos: [cell39Photo1, cell39Photo2],
+  },
+  {
+    id: 'cell-40',
+    number: 40,
+    width: 1.1,
+    height: 1.1,
+    depth: 1,
+    area: 1.1,
+    volume: 1.21,
+    floor: 1,
+    tier: 1,
+    pricePerMonth: 1500,
+    isAvailable: true,
+    hasSocket: false,
+    hasShelves: false,
+    photos: [cell40Photo1, cell40Photo2],
   },
 ];
 
