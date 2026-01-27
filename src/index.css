@@ -132,9 +132,18 @@
   }
   
   /* Предотвращает сдвиг при открытии модальных окон Radix */
-  body[data-scroll-locked] {
+  body[data-scroll-locked],
+  [data-radix-scroll-area-viewport] {
     padding-right: 0 !important;
     margin-right: 0 !important;
+  }
+  
+  /* Фиксируем ширину при открытии диалогов */
+  html[style*="overflow"],
+  body[style*="overflow"] {
+    padding-right: 0 !important;
+    margin-right: 0 !important;
+    overflow-y: scroll !important;
   }
 }
 
