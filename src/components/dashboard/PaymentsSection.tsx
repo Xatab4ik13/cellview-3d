@@ -68,43 +68,43 @@ const PaymentsSection = () => {
     <div className="space-y-6">
       {/* Summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="border-border/50 shadow-lg overflow-hidden">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center">
-                <CreditCard className="w-6 h-6 text-green-500" />
+              <div className="w-14 h-14 bg-accent/10 rounded-2xl flex items-center justify-center">
+                <CreditCard className="w-7 h-7 text-accent" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Всего оплачено</p>
-                <p className="text-2xl font-bold">{totalPaid.toLocaleString()} ₽</p>
+                <p className="text-sm text-muted-foreground font-medium">Всего оплачено</p>
+                <p className="text-2xl font-extrabold">{totalPaid.toLocaleString()} ₽</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="border-border/50 shadow-lg overflow-hidden">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <Receipt className="w-6 h-6 text-primary" />
+              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center">
+                <Receipt className="w-7 h-7 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Платежей</p>
-                <p className="text-2xl font-bold">{mockPayments.length}</p>
+                <p className="text-sm text-muted-foreground font-medium">Платежей</p>
+                <p className="text-2xl font-extrabold">{mockPayments.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="border-border/50 shadow-lg overflow-hidden">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
-                <FileText className="w-6 h-6" />
+              <div className="w-14 h-14 bg-secondary rounded-2xl flex items-center justify-center border border-border/50">
+                <FileText className="w-7 h-7 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Следующий платеж</p>
-                <p className="text-2xl font-bold">15 фев</p>
+                <p className="text-sm text-muted-foreground font-medium">Следующий платеж</p>
+                <p className="text-2xl font-extrabold">15 фев</p>
               </div>
             </div>
           </CardContent>
@@ -112,14 +112,14 @@ const PaymentsSection = () => {
       </div>
 
       {/* Payment history */}
-      <Card>
-        <CardHeader>
-          <CardTitle>История платежей</CardTitle>
+      <Card className="border-border/50 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-t-lg border-b border-border/50">
+          <CardTitle className="text-xl font-bold">История платежей</CardTitle>
           <CardDescription>
             Все транзакции по вашим арендам
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {/* Desktop table */}
           <div className="hidden md:block">
             <Table>
