@@ -17,19 +17,35 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          # TimeWeb собирает образ на Node 24 (см. логи), генерим lockfile тем же рантаймом
+          node-version: "24"
 
-      - name: Remove old lockfile and regenerate
+      - name: Remove old lockfile and regenerate (lockfile only)
         run: |
           rm -f package-lock.json
+          # bun.lockb может существовать в репо, но он не нужен для npm
           rm -f bun.lockb
-          npm install
+
+          # Генерируем ТОЛЬКО package-lock.json, не трогая зависимости в рабочем дереве
+          npm install --package-lock-only --ignore-scripts
+
+          # Если npm внезапно изменил package.json — это приведёт к новому рассинхрону.
+          if ! git diff --quiet -- package.json; then
+            echo "ERROR: npm modified package.json during lockfile generation. Aborting to avoid mismatch." >&2
+            git --no-pager diff -- package.json || true
+            exit 1
+          fi
 
       - name: Commit updated lockfile
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+
+          if git diff --quiet -- package-lock.json; then
+            echo "package-lock.json unchanged"
+            exit 0
+          fi
+
           git add package-lock.json
-          git commit -m "chore: regenerate package-lock.json" || echo "No changes to commit"
+          git commit -m "chore: regenerate package-lock.json"
           git push
