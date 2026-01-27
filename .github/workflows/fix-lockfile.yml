@@ -1,4 +1,4 @@
-name: Fix lockfile (remove for npm install)
+name: Fix lockfile (package-lock)
 
 on:
   workflow_dispatch:
@@ -7,30 +7,49 @@ permissions:
   contents: write
 
 jobs:
-  remove-lockfile:
+  fix-lockfile:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Remove package-lock.json (forces npm install on TimeWeb)
-        run: |
-          # Lovable использует Bun, поэтому package-lock.json всегда устаревает.
-          # Удаляем его — тогда TimeWeb выполнит `npm install` вместо `npm ci`.
-          rm -f package-lock.json
-          rm -f bun.lockb
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          # TimeWeb собирает на Node 24 (см. логи)
+          node-version: "24"
 
-      - name: Commit removal
+      - name: Regenerate package-lock.json (npm@11)
+        run: |
+          # Обновим npm до минорной версии, совместимой с тем, что у вас на TimeWeb (11.x)
+          npm i -g npm@11.6.2
+
+          # Чистим артефакты, чтобы lockfile пересобрался детерминированно
+          rm -rf node_modules
+          rm -f package-lock.json
+
+          # Генерируем lockfile реальным install'ом (именно это нужно, чтобы lockfile
+          # содержал корректные peer/транзитивные зависимости и `npm ci` не падал)
+          npm install --ignore-scripts --no-audit --no-fund
+
+          # Safety: не допускаем изменения package.json
+          if ! git diff --quiet -- package.json; then
+            echo "ERROR: npm modified package.json during lockfile generation. Aborting." >&2
+            git --no-pager diff -- package.json || true
+            exit 1
+          fi
+
+      - name: Commit updated lockfile
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          if git diff --quiet && git diff --cached --quiet; then
-            echo "Nothing to commit"
+          if git diff --quiet -- package-lock.json; then
+            echo "package-lock.json unchanged"
             exit 0
           fi
 
-          git add -A
-          git commit -m "chore: remove lockfiles (use npm install on deploy)"
+          git add package-lock.json
+          git commit -m "chore: regenerate package-lock.json (node24/npm11)"
           git push
