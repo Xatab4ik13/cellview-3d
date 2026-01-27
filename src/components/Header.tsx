@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Phone, MapPin, HelpCircle, User, MessageCircle } from 'lucide-react';
+import { Menu, X, Phone, MapPin, HelpCircle, User, MessageCircle, Package, Wallet, FileText, CircleHelp, Mail, ChevronRight } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import logo from '@/assets/logo.png';
 
 const Header = () => {
@@ -15,7 +16,13 @@ const Header = () => {
     setIsAuthenticated(!!user);
   }, [location]);
 
+  useEffect(() => {
+    // Close menu on route change
+    setIsMenuOpen(false);
+  }, [location.pathname]);
+
   const handleAccountClick = () => {
+    setIsMenuOpen(false);
     if (isAuthenticated) {
       navigate('/dashboard');
     } else {
@@ -24,11 +31,11 @@ const Header = () => {
   };
 
   const navLinks = [
-    { href: '/catalog', label: 'Кладовки' },
-    { href: '/pricing', label: 'Цены' },
-    { href: '/docs', label: 'Документация' },
-    { href: '/faq', label: 'Вопрос-ответ' },
-    { href: '/contacts', label: 'Контакты' },
+    { href: '/catalog', label: 'Кладовки', icon: Package },
+    { href: '/pricing', label: 'Цены', icon: Wallet },
+    { href: '/docs', label: 'Документация', icon: FileText },
+    { href: '/faq', label: 'Вопрос-ответ', icon: CircleHelp },
+    { href: '/contacts', label: 'Контакты', icon: Mail },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -93,12 +100,131 @@ const Header = () => {
             </div>
 
             {/* Mobile Menu Button */}
-            <button
-              className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+            <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+              <SheetTrigger asChild>
+                <button
+                  className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
+                  aria-label="Открыть меню"
+                >
+                  <Menu className="w-6 h-6" />
+                </button>
+              </SheetTrigger>
+              
+              <SheetContent side="right" className="w-full sm:w-[380px] p-0 bg-background border-l border-border">
+                <SheetHeader className="p-4 pb-0">
+                  <SheetTitle className="sr-only">Меню навигации</SheetTitle>
+                </SheetHeader>
+                
+                {/* Mobile Menu Content */}
+                <div className="flex flex-col h-full">
+                  {/* User Account Block */}
+                  <div className="p-4">
+                    <button
+                      onClick={handleAccountClick}
+                      className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:opacity-90 transition-opacity"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <User className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="font-bold text-lg">
+                          {isAuthenticated ? 'Личный кабинет' : 'Войти'}
+                        </p>
+                        <p className="text-sm opacity-80">
+                          {isAuthenticated ? 'Управление арендой' : 'Регистрация и вход'}
+                        </p>
+                      </div>
+                      <ChevronRight className="w-5 h-5 opacity-80" />
+                    </button>
+                  </div>
+
+                  {/* City Selector */}
+                  <div className="px-4 pb-4">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 border border-border">
+                      <MapPin className="w-5 h-5 text-primary" />
+                      <div className="flex-1">
+                        <p className="text-xs text-muted-foreground">Ваш город</p>
+                        <p className="font-semibold text-primary">Санкт-Петербург</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Navigation Links */}
+                  <nav className="flex-1 px-4">
+                    <div className="space-y-1">
+                      {navLinks.map((link) => {
+                        const Icon = link.icon;
+                        const active = isActive(link.href);
+                        return (
+                          <Link
+                            key={link.href}
+                            to={link.href}
+                            onClick={() => setIsMenuOpen(false)}
+                            className={`flex items-center gap-4 px-4 py-4 rounded-xl font-medium transition-all ${
+                              active
+                                ? 'bg-primary/10 text-primary border-l-4 border-primary'
+                                : 'text-foreground hover:bg-muted/50 hover:text-primary border-l-4 border-transparent'
+                            }`}
+                          >
+                            <Icon className={`w-5 h-5 ${active ? 'text-primary' : 'text-muted-foreground'}`} />
+                            <span className="text-base">{link.label}</span>
+                            <ChevronRight className={`w-4 h-4 ml-auto ${active ? 'text-primary' : 'text-muted-foreground/50'}`} />
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </nav>
+
+                  {/* Bottom Section - Contact Info */}
+                  <div className="mt-auto p-4 space-y-4 border-t border-border bg-muted/30">
+                    {/* Phone */}
+                    <a 
+                      href="tel:+78121234567" 
+                      className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border hover:border-primary transition-colors"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Phone className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-lg">8 812 123-45-67</p>
+                        <p className="text-xs text-muted-foreground">Бесплатно по РФ</p>
+                      </div>
+                    </a>
+
+                    {/* CTA Button */}
+                    <Button 
+                      variant="default" 
+                      className="w-full h-14 text-base font-bold rounded-xl bg-gradient-to-r from-accent to-accent/80 hover:opacity-90"
+                    >
+                      Заказать звонок
+                    </Button>
+
+                    {/* Social Links */}
+                    <div className="flex items-center justify-center gap-3">
+                      <a 
+                        href="https://t.me/" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-12 h-12 rounded-full bg-background border border-border hover:border-primary hover:text-primary flex items-center justify-center transition-colors"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                      </a>
+                      <a 
+                        href="https://wa.me/" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-12 h-12 rounded-full bg-background border border-border hover:border-primary hover:text-primary flex items-center justify-center transition-colors"
+                      >
+                        <Phone className="w-5 h-5" />
+                      </a>
+                      <button className="w-12 h-12 rounded-full bg-background border border-border hover:border-primary hover:text-primary flex items-center justify-center transition-colors">
+                        <HelpCircle className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>
@@ -124,52 +250,6 @@ const Header = () => {
           </nav>
         </div>
       </div>
-
-      {/* Mobile Navigation */}
-      {isMenuOpen && (
-        <div className="lg:hidden py-4 border-t border-border bg-background animate-fade-in">
-          <div className="container mx-auto px-4">
-            {/* City */}
-            <div className="flex items-center gap-2 text-sm mb-4 pb-4 border-b border-border">
-              <MapPin className="w-4 h-4 text-primary" />
-              <span className="text-muted-foreground">Город:</span>
-              <span className="font-semibold text-primary">Санкт-Петербург</span>
-            </div>
-
-            <nav className="flex flex-col gap-2">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className={`px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                    isActive(link.href)
-                      ? 'text-primary bg-primary/10'
-                      : 'text-foreground hover:text-primary hover:bg-muted/50'
-                  }`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              
-              <div className="mt-4 pt-4 border-t border-border space-y-3">
-                <a 
-                  href="tel:+78121234567" 
-                  className="flex items-center gap-2 text-lg font-bold text-foreground"
-                >
-                  <Phone className="w-5 h-5 text-primary" />
-                  8 812 123-45-67
-                </a>
-                <p className="text-xs text-muted-foreground">Бесплатно по РФ</p>
-                
-                <Button variant="default" className="w-full">
-                  Заказать звонок
-                </Button>
-              </div>
-            </nav>
-          </div>
-        </div>
-      )}
     </header>
   );
 };
