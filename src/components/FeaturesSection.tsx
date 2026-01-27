@@ -45,10 +45,10 @@ const FeaturesSection = () => {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-12 lg:mb-16">
-          <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-            Почему выбирают нас
+          <h2 className="heading-section mb-4">
+            Почему выбирают <span className="text-primary">нас</span>
           </h2>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lg text-muted-foreground font-medium">
             Современные кладовые с полным контролем и удобным управлением
           </p>
         </div>
@@ -58,19 +58,19 @@ const FeaturesSection = () => {
           {features.map((feature, index) => (
             <div 
               key={index}
-              className="group p-6 bg-card border border-border rounded-2xl hover:border-primary/50 hover:shadow-lg transition-all duration-300"
+              className="group p-6 bg-card border-2 border-border rounded-2xl hover:border-primary hover:shadow-xl transition-all duration-300"
             >
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary transition-colors">
-                <feature.icon className="w-6 h-6 text-primary group-hover:text-primary-foreground transition-colors" />
+              <div className="w-14 h-14 rounded-xl gradient-primary shadow-primary flex items-center justify-center mb-4">
+                <feature.icon className="w-7 h-7 text-primary-foreground" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
-              <p className="text-muted-foreground text-sm">{feature.description}</p>
+              <h3 className="font-bold text-lg mb-2">{feature.title}</h3>
+              <p className="text-muted-foreground">{feature.description}</p>
             </div>
           ))}
         </div>
 
         {/* Free services */}
-        <div className="bg-primary rounded-3xl p-8 lg:p-12">
+        <div className="gradient-primary rounded-3xl p-8 lg:p-12 shadow-primary">
           <h3 className="text-2xl lg:text-3xl font-bold text-primary-foreground text-center mb-8">
             Бесплатные услуги
           </h3>
@@ -78,12 +78,12 @@ const FeaturesSection = () => {
             {freeServices.map((service, index) => (
               <div 
                 key={index}
-                className="flex flex-col items-center gap-3 p-4 bg-primary-foreground/10 rounded-2xl"
+                className="flex flex-col items-center gap-3 p-5 bg-primary-foreground/15 rounded-2xl border border-primary-foreground/20 hover:bg-primary-foreground/25 transition-colors"
               >
-                <div className="w-14 h-14 rounded-full bg-primary-foreground/20 flex items-center justify-center">
-                  <service.icon className="w-7 h-7 text-primary-foreground" />
+                <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center shadow-accent">
+                  <service.icon className="w-8 h-8 text-accent-foreground" />
                 </div>
-                <span className="text-sm font-medium text-primary-foreground text-center">
+                <span className="text-sm font-bold text-primary-foreground text-center">
                   {service.title}
                 </span>
               </div>
