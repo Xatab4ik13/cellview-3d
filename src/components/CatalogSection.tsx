@@ -8,6 +8,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { 
   Filter, 
   Grid3X3, 
@@ -128,8 +129,43 @@ const CatalogSection = () => {
             
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Price range */}
-              <div className="space-y-3">
-                <Label>Цена, ₽/мес</Label>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Цена, ₽/мес</Label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <Input
+                      type="number"
+                      value={priceRange[0]}
+                      onChange={(e) => {
+                        const val = Math.max(0, Math.min(Number(e.target.value), priceRange[1]));
+                        setPriceRange([val, priceRange[1]]);
+                        handleFilterChange();
+                      }}
+                      className="h-9 text-center text-sm font-medium pr-8"
+                      min={0}
+                      max={priceRange[1]}
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">₽</span>
+                  </div>
+                  <span className="text-muted-foreground">—</span>
+                  <div className="relative flex-1">
+                    <Input
+                      type="number"
+                      value={priceRange[1]}
+                      onChange={(e) => {
+                        const val = Math.max(priceRange[0], Math.min(Number(e.target.value), 10000));
+                        setPriceRange([priceRange[0], val]);
+                        handleFilterChange();
+                      }}
+                      className="h-9 text-center text-sm font-medium pr-8"
+                      min={priceRange[0]}
+                      max={10000}
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">₽</span>
+                  </div>
+                </div>
                 <Slider
                   value={priceRange}
                   onValueChange={(value) => {
@@ -139,16 +175,50 @@ const CatalogSection = () => {
                   min={0}
                   max={10000}
                   step={100}
+                  className="mt-2"
                 />
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>{priceRange[0].toLocaleString('ru-RU')}</span>
-                  <span>{priceRange[1].toLocaleString('ru-RU')}</span>
-                </div>
               </div>
               
               {/* Area range */}
-              <div className="space-y-3">
-                <Label>Площадь, м²</Label>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Площадь, м²</Label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <Input
+                      type="number"
+                      value={areaRange[0]}
+                      onChange={(e) => {
+                        const val = Math.max(0, Math.min(Number(e.target.value), areaRange[1]));
+                        setAreaRange([val, areaRange[1]]);
+                        handleFilterChange();
+                      }}
+                      className="h-9 text-center text-sm font-medium pr-10"
+                      min={0}
+                      max={areaRange[1]}
+                      step={0.5}
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">м²</span>
+                  </div>
+                  <span className="text-muted-foreground">—</span>
+                  <div className="relative flex-1">
+                    <Input
+                      type="number"
+                      value={areaRange[1]}
+                      onChange={(e) => {
+                        const val = Math.max(areaRange[0], Math.min(Number(e.target.value), 20));
+                        setAreaRange([areaRange[0], val]);
+                        handleFilterChange();
+                      }}
+                      className="h-9 text-center text-sm font-medium pr-10"
+                      min={areaRange[0]}
+                      max={20}
+                      step={0.5}
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">м²</span>
+                  </div>
+                </div>
                 <Slider
                   value={areaRange}
                   onValueChange={(value) => {
@@ -158,11 +228,8 @@ const CatalogSection = () => {
                   min={0}
                   max={20}
                   step={0.5}
+                  className="mt-2"
                 />
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>{areaRange[0]}</span>
-                  <span>{areaRange[1]}</span>
-                </div>
               </div>
               
               {/* Tier filter */}
