@@ -1,12 +1,7 @@
-# GitHub Actions workflow для деплоя на TimeWeb
-# 
-# НЕОБХОДИМЫЕ SECRETS (добавьте в Settings → Secrets and variables → Actions):
-# - FTP_SERVER: адрес FTP сервера (например: ftp.timeweb.ru)
-# - FTP_USERNAME: логин FTP
-# - FTP_PASSWORD: пароль FTP
-# - FTP_PATH: путь на сервере (например: /public_html или /www)
+# GitHub Actions workflow для сборки проекта
+# Собирает проект и создает артефакт dist.zip для деплоя на TimeWeb
 
-name: Deploy to TimeWeb
+name: Build Project
 
 on:
   push:
@@ -15,7 +10,7 @@ on:
   workflow_dispatch: # Позволяет запускать вручную
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     
     steps:
@@ -26,7 +21,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          # Убрали cache: 'npm' т.к. проект использует bun
 
       - name: Install dependencies
         run: npm install
@@ -34,12 +29,9 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Deploy to TimeWeb via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./dist/
-          server-dir: ${{ secrets.FTP_PATH }}/
-          dangerous-clean-slate: false
+          name: dist
+          path: dist/
+          retention-days: 30
