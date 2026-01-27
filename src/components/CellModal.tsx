@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { StorageCell } from '@/types/storage';
+import { StorageCell, calculatePrice } from '@/types/storage';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Zap, 
   Grid3X3, 
   Video, 
   Calendar, 
@@ -39,10 +38,12 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
   
   const photos = cell.photos;
   
+  const monthlyPrice = calculatePrice(cell.volume);
+  
   const prices = {
-    day: Math.round(cell.pricePerMonth / 25),
-    week: Math.round(cell.pricePerMonth / 4),
-    month: cell.pricePerMonth,
+    day: Math.ceil(monthlyPrice / 25 / 10) * 10,
+    week: Math.ceil(monthlyPrice / 4 / 10) * 10,
+    month: monthlyPrice,
   };
   
   const periodLabels = {
@@ -153,17 +154,6 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
             <div className="p-4 bg-muted rounded-xl">
               <h3 className="font-semibold mb-3">Особенности</h3>
               <div className="space-y-2">
-                <div className="flex items-center gap-3">
-                  {cell.hasSocket ? (
-                    <Check className="w-5 h-5 text-primary" />
-                  ) : (
-                    <X className="w-5 h-5 text-muted-foreground" />
-                  )}
-                  <Zap className="w-4 h-4 text-muted-foreground" />
-                  <span className={cell.hasSocket ? '' : 'text-muted-foreground'}>
-                    Электрическая розетка
-                  </span>
-                </div>
                 <div className="flex items-center gap-3">
                   {cell.hasShelves ? (
                     <Check className="w-5 h-5 text-primary" />
