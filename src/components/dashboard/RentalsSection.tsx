@@ -76,15 +76,15 @@ const RentalsSection = () => {
         const daysLeft = getDaysLeft(rental.endDate);
         
         return (
-          <Card key={rental.id}>
-            <CardHeader>
+          <Card key={rental.id} className="border-border/50 shadow-lg overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 border-b border-border/50">
               <div className="flex items-start justify-between">
                 <div>
-                  <CardTitle className="flex items-center gap-3">
+                  <CardTitle className="flex items-center gap-3 text-xl font-bold">
                     Ячейка {rental.cellNumber}
                     <Badge 
                       variant={rental.status === 'active' ? 'default' : 'secondary'}
-                      className="ml-2"
+                      className={`ml-2 ${rental.status === 'active' ? 'bg-accent text-accent-foreground' : ''}`}
                     >
                       {rental.status === 'active' ? 'Активна' : 'Завершена'}
                     </Badge>
@@ -95,7 +95,7 @@ const RentalsSection = () => {
                   </CardDescription>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-primary">
+                  <p className="text-2xl font-extrabold text-primary">
                     {rental.monthlyPrice.toLocaleString()} ₽
                   </p>
                   <p className="text-sm text-muted-foreground">в месяц</p>
@@ -106,41 +106,41 @@ const RentalsSection = () => {
             <CardContent className="space-y-6">
               {/* Cell info */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <p className="text-sm text-muted-foreground">Размер</p>
-                  <p className="font-semibold">{rental.size}</p>
+                <div className="bg-secondary rounded-xl p-4 border border-border/50">
+                  <p className="text-sm text-muted-foreground font-medium">Размер</p>
+                  <p className="font-bold text-lg">{rental.size}</p>
                 </div>
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <p className="text-sm text-muted-foreground">Объем</p>
-                  <p className="font-semibold">{rental.volume}</p>
+                <div className="bg-secondary rounded-xl p-4 border border-border/50">
+                  <p className="text-sm text-muted-foreground font-medium">Объем</p>
+                  <p className="font-bold text-lg">{rental.volume}</p>
                 </div>
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <p className="text-sm text-muted-foreground">Начало</p>
-                  <p className="font-semibold">{formatDate(rental.startDate)}</p>
+                <div className="bg-secondary rounded-xl p-4 border border-border/50">
+                  <p className="text-sm text-muted-foreground font-medium">Начало</p>
+                  <p className="font-bold text-lg">{formatDate(rental.startDate)}</p>
                 </div>
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <p className="text-sm text-muted-foreground">Окончание</p>
-                  <p className="font-semibold">{formatDate(rental.endDate)}</p>
+                <div className="bg-secondary rounded-xl p-4 border border-border/50">
+                  <p className="text-sm text-muted-foreground font-medium">Окончание</p>
+                  <p className="font-bold text-lg">{formatDate(rental.endDate)}</p>
                 </div>
               </div>
 
               {/* Days left warning */}
               {daysLeft <= 7 && daysLeft > 0 && (
-                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-                  <p className="text-sm font-medium text-yellow-700 dark:text-yellow-400">
+                <div className="bg-accent/10 border border-accent/30 rounded-xl p-4">
+                  <p className="text-sm font-semibold text-accent-foreground">
                     ⚠️ До окончания аренды осталось {daysLeft} {daysLeft === 1 ? 'день' : 'дней'}
                   </p>
                 </div>
               )}
 
               {/* Access by phone */}
-              <div className="border rounded-lg p-4 bg-primary/5">
+              <div className="border-2 border-accent/30 rounded-2xl p-5 bg-gradient-to-r from-accent/5 to-primary/5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Доступ по звонку</p>
+                    <p className="text-sm text-muted-foreground mb-1 font-medium">Доступ по звонку</p>
                     <div className="flex items-center gap-3">
-                      <Phone className="w-6 h-6 text-primary" />
-                      <p className="text-2xl font-bold text-primary">
+                      <Phone className="w-6 h-6 text-accent" />
+                      <p className="text-2xl font-extrabold text-primary">
                         {rental.accessPhone}
                       </p>
                     </div>
@@ -152,6 +152,7 @@ const RentalsSection = () => {
                     <Button 
                       variant="outline" 
                       size="icon"
+                      className="border-primary/30 hover:border-primary hover:bg-primary/5"
                       onClick={() => copyAccessPhone(rental.id, rental.accessPhone)}
                     >
                       {copiedPhone === rental.id ? (
@@ -161,8 +162,8 @@ const RentalsSection = () => {
                       )}
                     </Button>
                     <Button 
-                      variant="default" 
                       size="icon"
+                      className="bg-accent hover:bg-accent/90 text-accent-foreground"
                       asChild
                     >
                       <a href={`tel:${rental.accessPhone.replace(/[\s\-]/g, '')}`}>
@@ -175,15 +176,15 @@ const RentalsSection = () => {
 
               {/* Actions */}
               <div className="flex flex-wrap gap-3">
-                <Button variant="outline" className="gap-2">
+                <Button variant="outline" className="gap-2 font-semibold border-primary/30 hover:border-primary hover:bg-primary/5">
                   <FileText className="w-4 h-4" />
                   Скачать договор
                 </Button>
-                <Button variant="outline" className="gap-2">
+                <Button className="gap-2 font-semibold bg-primary hover:bg-primary/90">
                   <Calendar className="w-4 h-4" />
                   Продлить аренду
                 </Button>
-                <Button variant="ghost" className="gap-2">
+                <Button variant="ghost" className="gap-2 font-semibold">
                   <ExternalLink className="w-4 h-4" />
                   Как добраться
                 </Button>

@@ -100,10 +100,12 @@ const NotificationsSection = () => {
   return (
     <div className="space-y-6">
       {/* Important notice */}
-      <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg flex items-start gap-3">
-        <Info className="w-5 h-5 text-primary mt-0.5" />
+      <div className="p-5 bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-2xl flex items-start gap-4">
+        <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center flex-shrink-0">
+          <Info className="w-5 h-5 text-primary" />
+        </div>
         <div>
-          <p className="font-medium text-primary">Обязательные уведомления</p>
+          <p className="font-semibold text-primary">Обязательные уведомления</p>
           <p className="text-sm text-muted-foreground">
             За 24 часа до окончания аренды вы получите уведомление по всем активным каналам. 
             Это обязательное уведомление для защиты ваших интересов.
@@ -112,31 +114,31 @@ const NotificationsSection = () => {
       </div>
 
       {/* Notification channels */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Каналы уведомлений</CardTitle>
+      <Card className="border-border/50 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-t-lg border-b border-border/50">
+          <CardTitle className="text-xl font-bold">Каналы уведомлений</CardTitle>
           <CardDescription>
             Выберите, как вы хотите получать уведомления
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           {channels.map((channel) => {
             const IconComponent = channel.icon;
             return (
             <div 
               key={channel.key} 
-              className="flex items-center justify-between p-4 border rounded-lg"
+              className="flex items-center justify-between p-4 border border-border/50 rounded-xl hover:bg-secondary/50 transition-colors"
             >
               <div className="flex items-center gap-4">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  notifications[channel.key] ? 'bg-primary/10' : 'bg-muted'
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                  notifications[channel.key] ? 'bg-primary/10' : 'bg-secondary'
                 }`}>
                   <IconComponent className={`w-5 h-5 ${
                     notifications[channel.key] ? 'text-primary' : 'text-muted-foreground'
                   }`} />
                 </div>
                 <div>
-                  <p className="font-medium">{channel.label}</p>
+                  <p className="font-semibold">{channel.label}</p>
                   <p className="text-sm text-muted-foreground">{channel.description}</p>
                 </div>
               </div>
@@ -163,34 +165,34 @@ const NotificationsSection = () => {
       </Card>
 
       {/* Notification types */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Типы уведомлений</CardTitle>
+      <Card className="border-border/50 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-t-lg border-b border-border/50">
+          <CardTitle className="text-xl font-bold">Типы уведомлений</CardTitle>
           <CardDescription>
             Настройте, какие уведомления вы хотите получать
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           {notificationTypes.map((type) => (
             <div 
               key={type.key} 
-              className="flex items-center justify-between p-4 border rounded-lg"
+              className="flex items-center justify-between p-4 border border-border/50 rounded-xl hover:bg-secondary/50 transition-colors"
             >
               <div className="flex items-start gap-4">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  type.required ? 'bg-yellow-500/10' : 'bg-muted'
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                  type.required ? 'bg-accent/10' : 'bg-secondary'
                 }`}>
                   {type.required ? (
-                    <AlertCircle className="w-5 h-5 text-yellow-600" />
+                    <AlertCircle className="w-5 h-5 text-accent" />
                   ) : (
                     <Bell className="w-5 h-5 text-muted-foreground" />
                   )}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="font-medium">{type.label}</p>
+                    <p className="font-semibold">{type.label}</p>
                     {type.required && (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-xs bg-accent/10 text-accent-foreground font-semibold">
                         Обязательно
                       </Badge>
                     )}

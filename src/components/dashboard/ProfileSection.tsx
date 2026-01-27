@@ -51,21 +51,21 @@ const ProfileSection = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="personal" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="personal" className="gap-2">
+        <TabsList className="grid w-full max-w-md grid-cols-2 p-1.5 bg-secondary rounded-xl border border-border">
+          <TabsTrigger value="personal" className="gap-2 rounded-lg font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
             <User className="w-4 h-4" />
             Физ. лицо
           </TabsTrigger>
-          <TabsTrigger value="company" className="gap-2">
+          <TabsTrigger value="company" className="gap-2 rounded-lg font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm">
             <Building2 className="w-4 h-4" />
             Юр. лицо
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="personal">
-          <Card>
-            <CardHeader>
-              <CardTitle>Личные данные</CardTitle>
+          <Card className="border-border/50 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-t-lg border-b border-border/50">
+              <CardTitle className="text-xl font-bold">Личные данные</CardTitle>
               <CardDescription>
                 Заполните информацию для заключения договора аренды
               </CardDescription>
@@ -137,8 +137,8 @@ const ProfileSection = () => {
               </div>
 
               {/* Паспорт */}
-              <div className="border-t pt-6">
-                <h4 className="font-medium mb-4">Паспортные данные</h4>
+              <div className="border-t border-border/50 pt-6">
+                <h4 className="font-semibold text-lg mb-4">Паспортные данные</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="passportSeries">Серия *</Label>
@@ -181,7 +181,7 @@ const ProfileSection = () => {
                 </div>
               </div>
 
-              <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+              <Button onClick={handleSave} disabled={isSaving} className="gap-2 bg-primary hover:bg-primary/90 shadow-primary font-semibold">
                 {isSaving ? (
                   <>Сохранение...</>
                 ) : (
@@ -196,14 +196,14 @@ const ProfileSection = () => {
         </TabsContent>
 
         <TabsContent value="company">
-          <Card>
-            <CardHeader>
-              <CardTitle>Данные организации</CardTitle>
+          <Card className="border-border/50 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-t-lg border-b border-border/50">
+              <CardTitle className="text-xl font-bold">Данные организации</CardTitle>
               <CardDescription>
                 Реквизиты для заключения договора с юридическим лицом
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 pt-6">
               {/* Основные данные */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2 md:col-span-2">
@@ -248,8 +248,8 @@ const ProfileSection = () => {
               </div>
 
               {/* Банковские реквизиты */}
-              <div className="border-t pt-6">
-                <h4 className="font-medium mb-4">Банковские реквизиты</h4>
+              <div className="border-t border-border/50 pt-6">
+                <h4 className="font-semibold text-lg mb-4">Банковские реквизиты</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="bankName">Наименование банка *</Label>
@@ -294,7 +294,7 @@ const ProfileSection = () => {
               </div>
 
               {/* Адрес */}
-              <div className="border-t pt-6">
+              <div className="border-t border-border/50 pt-6">
                 <div className="space-y-2">
                   <Label htmlFor="legalAddress">Юридический адрес *</Label>
                   <Input
@@ -306,7 +306,7 @@ const ProfileSection = () => {
                 </div>
               </div>
 
-              <Button onClick={handleSave} disabled={isSaving} className="gap-2">
+              <Button onClick={handleSave} disabled={isSaving} className="gap-2 bg-primary hover:bg-primary/90 shadow-primary font-semibold">
                 {isSaving ? (
                   <>Сохранение...</>
                 ) : (

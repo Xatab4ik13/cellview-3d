@@ -37,24 +37,24 @@ const InfoSection = () => {
   return (
     <div className="space-y-6">
       {/* Documents */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Документы</CardTitle>
+      <Card className="border-border/50 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-t-lg border-b border-border/50">
+          <CardTitle className="text-xl font-bold">Документы</CardTitle>
           <CardDescription>
             Важные документы и правила использования
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6">
           {documents.map((doc, index) => (
             <button
               key={index}
-              className="flex items-start gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors text-left"
+              className="flex items-start gap-4 p-5 border border-border/50 rounded-xl hover:bg-secondary/50 hover:border-primary/30 transition-all text-left group"
             >
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                <doc.icon className="w-5 h-5 text-primary" />
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                <doc.icon className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="font-medium">{doc.title}</p>
+                <p className="font-semibold">{doc.title}</p>
                 <p className="text-sm text-muted-foreground">{doc.description}</p>
               </div>
             </button>
@@ -63,19 +63,19 @@ const InfoSection = () => {
       </Card>
 
       {/* FAQ */}
-      <Card>
-        <CardHeader>
+      <Card className="border-border/50 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-t-lg border-b border-border/50">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <HelpCircle className="w-5 h-5" />
+              <CardTitle className="flex items-center gap-2 text-xl font-bold">
+                <HelpCircle className="w-5 h-5 text-primary" />
                 Частые вопросы
               </CardTitle>
               <CardDescription>
                 Ответы на популярные вопросы клиентов
               </CardDescription>
             </div>
-            <Button variant="outline" asChild>
+            <Button variant="outline" asChild className="font-semibold border-primary/30 hover:border-primary hover:bg-primary/5">
               <Link to="/faq" className="gap-2">
                 Все вопросы
                 <ExternalLink className="w-4 h-4" />
@@ -83,11 +83,11 @@ const InfoSection = () => {
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <Accordion type="single" collapsible className="w-full">
             {faqItems.map((item, index) => (
-              <AccordionItem key={index} value={`item-${index}`}>
-                <AccordionTrigger className="text-left">
+              <AccordionItem key={index} value={`item-${index}`} className="border-border/50">
+                <AccordionTrigger className="text-left font-semibold hover:text-primary">
                   {item.question}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
@@ -100,38 +100,38 @@ const InfoSection = () => {
       </Card>
 
       {/* Contacts */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Связаться с нами</CardTitle>
+      <Card className="border-border/50 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-t-lg border-b border-border/50">
+          <CardTitle className="text-xl font-bold">Связаться с нами</CardTitle>
           <CardDescription>
             Служба поддержки работает ежедневно с 9:00 до 21:00
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <a
               href="tel:+78121234567"
-              className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+              className="flex items-center gap-4 p-5 border border-border/50 rounded-xl hover:bg-secondary/50 hover:border-primary/30 transition-all group"
             >
-              <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center">
-                <Phone className="w-6 h-6 text-green-600" />
+              <div className="w-14 h-14 bg-accent/10 rounded-2xl flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                <Phone className="w-7 h-7 text-accent" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Телефон</p>
-                <p className="font-semibold">8 812 123-45-67</p>
+                <p className="text-sm text-muted-foreground font-medium">Телефон</p>
+                <p className="font-bold text-lg">8 812 123-45-67</p>
               </div>
             </a>
             
             <a
               href="mailto:info@kladovka78.ru"
-              className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+              className="flex items-center gap-4 p-5 border border-border/50 rounded-xl hover:bg-secondary/50 hover:border-primary/30 transition-all group"
             >
-              <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center">
-                <Mail className="w-6 h-6 text-blue-600" />
+              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <Mail className="w-7 h-7 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Email</p>
-                <p className="font-semibold">info@kladovka78.ru</p>
+                <p className="text-sm text-muted-foreground font-medium">Email</p>
+                <p className="font-bold text-lg">info@kladovka78.ru</p>
               </div>
             </a>
             
@@ -139,14 +139,14 @@ const InfoSection = () => {
               href="https://t.me/kladovka78"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+              className="flex items-center gap-4 p-5 border border-border/50 rounded-xl hover:bg-secondary/50 hover:border-primary/30 transition-all group"
             >
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <MessageCircle className="w-6 h-6 text-primary" />
+              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <MessageCircle className="w-7 h-7 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Telegram</p>
-                <p className="font-semibold">@kladovka78</p>
+                <p className="text-sm text-muted-foreground font-medium">Telegram</p>
+                <p className="font-bold text-lg">@kladovka78</p>
               </div>
             </a>
           </div>

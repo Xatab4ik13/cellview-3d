@@ -49,63 +49,66 @@ const SubscriptionSection = () => {
   return (
     <div className="space-y-6">
       {/* Current subscription */}
-      <Card>
-        <CardHeader>
+      <Card className="border-border/50 shadow-lg overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5 border-b border-border/50">
           <div className="flex items-start justify-between">
             <div>
-              <CardTitle>Текущая подписка</CardTitle>
+              <CardTitle className="text-xl font-bold">Текущая подписка</CardTitle>
               <CardDescription>
                 Управление автопродлением и способами оплаты
               </CardDescription>
             </div>
-            <Badge variant={subscription.status === 'active' ? 'default' : 'secondary'}>
+            <Badge 
+              variant={subscription.status === 'active' ? 'default' : 'secondary'}
+              className={subscription.status === 'active' ? 'bg-accent text-accent-foreground font-semibold' : ''}
+            >
               {subscription.status === 'active' ? 'Активна' : 'Неактивна'}
             </Badge>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 pt-6">
           {/* Subscription details */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-muted/50 rounded-lg p-4">
-              <p className="text-sm text-muted-foreground mb-1">Ячейка</p>
-              <p className="font-semibold text-lg">{subscription.cellNumber}</p>
+            <div className="bg-secondary rounded-xl p-4 border border-border/50">
+              <p className="text-sm text-muted-foreground font-medium mb-1">Ячейка</p>
+              <p className="font-bold text-lg">{subscription.cellNumber}</p>
             </div>
-            <div className="bg-muted/50 rounded-lg p-4">
-              <p className="text-sm text-muted-foreground mb-1">Тариф</p>
-              <p className="font-semibold text-lg">{subscription.plan}</p>
+            <div className="bg-secondary rounded-xl p-4 border border-border/50">
+              <p className="text-sm text-muted-foreground font-medium mb-1">Тариф</p>
+              <p className="font-bold text-lg">{subscription.plan}</p>
             </div>
-            <div className="bg-muted/50 rounded-lg p-4">
-              <p className="text-sm text-muted-foreground mb-1">Стоимость</p>
-              <p className="font-semibold text-lg text-primary">{subscription.price.toLocaleString()} ₽</p>
+            <div className="bg-secondary rounded-xl p-4 border border-border/50">
+              <p className="text-sm text-muted-foreground font-medium mb-1">Стоимость</p>
+              <p className="font-bold text-lg text-primary">{subscription.price.toLocaleString()} ₽</p>
             </div>
           </div>
 
           {/* Next payment */}
-          <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="flex items-center justify-between p-5 border-2 border-primary/20 rounded-2xl bg-gradient-to-r from-primary/5 to-transparent">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-primary" />
+              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center">
+                <Calendar className="w-7 h-7 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Следующее списание</p>
-                <p className="font-semibold">{formatDate(subscription.nextPayment)}</p>
+                <p className="text-sm text-muted-foreground font-medium">Следующее списание</p>
+                <p className="font-bold text-lg">{formatDate(subscription.nextPayment)}</p>
               </div>
             </div>
-            <p className="text-xl font-bold">{subscription.price.toLocaleString()} ₽</p>
+            <p className="text-2xl font-extrabold text-primary">{subscription.price.toLocaleString()} ₽</p>
           </div>
 
           {/* Payment method */}
-          <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="flex items-center justify-between p-5 border border-border/50 rounded-2xl">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
-                <CreditCard className="w-6 h-6" />
+              <div className="w-14 h-14 bg-secondary rounded-2xl flex items-center justify-center border border-border/50">
+                <CreditCard className="w-7 h-7 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Способ оплаты</p>
-                <p className="font-semibold">Visa {subscription.paymentMethod}</p>
+                <p className="text-sm text-muted-foreground font-medium">Способ оплаты</p>
+                <p className="font-bold">Visa {subscription.paymentMethod}</p>
               </div>
             </div>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="font-semibold border-primary/30 hover:border-primary hover:bg-primary/5">
               Изменить
             </Button>
           </div>
@@ -113,10 +116,10 @@ const SubscriptionSection = () => {
       </Card>
 
       {/* Auto renewal */}
-      <Card>
+      <Card className="border-border/50 shadow-lg">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <RefreshCw className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-xl font-bold">
+            <RefreshCw className="w-5 h-5 text-primary" />
             Автопродление
           </CardTitle>
           <CardDescription>
@@ -124,9 +127,9 @@ const SubscriptionSection = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="flex items-center justify-between p-5 border border-border/50 rounded-2xl">
             <div>
-              <p className="font-medium">Автоматическое продление</p>
+              <p className="font-semibold">Автоматическое продление</p>
               <p className="text-sm text-muted-foreground">
                 {autoRenewal 
                   ? 'Аренда будет продлена автоматически' 
@@ -141,13 +144,13 @@ const SubscriptionSection = () => {
           </div>
 
           {!autoRenewal && (
-            <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
+            <div className="mt-4 p-4 bg-accent/10 border border-accent/30 rounded-xl flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-accent mt-0.5" />
               <div>
-                <p className="font-medium text-yellow-700 dark:text-yellow-400">
+                <p className="font-semibold text-accent-foreground">
                   Автопродление отключено
                 </p>
-                <p className="text-sm text-yellow-600 dark:text-yellow-500">
+                <p className="text-sm text-muted-foreground">
                   Ваша аренда завершится {formatDate(subscription.nextPayment)}. 
                   Не забудьте забрать вещи или продлить аренду вручную.
                 </p>
@@ -158,9 +161,9 @@ const SubscriptionSection = () => {
       </Card>
 
       {/* Cancel subscription */}
-      <Card className="border-destructive/30">
+      <Card className="border-destructive/30 shadow-lg">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-destructive">
+          <CardTitle className="flex items-center gap-2 text-xl font-bold text-destructive">
             <XCircle className="w-5 h-5" />
             Досрочное завершение
           </CardTitle>
@@ -169,7 +172,7 @@ const SubscriptionSection = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="p-4 bg-muted/50 rounded-lg mb-4">
+          <div className="p-4 bg-secondary rounded-xl mb-4 border border-border/50">
             <p className="text-sm text-muted-foreground">
               При досрочном завершении аренды возврат средств за неиспользованный период 
               осуществляется согласно условиям договора. Пожалуйста, освободите ячейку 
@@ -179,7 +182,7 @@ const SubscriptionSection = () => {
           
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" className="gap-2">
+              <Button variant="destructive" className="gap-2 font-semibold">
                 <XCircle className="w-4 h-4" />
                 Завершить аренду досрочно
               </Button>
