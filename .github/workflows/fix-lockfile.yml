@@ -2,11 +2,6 @@ name: Fix lockfile (package-lock)
 
 on:
   workflow_dispatch:
-    inputs:
-      commit_message:
-        description: Commit message for lockfile update
-        required: false
-        default: "chore: sync package-lock"
 
 permissions:
   contents: write
@@ -18,27 +13,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
 
-      - name: Install dependencies (updates package-lock.json)
-        run: npm install
-
-      - name: Commit updated lockfile (if changed)
+      - name: Remove old lockfile and regenerate
         run: |
-          if git diff --quiet -- package-lock.json; then
-            echo "package-lock.json unchanged"
-            exit 0
-          fi
+          rm -f package-lock.json
+          rm -f bun.lockb
+          npm install
 
+      - name: Commit updated lockfile
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
+          
           git add package-lock.json
-          git commit -m "${{ github.event.inputs.commit_message }}"
+          git commit -m "chore: regenerate package-lock.json" || echo "No changes to commit"
           git push
