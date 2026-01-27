@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Grid3X3, 
   Video, 
-  Calendar, 
   Check,
   X,
   ChevronLeft,
@@ -25,8 +24,10 @@ interface CellModalProps {
   onClose: () => void;
 }
 
+type DurationOption = 1 | 3 | 6 | 12;
+
 const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
-  const [selectedPeriod, setSelectedPeriod] = useState<'day' | 'week' | 'month'>('month');
+  const [selectedDuration, setSelectedDuration] = useState<DurationOption>(1);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   
   // Сброс индекса фото при смене ячейки
@@ -40,16 +41,26 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
   
   const monthlyPrice = calculatePrice(cell.volume);
   
-  const prices = {
-    day: Math.ceil(monthlyPrice / 25 / 10) * 10,
-    week: Math.ceil(monthlyPrice / 4 / 10) * 10,
-    month: monthlyPrice,
+  // Скидки по длительности
+  const discounts: Record<DurationOption, number> = {
+    1: 0,
+    3: 5,
+    6: 10,
+    12: 15,
   };
   
-  const periodLabels = {
-    day: 'День',
-    week: 'Неделя',
-    month: 'Месяц',
+  const durationLabels: Record<DurationOption, string> = {
+    1: '1 месяц',
+    3: '3 месяца',
+    6: '6 месяцев',
+    12: '12 месяцев',
+  };
+  
+  const calculateTotalPrice = (months: DurationOption) => {
+    const discount = discounts[months];
+    const totalBeforeDiscount = monthlyPrice * months;
+    const discountAmount = Math.floor(totalBeforeDiscount * discount / 100);
+    return Math.ceil((totalBeforeDiscount - discountAmount) / 10) * 10;
   };
 
   const nextPhoto = () => {
@@ -173,46 +184,48 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
               </div>
             </div>
 
-            {/* Period selector */}
+            {/* Duration selector */}
             <div>
-              <h3 className="font-semibold mb-3">Период аренды</h3>
-              <div className="grid grid-cols-3 gap-2">
-                {(['day', 'week', 'month'] as const).map((period) => (
-                  <button
-                    key={period}
-                    onClick={() => setSelectedPeriod(period)}
-                    className={`p-3 rounded-xl border-2 transition-all ${
-                      selectedPeriod === period
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <p className="font-semibold">{periodLabels[period]}</p>
-                    <p className="text-lg font-bold text-primary">
-                      {prices[period].toLocaleString('ru-RU')} ₽
-                    </p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Date selection hint */}
-            <div className="p-4 border border-border rounded-xl">
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-primary" />
-                <div>
-                  <p className="font-medium">Выберите даты</p>
-                  <p className="text-sm text-muted-foreground">
-                    Укажите период аренды в календаре
-                  </p>
-                </div>
+              <h3 className="font-semibold mb-3">Срок аренды</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {([1, 3, 6, 12] as const).map((duration) => {
+                  const discount = discounts[duration];
+                  const totalPrice = calculateTotalPrice(duration);
+                  
+                  return (
+                    <button
+                      key={duration}
+                      onClick={() => setSelectedDuration(duration)}
+                      className={`p-3 rounded-xl border-2 transition-all relative ${
+                        selectedDuration === duration
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      {discount > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+                          -{discount}%
+                        </span>
+                      )}
+                      <p className="font-semibold">{durationLabels[duration]}</p>
+                      <p className="text-lg font-bold text-primary">
+                        {totalPrice.toLocaleString('ru-RU')} ₽
+                      </p>
+                      {discount > 0 && (
+                        <p className="text-xs text-muted-foreground line-through">
+                          {(monthlyPrice * duration).toLocaleString('ru-RU')} ₽
+                        </p>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* CTA */}
             <div className="space-y-3">
               <Button className="w-full" size="lg">
-                Забронировать за {prices[selectedPeriod].toLocaleString('ru-RU')} ₽
+                Забронировать за {calculateTotalPrice(selectedDuration).toLocaleString('ru-RU')} ₽
               </Button>
               <Button variant="outline" className="w-full" size="lg">
                 Связаться с менеджером
