@@ -20,14 +20,16 @@ jobs:
           # TimeWeb собирает образ на Node 24 (см. логи), генерим lockfile тем же рантаймом
           node-version: "24"
 
-      - name: Remove old lockfile and regenerate (lockfile only)
+      - name: Remove old lockfile and regenerate (fresh install)
         run: |
           rm -f package-lock.json
           # bun.lockb может существовать в репо, но он не нужен для npm
           rm -f bun.lockb
 
-          # Генерируем ТОЛЬКО package-lock.json, не трогая зависимости в рабочем дереве
-          npm install --package-lock-only --ignore-scripts
+          # ВАЖНО: `npm ci` на TimeWeb падает, если в lockfile нет peer-зависимостей.
+          # Поэтому генерируем lockfile через полноценный `npm install`.
+          # Скрипты не запускаем (безопаснее/детерминированнее для CI).
+          npm install --ignore-scripts --no-audit --no-fund
 
           # Если npm внезапно изменил package.json — это приведёт к новому рассинхрону.
           if ! git diff --quiet -- package.json; then
