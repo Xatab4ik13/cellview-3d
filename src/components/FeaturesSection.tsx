@@ -1,7 +1,7 @@
 import { 
   Shield, 
   Video, 
-  Key, 
+  Phone, 
   Clock, 
   Wifi,
   Car,
@@ -23,9 +23,9 @@ const features = [
     description: 'Онлайн-доступ к камерам вашей ячейки в личном кабинете',
   },
   {
-    icon: Key,
-    title: 'Персональный код',
-    description: 'Индивидуальный PIN-код для доступа в помещение',
+    icon: Phone,
+    title: 'Доступ по звонку',
+    description: 'Позвоните на номер — дверь откроется автоматически',
   },
   {
     icon: Clock,
