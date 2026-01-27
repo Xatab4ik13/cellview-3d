@@ -123,6 +123,8 @@
 
   html {
     scroll-behavior: smooth;
+    /* Предотвращает сдвиг при открытии модальных окон */
+    scrollbar-gutter: stable;
   }
 
   body {
