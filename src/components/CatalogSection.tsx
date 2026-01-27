@@ -11,8 +11,6 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Filter, 
   Grid3X3, 
-  List,
-  Zap,
   Layers,
   X,
   ChevronLeft,
@@ -25,13 +23,12 @@ const CatalogSection = () => {
   const [selectedCell, setSelectedCell] = useState<StorageCell | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
   
   const [filters, setFilters] = useState<FilterOptions>({
     availableOnly: false,
-    hasSocket: false,
     hasShelves: false,
+    tier: undefined,
   });
   
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
@@ -40,8 +37,8 @@ const CatalogSection = () => {
   const filteredCells = useMemo(() => {
     return storageCells.filter(cell => {
       if (filters.availableOnly && !cell.isAvailable) return false;
-      if (filters.hasSocket && !cell.hasSocket) return false;
       if (filters.hasShelves && !cell.hasShelves) return false;
+      if (filters.tier !== undefined && cell.tier !== filters.tier) return false;
       if (cell.pricePerMonth < priceRange[0] || cell.pricePerMonth > priceRange[1]) return false;
       if (cell.area < areaRange[0] || cell.area > areaRange[1]) return false;
       return true;
@@ -68,8 +65,8 @@ const CatalogSection = () => {
   const clearFilters = () => {
     setFilters({
       availableOnly: false,
-      hasSocket: false,
       hasShelves: false,
+      tier: undefined,
     });
     setPriceRange([0, 10000]);
     setAreaRange([0, 20]);
@@ -78,8 +75,8 @@ const CatalogSection = () => {
   
   const activeFiltersCount = [
     filters.availableOnly,
-    filters.hasSocket,
     filters.hasShelves,
+    filters.tier !== undefined,
     priceRange[0] > 0 || priceRange[1] < 10000,
     areaRange[0] > 0 || areaRange[1] < 20,
   ].filter(Boolean).length;
@@ -113,30 +110,6 @@ const CatalogSection = () => {
                 </Badge>
               )}
             </Button>
-            
-            {/* View mode toggle */}
-            <div className="flex border border-border rounded-lg overflow-hidden">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 transition-colors ${
-                  viewMode === 'grid' 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'hover:bg-muted'
-                }`}
-              >
-                <Grid3X3 className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 transition-colors ${
-                  viewMode === 'list' 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'hover:bg-muted'
-                }`}
-              >
-                <List className="w-5 h-5" />
-              </button>
-            </div>
           </div>
         </div>
 
@@ -192,6 +165,43 @@ const CatalogSection = () => {
                 </div>
               </div>
               
+              {/* Tier filter */}
+              <div className="space-y-3">
+                <Label>Ярус</Label>
+                <div className="flex gap-2">
+                  <Button
+                    variant={filters.tier === undefined ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setFilters(f => ({ ...f, tier: undefined }));
+                      handleFilterChange();
+                    }}
+                  >
+                    Все
+                  </Button>
+                  <Button
+                    variant={filters.tier === 1 ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setFilters(f => ({ ...f, tier: 1 }));
+                      handleFilterChange();
+                    }}
+                  >
+                    1 ярус
+                  </Button>
+                  <Button
+                    variant={filters.tier === 2 ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                      setFilters(f => ({ ...f, tier: 2 }));
+                      handleFilterChange();
+                    }}
+                  >
+                    2 ярус
+                  </Button>
+                </div>
+              </div>
+              
               {/* Toggles */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -209,23 +219,6 @@ const CatalogSection = () => {
                   />
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="socket" className="flex items-center gap-2">
-                    <Zap className="w-4 h-4" />
-                    С розеткой
-                  </Label>
-                  <Switch 
-                    id="socket"
-                    checked={filters.hasSocket}
-                    onCheckedChange={(checked) => {
-                      setFilters(f => ({ ...f, hasSocket: checked }));
-                      handleFilterChange();
-                    }}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="shelves" className="flex items-center gap-2">
                     <Grid3X3 className="w-4 h-4" />
@@ -247,11 +240,7 @@ const CatalogSection = () => {
 
         {/* Cells grid */}
         {paginatedCells.length > 0 ? (
-          <div className={
-            viewMode === 'grid'
-              ? 'grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-              : 'space-y-4'
-          }>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {paginatedCells.map((cell) => (
               <CellCardVariantB 
                 key={cell.id} 

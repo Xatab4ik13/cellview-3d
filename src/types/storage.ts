@@ -21,8 +21,8 @@ export interface FilterOptions {
   minPrice?: number;
   maxPrice?: number;
   floor?: number;
+  tier?: number;
   availableOnly: boolean;
-  hasSocket?: boolean;
   hasShelves?: boolean;
 }
 
