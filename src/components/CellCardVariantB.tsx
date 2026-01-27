@@ -1,7 +1,7 @@
-import { StorageCell } from '@/types/storage';
+import { StorageCell, calculatePrice } from '@/types/storage';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Zap, Grid3X3, ArrowRight } from 'lucide-react';
+import { Grid3X3, ArrowRight } from 'lucide-react';
 
 interface CellCardProps {
   cell: StorageCell;
@@ -282,20 +282,12 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
       {/* Features & Price */}
       <div className="p-4 space-y-3 border-t border-border">
         {/* Features */}
-        {(cell.hasSocket || cell.hasShelves) && (
+        {cell.hasShelves && (
           <div className="flex gap-2 flex-wrap">
-            {cell.hasSocket && (
-              <div className="flex items-center gap-1.5 text-xs font-medium text-accent-foreground bg-accent/30 px-3 py-1.5 rounded-full">
-                <Zap className="w-3.5 h-3.5" />
-                Розетка
-              </div>
-            )}
-            {cell.hasShelves && (
-              <div className="flex items-center gap-1.5 text-xs font-medium text-accent-foreground bg-accent/30 px-3 py-1.5 rounded-full">
-                <Grid3X3 className="w-3.5 h-3.5" />
-                Полки
-              </div>
-            )}
+            <div className="flex items-center gap-1.5 text-xs font-medium text-accent-foreground bg-accent/30 px-3 py-1.5 rounded-full">
+              <Grid3X3 className="w-3.5 h-3.5" />
+              Полки
+            </div>
           </div>
         )}
 
@@ -303,7 +295,7 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-2xl font-bold text-foreground">
-              {cell.pricePerMonth.toLocaleString('ru-RU')}
+              {calculatePrice(cell.volume).toLocaleString('ru-RU')}
               <span className="text-base font-normal text-muted-foreground ml-1">₽/мес</span>
             </p>
           </div>
