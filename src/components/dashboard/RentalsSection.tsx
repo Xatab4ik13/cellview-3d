@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Key, Calendar, MapPin, FileText, Copy, Check, ExternalLink } from 'lucide-react';
+import { Key, Calendar, MapPin, FileText, Copy, Check, ExternalLink, Phone } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -16,7 +16,7 @@ const mockRentals = [
     startDate: '2025-01-15',
     endDate: '2025-02-15',
     status: 'active',
-    pinCode: '4521',
+    accessPhone: '+7 812 123-45-67',
     monthlyPrice: 4500,
     contractUrl: '#',
   },
@@ -24,16 +24,16 @@ const mockRentals = [
 
 const RentalsSection = () => {
   const { toast } = useToast();
-  const [copiedPin, setCopiedPin] = useState<number | null>(null);
+  const [copiedPhone, setCopiedPhone] = useState<number | null>(null);
 
-  const copyPinCode = (id: number, pin: string) => {
-    navigator.clipboard.writeText(pin);
-    setCopiedPin(id);
+  const copyAccessPhone = (id: number, phone: string) => {
+    navigator.clipboard.writeText(phone.replace(/[\s\-]/g, ''));
+    setCopiedPhone(id);
     toast({
       title: "Скопировано",
-      description: "PIN-код скопирован в буфер обмена",
+      description: "Номер телефона скопирован в буфер обмена",
     });
-    setTimeout(() => setCopiedPin(null), 2000);
+    setTimeout(() => setCopiedPhone(null), 2000);
   };
 
   const formatDate = (dateStr: string) => {
@@ -133,26 +133,43 @@ const RentalsSection = () => {
                 </div>
               )}
 
-              {/* PIN code */}
-              <div className="border rounded-lg p-4">
+              {/* Access by phone */}
+              <div className="border rounded-lg p-4 bg-primary/5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">PIN-код доступа</p>
-                    <p className="text-3xl font-mono font-bold tracking-widest">
-                      {rental.pinCode}
+                    <p className="text-sm text-muted-foreground mb-1">Доступ по звонку</p>
+                    <div className="flex items-center gap-3">
+                      <Phone className="w-6 h-6 text-primary" />
+                      <p className="text-2xl font-bold text-primary">
+                        {rental.accessPhone}
+                      </p>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Позвоните на этот номер — дверь откроется автоматически
                     </p>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    onClick={() => copyPinCode(rental.id, rental.pinCode)}
-                  >
-                    {copiedPin === rental.id ? (
-                      <Check className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </Button>
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => copyAccessPhone(rental.id, rental.accessPhone)}
+                    >
+                      {copiedPhone === rental.id ? (
+                        <Check className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
+                    <Button 
+                      variant="default" 
+                      size="icon"
+                      asChild
+                    >
+                      <a href={`tel:${rental.accessPhone.replace(/[\s\-]/g, '')}`}>
+                        <Phone className="w-4 h-4" />
+                      </a>
+                    </Button>
+                  </div>
                 </div>
               </div>
 
