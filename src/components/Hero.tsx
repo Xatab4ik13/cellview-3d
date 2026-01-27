@@ -50,8 +50,8 @@ const Hero = () => {
   ];
 
   return (
-    <section className="relative min-h-screen pt-32 lg:pt-36 overflow-hidden bg-background">
-      <div className="container mx-auto px-4 py-8 lg:py-12">
+    <section className="relative pt-32 lg:pt-36 overflow-hidden bg-background">
+      <div className="container mx-auto px-4 py-4 lg:py-6">
         <div className="grid lg:grid-cols-[minmax(400px,1fr)_1.4fr] gap-8 lg:gap-6 items-center">
           {/* Left side - Content */}
           <div className="space-y-6 lg:space-y-8 order-2 lg:order-1">
@@ -139,7 +139,7 @@ const Hero = () => {
                   key={index}
                   src={slide.image}
                   alt={slide.title}
-                  className={`w-full h-[500px] lg:h-[700px] object-cover absolute inset-0 transition-opacity duration-700 ${
+                  className={`w-full h-[350px] lg:h-[480px] object-cover absolute inset-0 transition-opacity duration-700 ${
                     currentSlide === index ? 'opacity-100' : 'opacity-0'
                   }`}
                 />
@@ -148,7 +148,7 @@ const Hero = () => {
               <img
                 src={heroSlides[0].image}
                 alt=""
-                className="w-full h-[500px] lg:h-[700px] object-cover invisible"
+                className="w-full h-[350px] lg:h-[480px] object-cover invisible"
               />
               
               {/* Text overlay with semi-transparent purple background */}
