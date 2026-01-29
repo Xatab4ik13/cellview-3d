@@ -25,6 +25,7 @@ import { Switch } from '@/components/ui/switch';
 import { Plus, Search, Edit, Trash2, Box, Upload, X, Image } from 'lucide-react';
 import { storageCells } from '@/data/storageCells';
 import { calculatePrice } from '@/types/storage';
+import CellProjectionPreview from '@/components/admin/CellProjectionPreview';
 
 const AdminCells = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -128,6 +129,16 @@ const AdminCells = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
+              {/* Projection Preview */}
+              <div className="space-y-2">
+                <Label>Превью проекции</Label>
+                <CellProjectionPreview
+                  width={parseFloat(formData.width) || 0}
+                  height={parseFloat(formData.height) || 0}
+                  depth={parseFloat(formData.depth) || 0}
+                />
+              </div>
+
               {/* Dimensions */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="grid gap-2">
