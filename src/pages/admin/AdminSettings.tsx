@@ -58,11 +58,14 @@ const AdminSettings = () => {
           </div>
           <Separator />
           <div className="space-y-2">
-            <Label>Цена за м² (базовая)</Label>
+            <Label>Цена за м³ (базовая)</Label>
             <div className="flex items-center gap-2">
-              <Input type="number" defaultValue="1000" className="w-32" />
+              <Input type="number" defaultValue="1500" className="w-32" />
               <span className="text-muted-foreground">₽/мес</span>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Формула: объём × 1500₽, округление до 10₽ вверх
+            </p>
           </div>
         </CardContent>
       </Card>
