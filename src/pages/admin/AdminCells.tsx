@@ -35,11 +35,15 @@ const AdminCells = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
+  const nextNumber = storageCells.length > 0 ? Math.max(...storageCells.map(c => c.number)) + 1 : 1;
+  
   const [formData, setFormData] = useState({
+    number: '',
     width: '',
     depth: '',
     height: '',
     floor: '1',
+    tier: '1',
     hasSocket: false,
     hasShelves: false,
   });
@@ -84,10 +88,12 @@ const AdminCells = () => {
 
   const resetForm = () => {
     setFormData({
+      number: '',
       width: '',
       depth: '',
       height: '',
       floor: '1',
+      tier: '1',
       hasSocket: false,
       hasShelves: false,
     });
@@ -137,6 +143,32 @@ const AdminCells = () => {
                   height={parseFloat(formData.height) || 0}
                   depth={parseFloat(formData.depth) || 0}
                 />
+              </div>
+
+              {/* Cell Number */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="number">Номер ячейки</Label>
+                  <Input 
+                    id="number" 
+                    type="number" 
+                    placeholder={String(nextNumber)}
+                    value={formData.number}
+                    onChange={(e) => setFormData(prev => ({ ...prev, number: e.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground">Следующий: {nextNumber}</p>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="tier">Ярус</Label>
+                  <Input 
+                    id="tier" 
+                    type="number" 
+                    min="1"
+                    placeholder="1"
+                    value={formData.tier}
+                    onChange={(e) => setFormData(prev => ({ ...prev, tier: e.target.value }))}
+                  />
+                </div>
               </div>
 
               {/* Dimensions */}
