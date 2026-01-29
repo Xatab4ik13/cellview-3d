@@ -27,12 +27,17 @@ import { storageCells } from '@/data/storageCells';
 import { calculatePrice } from '@/types/storage';
 import CellProjectionPreview from '@/components/admin/CellProjectionPreview';
 
+import { StorageCell } from '@/types/storage';
+
 const AdminCells = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingCell, setEditingCell] = useState<StorageCell | null>(null);
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const nextNumber = storageCells.length > 0 ? Math.max(...storageCells.map(c => c.number)) + 1 : 1;
@@ -47,6 +52,20 @@ const AdminCells = () => {
     hasSocket: false,
     hasShelves: false,
   });
+
+  // Edit form state
+  const [editFormData, setEditFormData] = useState({
+    number: '',
+    width: '',
+    depth: '',
+    height: '',
+    floor: '1',
+    tier: '1',
+    hasSocket: false,
+    hasShelves: false,
+    isAvailable: true,
+  });
+  const [editPhotoPreviews, setEditPhotoPreviews] = useState<string[]>([]);
 
   const getDimensions = (cell: typeof storageCells[0]) => 
     `${cell.width} × ${cell.depth} × ${cell.height} м`;
@@ -107,6 +126,51 @@ const AdminCells = () => {
     resetForm();
     setIsAddDialogOpen(false);
   };
+
+  // Edit cell functions
+  const openEditDialog = (cell: StorageCell) => {
+    setEditingCell(cell);
+    setEditFormData({
+      number: String(cell.number),
+      width: String(cell.width),
+      depth: String(cell.depth),
+      height: String(cell.height),
+      floor: String(cell.floor),
+      tier: String(cell.tier),
+      hasSocket: cell.hasSocket,
+      hasShelves: cell.hasShelves,
+      isAvailable: cell.isAvailable,
+    });
+    setEditPhotoPreviews(cell.photos || []);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditPhotoPreviews(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeEditPhoto = (index: number) => {
+    setEditPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSaveEdit = () => {
+    // Here you would normally save to backend
+    console.log('Saving cell:', { id: editingCell?.id, ...editFormData, photos: editPhotoPreviews });
+    setIsEditDialogOpen(false);
+    setEditingCell(null);
+  };
+
+  const editVolume = (parseFloat(editFormData.width) || 0) * (parseFloat(editFormData.depth) || 0) * (parseFloat(editFormData.height) || 0);
+  const editCalculatedPrice = editVolume > 0 ? calculatePrice(editVolume) : 0;
 
   return (
     <div className="space-y-6">
@@ -387,7 +451,7 @@ const AdminCells = () => {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(cell)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon" className="text-destructive">
@@ -401,6 +465,202 @@ const AdminCells = () => {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Редактировать ячейку №{editingCell?.number}</DialogTitle>
+            <DialogDescription>
+              Измените параметры ячейки хранения
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {/* Projection Preview */}
+            <div className="space-y-2">
+              <Label>Превью проекции</Label>
+              <CellProjectionPreview
+                width={parseFloat(editFormData.width) || 0}
+                height={parseFloat(editFormData.height) || 0}
+                depth={parseFloat(editFormData.depth) || 0}
+              />
+            </div>
+
+            {/* Cell Number & Tier */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-number">Номер ячейки</Label>
+                <Input 
+                  id="edit-number" 
+                  type="number" 
+                  value={editFormData.number}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, number: e.target.value }))}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-tier">Ярус</Label>
+                <Input 
+                  id="edit-tier" 
+                  type="number" 
+                  min="1"
+                  value={editFormData.tier}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, tier: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            {/* Dimensions */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-width">Ширина (м)</Label>
+                <Input 
+                  id="edit-width" 
+                  type="number" 
+                  step="0.1"
+                  value={editFormData.width}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, width: e.target.value }))}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-depth">Глубина (м)</Label>
+                <Input 
+                  id="edit-depth" 
+                  type="number" 
+                  step="0.1"
+                  value={editFormData.depth}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, depth: e.target.value }))}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-height">Высота (м)</Label>
+                <Input 
+                  id="edit-height" 
+                  type="number" 
+                  step="0.1"
+                  value={editFormData.height}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, height: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            {/* Calculated values */}
+            {editVolume > 0 && (
+              <div className="rounded-lg bg-muted/50 p-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Объём:</span>
+                  <span className="font-medium">{editVolume.toFixed(2)} м³</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Площадь:</span>
+                  <span className="font-medium">{((parseFloat(editFormData.width) || 0) * (parseFloat(editFormData.depth) || 0)).toFixed(2)} м²</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Цена (1500₽/м³):</span>
+                  <span className="font-bold text-primary">₽ {editCalculatedPrice.toLocaleString()}/мес</span>
+                </div>
+              </div>
+            )}
+
+            {/* Floor */}
+            <div className="grid gap-2">
+              <Label htmlFor="edit-floor">Этаж</Label>
+              <Input 
+                id="edit-floor" 
+                type="number" 
+                value={editFormData.floor}
+                onChange={(e) => setEditFormData(prev => ({ ...prev, floor: e.target.value }))}
+              />
+            </div>
+
+            {/* Options */}
+            <div className="flex items-center gap-6 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Switch 
+                  id="edit-socket" 
+                  checked={editFormData.hasSocket}
+                  onCheckedChange={(checked) => setEditFormData(prev => ({ ...prev, hasSocket: checked }))}
+                />
+                <Label htmlFor="edit-socket">Розетка</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch 
+                  id="edit-shelves" 
+                  checked={editFormData.hasShelves}
+                  onCheckedChange={(checked) => setEditFormData(prev => ({ ...prev, hasShelves: checked }))}
+                />
+                <Label htmlFor="edit-shelves">Стеллажи</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch 
+                  id="edit-available" 
+                  checked={editFormData.isAvailable}
+                  onCheckedChange={(checked) => setEditFormData(prev => ({ ...prev, isAvailable: checked }))}
+                />
+                <Label htmlFor="edit-available">Свободна</Label>
+              </div>
+            </div>
+
+            {/* Photo Upload */}
+            <div className="space-y-3">
+              <Label>Фотографии ячейки</Label>
+              <div 
+                className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                onClick={() => editFileInputRef.current?.click()}
+              >
+                <input
+                  ref={editFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleEditPhotoUpload}
+                />
+                <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  Нажмите для загрузки или перетащите файлы
+                </p>
+              </div>
+
+              {/* Photo Previews */}
+              {editPhotoPreviews.length > 0 && (
+                <div className="grid grid-cols-4 gap-3">
+                  {editPhotoPreviews.map((preview, index) => (
+                    <div key={index} className="relative group aspect-square">
+                      <img 
+                        src={preview} 
+                        alt={`Фото ${index + 1}`}
+                        className="w-full h-full object-cover rounded-lg border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeEditPhoto(index)}
+                        className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {editPhotoPreviews.length > 0 && (
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Image className="h-4 w-4" />
+                  Всего: {editPhotoPreviews.length} фото
+                </p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Отмена
+            </Button>
+            <Button onClick={handleSaveEdit}>
+              Сохранить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
