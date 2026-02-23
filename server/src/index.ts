@@ -6,6 +6,8 @@ import dotenv from 'dotenv';
 import { errorHandler } from './middleware/errorHandler';
 import { healthRouter } from './routes/health';
 import { cellsRouter } from './routes/cells';
+import { customersRouter } from './routes/customers';
+import { rentalsRouter } from './routes/rentals';
 
 dotenv.config();
 
@@ -31,7 +33,8 @@ app.use('/uploads', express.static(process.env.UPLOAD_DIR || '/var/www/kladovka7
 // Routes
 app.use('/api/health', healthRouter);
 app.use('/api/cells', cellsRouter);
-
+app.use('/api/customers', customersRouter);
+app.use('/api/rentals', rentalsRouter);
 // Error handling
 app.use(errorHandler);
 
