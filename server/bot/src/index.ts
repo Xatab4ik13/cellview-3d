@@ -71,6 +71,7 @@ bot.on('contact', async (ctx) => {
   const normalizedPhone = phone.startsWith('+') ? phone : `+${phone}`;
 
   try {
+    // Try to link existing customer
     const [result] = await db.query(
       'UPDATE customers SET telegram = ?, telegram_id = ? WHERE phone LIKE ?',
       [`@${username || telegramId}`, String(telegramId), `%${normalizedPhone.slice(-10)}%`]
@@ -87,11 +88,24 @@ bot.on('contact', async (ctx) => {
         ])
       );
     } else {
+      // Auto-register new customer
+      const firstName = ctx.from?.first_name || '';
+      const lastName = ctx.from?.last_name || '';
+      const fullName = `${firstName} ${lastName}`.trim() || 'Клиент';
+
+      await db.query(
+        'INSERT INTO customers (name, phone, telegram, telegram_id, type, status) VALUES (?, ?, ?, ?, ?, ?)',
+        [fullName, normalizedPhone, `@${username || telegramId}`, String(telegramId), 'individual', 'active']
+      );
+
       await ctx.reply(
-        '🆕 Ваш номер не найден в системе.\n' +
-        'Забронируйте ячейку на сайте, и ваш аккаунт будет создан автоматически.',
+        '✅ Добро пожаловать! Аккаунт создан.\n\n' +
+        `👤 ${fullName}\n` +
+        `📱 ${normalizedPhone}\n\n` +
+        'Теперь вы можете выбрать и забронировать ячейку:',
         Markup.inlineKeyboard([
           [Markup.button.url('📦 Выбрать ячейку', `${process.env.SITE_URL}/catalog`)],
+          [Markup.button.url('🏠 Личный кабинет', `${process.env.SITE_URL}/dashboard`)],
         ])
       );
     }
