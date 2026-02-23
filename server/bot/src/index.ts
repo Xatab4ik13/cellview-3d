@@ -2,7 +2,7 @@ import { Telegraf, Markup } from 'telegraf';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { db } from './database';
-import { handleStart, handleLogin, handleMyRentals, handleHelp, handleContact, generateAuthToken } from './handlers';
+import { handleStart, handleLogin, handleMyRentals, handleHelp, handleContact } from './handlers';
 
 dotenv.config();
 
@@ -13,6 +13,7 @@ if (!BOT_TOKEN) {
 }
 
 const SITE_URL = process.env.SITE_URL || 'https://kladovka78.ru';
+const API_URL = process.env.API_URL || 'https://api.kladovka78.ru';
 
 const bot = new Telegraf(BOT_TOKEN);
 
@@ -22,6 +23,22 @@ bot.command('login', handleLogin);
 bot.command('rentals', handleMyRentals);
 bot.command('help', handleHelp);
 bot.command('contact', handleContact);
+
+// Helper: confirm auth session via API
+async function confirmAuthSession(sessionId: string, customerId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_URL}/api/auth/session/${sessionId}/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ customerId }),
+    });
+    const json = await res.json() as { success?: boolean };
+    return json.success === true;
+  } catch (err) {
+    console.error('Failed to confirm auth session:', err);
+    return false;
+  }
+}
 
 // Callback queries
 bot.action(/^confirm_phone:(.+)$/, async (ctx) => {
@@ -42,12 +59,11 @@ bot.action(/^confirm_phone:(.+)$/, async (ctx) => {
       const customer = (customers as any[])[0];
 
       if (customer) {
-        const authUrl = await generateAuthToken(customer.id);
         await ctx.editMessageText(
           '✅ Аккаунт успешно привязан!\n\n' +
-          'Нажмите кнопку ниже для входа в личный кабинет:',
+          'Используйте кнопку «Войти» на сайте для входа в ЛК.',
           Markup.inlineKeyboard([
-            [Markup.button.url('🏠 Войти в личный кабинет', authUrl)],
+            [Markup.button.url('🏠 Открыть сайт', SITE_URL)],
           ])
         );
       }
@@ -75,6 +91,10 @@ bot.on('contact', async (ctx) => {
 
   const normalizedPhone = phone.startsWith('+') ? phone : `+${phone}`;
 
+  // Check if there's a pending session from deep link
+  // (stored in-memory for simplicity — could use Redis in production)
+  const pendingSessionId = (ctx as any).__pendingSessionId as string | undefined;
+
   try {
     const [result] = await db.query(
       'UPDATE customers SET telegram = ?, telegram_id = ? WHERE phone LIKE ?',
@@ -87,16 +107,27 @@ bot.on('contact', async (ctx) => {
         [String(telegramId)]
       );
       const customer = (customers as any[])[0];
-      const authUrl = customer ? await generateAuthToken(customer.id) : `${SITE_URL}/dashboard`;
 
-      await ctx.reply(
-        `✅ Аккаунт привязан! Добро пожаловать, ${customer?.name || ''}.\n\n` +
-        'Нажмите кнопку ниже для входа:',
-        Markup.inlineKeyboard([
-          [Markup.button.url('🏠 Войти в личный кабинет', authUrl)],
-          [Markup.button.url('📦 Каталог ячеек', `${SITE_URL}/catalog`)],
-        ])
-      );
+      // If there was a pending session, confirm it
+      if (pendingSessionId && customer) {
+        await confirmAuthSession(pendingSessionId, customer.id);
+        await ctx.reply(
+          `✅ Аккаунт привязан! Добро пожаловать, ${customer.name}.\n\n` +
+          'Вернитесь на сайт — он автоматически откроет ЛК.',
+          Markup.inlineKeyboard([
+            [Markup.button.url('🏠 Открыть сайт', SITE_URL)],
+          ])
+        );
+      } else {
+        await ctx.reply(
+          `✅ Аккаунт привязан! Добро пожаловать, ${customer?.name || ''}.\n\n` +
+          'Используйте кнопку «Войти» на сайте.',
+          Markup.inlineKeyboard([
+            [Markup.button.url('🏠 Открыть сайт', SITE_URL)],
+            [Markup.button.url('📦 Каталог ячеек', `${SITE_URL}/catalog`)],
+          ])
+        );
+      }
     } else {
       // Auto-register new customer
       const firstName = ctx.from?.first_name || '';
@@ -109,17 +140,28 @@ bot.on('contact', async (ctx) => {
         [uuid, fullName, normalizedPhone, `@${username || telegramId}`, String(telegramId), 'individual']
       );
 
-      const authUrl = await generateAuthToken(uuid);
-
-      await ctx.reply(
-        `✅ Добро пожаловать, ${fullName}! Аккаунт создан.\n\n` +
-        `📱 ${normalizedPhone}\n\n` +
-        'Нажмите кнопку ниже для входа в личный кабинет:',
-        Markup.inlineKeyboard([
-          [Markup.button.url('🏠 Войти в личный кабинет', authUrl)],
-          [Markup.button.url('📦 Выбрать ячейку', `${SITE_URL}/catalog`)],
-        ])
-      );
+      // If there was a pending session, confirm it
+      if (pendingSessionId) {
+        await confirmAuthSession(pendingSessionId, uuid);
+        await ctx.reply(
+          `✅ Добро пожаловать, ${fullName}! Аккаунт создан.\n\n` +
+          `📱 ${normalizedPhone}\n\n` +
+          'Вернитесь на сайт — он автоматически откроет ЛК.',
+          Markup.inlineKeyboard([
+            [Markup.button.url('🏠 Открыть сайт', SITE_URL)],
+          ])
+        );
+      } else {
+        await ctx.reply(
+          `✅ Добро пожаловать, ${fullName}! Аккаунт создан.\n\n` +
+          `📱 ${normalizedPhone}\n\n` +
+          'Используйте кнопку «Войти» на сайте.',
+          Markup.inlineKeyboard([
+            [Markup.button.url('🏠 Открыть сайт', SITE_URL)],
+            [Markup.button.url('📦 Выбрать ячейку', `${SITE_URL}/catalog`)],
+          ])
+        );
+      }
     }
   } catch (err) {
     console.error('Error processing contact:', err);
