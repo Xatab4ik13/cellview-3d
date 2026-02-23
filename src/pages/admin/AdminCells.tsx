@@ -202,7 +202,7 @@ const CellDetailPanel = ({
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            {cell.width}×{cell.depth}×{cell.height} м · {cell.volume} м³ · Этаж {cell.floor}, ярус {cell.tier}
+            {cell.width}×{cell.depth}×{cell.height} м · {cell.volume} м³ · Ярус {cell.tier}
           </p>
         </div>
       </div>
@@ -610,10 +610,34 @@ const AdminCells = () => {
   };
 
   const handleSaveEdit = () => {
-    console.log('Saving cell:', { id: editingCell?.id, ...editFormData });
+    if (!editingCell) return;
+    const w = parseFloat(editFormData.width) || editingCell.width;
+    const d = parseFloat(editFormData.depth) || editingCell.depth;
+    const h = parseFloat(editFormData.height) || editingCell.height;
+    const area = parseFloat((w * d).toFixed(2));
+    const vol = parseFloat((w * d * h).toFixed(2));
+    const updatedCell: StorageCell = {
+      ...editingCell,
+      number: parseInt(editFormData.number) || editingCell.number,
+      width: w,
+      depth: d,
+      height: h,
+      area,
+      volume: vol,
+      floor: parseInt(editFormData.floor) || 1,
+      tier: parseInt(editFormData.tier) || 1,
+      pricePerMonth: calculatePrice(vol),
+      hasSocket: editFormData.hasSocket,
+      hasShelves: editFormData.hasShelves,
+      photos: editPhotoPreviews,
+    };
+    setCells(prev => prev.map(c => c.id === editingCell.id ? updatedCell : c));
+    if (selectedCell?.id === editingCell.id) {
+      setSelectedCell(updatedCell);
+    }
     setIsEditDialogOpen(false);
     setEditingCell(null);
-    toast.success('Ячейка обновлена');
+    toast.success(`Ячейка №${updatedCell.number} обновлена`);
   };
 
   const getDimensions = (cell: StorageCell) => `${cell.width} × ${cell.depth} × ${cell.height} м`;
@@ -736,11 +760,6 @@ const AdminCells = () => {
                   </div>
                 </div>
               )}
-              <div className="grid gap-2">
-                <Label>Этаж</Label>
-                <Input type="number" placeholder="1" value={formData.floor}
-                  onChange={(e) => setFormData(prev => ({ ...prev, floor: e.target.value }))} />
-              </div>
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
                   <Switch checked={formData.hasSocket} onCheckedChange={(c) => setFormData(prev => ({ ...prev, hasSocket: c }))} />
@@ -1171,11 +1190,6 @@ const AdminCells = () => {
                 </div>
               </div>
             )}
-            <div className="grid gap-2">
-              <Label>Этаж</Label>
-              <Input type="number" value={editFormData.floor}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, floor: e.target.value }))} />
-            </div>
             <div className="flex items-center gap-6 flex-wrap">
               <div className="flex items-center gap-2">
                 <Switch checked={editFormData.hasSocket} onCheckedChange={(c) => setEditFormData(prev => ({ ...prev, hasSocket: c }))} />

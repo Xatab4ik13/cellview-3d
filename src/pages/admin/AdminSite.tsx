@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Globe, Type, Image, Search, Save, Eye, Palette, Layout, FileText, Phone, MapPin, Clock, ExternalLink } from 'lucide-react';
+import { Globe, Type, Image, Search, Save, Eye, Palette, Layout, FileText, Phone, MapPin, Clock, ExternalLink, File, Plus, Trash2, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -90,11 +90,12 @@ const AdminSite = () => {
       </div>
 
       <Tabs defaultValue="content" className="space-y-6">
-        <TabsList className="h-11">
+        <TabsList className="h-11 flex-wrap">
           <TabsTrigger value="content" className="text-sm px-5 gap-2"><Type className="w-4 h-4" />Контент</TabsTrigger>
           <TabsTrigger value="contacts" className="text-sm px-5 gap-2"><Phone className="w-4 h-4" />Контакты</TabsTrigger>
           <TabsTrigger value="seo" className="text-sm px-5 gap-2"><Search className="w-4 h-4" />SEO</TabsTrigger>
           <TabsTrigger value="pages" className="text-sm px-5 gap-2"><Layout className="w-4 h-4" />Страницы</TabsTrigger>
+          <TabsTrigger value="documents" className="text-sm px-5 gap-2"><FileText className="w-4 h-4" />Документы</TabsTrigger>
         </TabsList>
 
         {/* Content tab */}
@@ -161,6 +162,47 @@ const AdminSite = () => {
                   checked={(siteData as any)[page.key]}
                   onCheckedChange={(v) => setSiteData(prev => ({ ...prev, [page.key]: v }))}
                 />
+              </div>
+            ))}
+          </CardBlock>
+        </TabsContent>
+
+        {/* Documents tab */}
+        <TabsContent value="documents" className="space-y-6">
+          <CardBlock title="Публичные документы" icon={FileText}>
+            <p className="text-sm text-muted-foreground mb-4">
+              Документы, доступные на сайте для клиентов: оферта, политика конфиденциальности, согласие на обработку данных
+            </p>
+            {[
+              { key: 'privacy', label: 'Политика конфиденциальности', path: '/privacy', status: 'published' },
+              { key: 'consent', label: 'Согласие на обработку данных', path: '/consent', status: 'published' },
+              { key: 'docs', label: 'Публичная оферта', path: '/docs', status: 'published' },
+            ].map(doc => (
+              <div key={doc.key} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
+                    <File className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">{doc.label}</p>
+                    <p className="text-xs text-muted-foreground">{doc.path}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs" style={{
+                    borderColor: 'hsl(var(--status-active) / 0.3)',
+                    color: 'hsl(var(--status-active))',
+                    backgroundColor: 'hsl(var(--status-active) / 0.1)',
+                  }}>
+                    Опубликован
+                  </Badge>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => window.open(doc.path, '_blank')}>
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => toast.info(`Редактирование "${doc.label}" будет доступно после подключения базы данных`)}>
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </CardBlock>

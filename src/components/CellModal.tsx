@@ -80,7 +80,7 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
             <Badge variant="success">Свободна</Badge>
           </DialogTitle>
           <DialogDescription>
-            Площадь {cell.area} м² • Объем {cell.volume} м³ • {cell.tier > 1 ? `${cell.tier} ярус` : 'Нижний ярус'}
+            Площадь {cell.area} м² • Объем {cell.volume} м³ • Ярус {cell.tier}
           </DialogDescription>
         </DialogHeader>
 

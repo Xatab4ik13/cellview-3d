@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Bell, Plus } from 'lucide-react';
+import { Search, Bell } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -59,15 +59,6 @@ const CrmTopBar = () => {
         />
       </div>
 
-      {/* Quick action */}
-      <Button
-        size="icon"
-        className="h-9 w-9 md:h-10 md:w-auto md:px-4 gap-2 text-sm shadow-sm shrink-0"
-        onClick={() => navigate('/admin/applications')}
-      >
-        <Plus className="h-4 w-4" />
-        <span className="hidden md:inline">Новая заявка</span>
-      </Button>
 
       {/* Notifications */}
       <Button

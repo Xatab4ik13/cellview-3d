@@ -43,7 +43,7 @@ const CellInfoPanel = ({ cell, onClose }: CellInfoPanelProps) => {
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            Ярус {cell.tier}, Этаж {cell.floor}
+            Ярус {cell.tier}
           </p>
         </div>
         <button 
