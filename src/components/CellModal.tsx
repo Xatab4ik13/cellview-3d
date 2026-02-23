@@ -231,14 +231,19 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
                 size="lg"
                 onClick={() => {
                   onClose();
-                  navigate('/auth', { 
-                    state: { 
-                      cellId: cell.id, 
-                      cellNumber: cell.number, 
-                      duration: selectedDuration, 
-                      totalPrice: calculateTotalPrice(selectedDuration) 
-                    } 
-                  });
+                  // Если авторизован — сразу на оплату, иначе — на авторизацию
+                  const user = localStorage.getItem('user');
+                  const bookingState = { 
+                    cellId: cell.id, 
+                    cellNumber: cell.number, 
+                    duration: selectedDuration, 
+                    totalPrice: calculateTotalPrice(selectedDuration) 
+                  };
+                  if (user) {
+                    navigate('/checkout', { state: bookingState });
+                  } else {
+                    navigate('/auth', { state: bookingState });
+                  }
                 }}
               >
                 Забронировать за {calculateTotalPrice(selectedDuration).toLocaleString('ru-RU')} ₽
