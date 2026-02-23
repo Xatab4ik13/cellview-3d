@@ -1,4 +1,10 @@
-import { StorageCell } from '@/types/storage';
+import { StorageCell, CellStatus } from '@/types/storage';
+
+// Helper to add status field based on isAvailable
+const withStatus = (cell: Omit<StorageCell, 'status'>): StorageCell => ({
+  ...cell,
+  status: cell.isAvailable ? 'available' as CellStatus : 'occupied' as CellStatus,
+});
 
 // Импорт фотографий ячеек
 import cell1Photo1 from '@/assets/cells/cell-1-photo-1.jpg';
@@ -84,8 +90,8 @@ import cell41Photo2 from '@/assets/cells/cell-41-photo-2.jpg';
 import cell42Photo1 from '@/assets/cells/cell-42-photo-1.jpg';
 import cell42Photo2 from '@/assets/cells/cell-42-photo-2.jpg';
 
-// Данные ячеек
-export const storageCells: StorageCell[] = [
+// Данные ячеек (raw without status)
+const rawCells: Omit<StorageCell, 'status'>[] = [
   {
     id: 'cell-1',
     number: 1,
@@ -759,6 +765,8 @@ export const storageCells: StorageCell[] = [
     photos: [cell42Photo1, cell42Photo2],
   },
 ];
+
+export const storageCells: StorageCell[] = rawCells.map(withStatus);
 
 export const getCellsBySize = (cells: StorageCell[]) => {
   return {

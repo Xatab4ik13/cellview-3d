@@ -41,6 +41,7 @@ interface Customer {
   type: 'company' | 'individual';
   phone: string;
   email: string;
+  telegram?: string;
   address?: string;
   rentals: number;
   totalSpent: string;
@@ -48,6 +49,10 @@ interface Customer {
   registeredAt: string;
   status: 'active' | 'inactive' | 'vip' | 'debtor';
   tags: string[];
+  telegramNotifications?: {
+    enabled: boolean;
+    types: ('payment' | 'rental' | 'documents')[];
+  };
   notes: Note[];
   rentalHistory: RentalRecord[];
   paymentHistory: PaymentRecord[];
@@ -83,10 +88,12 @@ const initialCustomers: Customer[] = [
   {
     id: 'C-001', name: 'ООО "ТехноСервис"', type: 'company',
     phone: '+7 (999) 123-45-67', email: 'info@technoservice.ru',
+    telegram: '@technoservice',
     address: 'г. Санкт-Петербург, ул. Ленина 42',
     rentals: 2, totalSpent: '₽ 156 000', totalSpentNum: 156000,
     registeredAt: '15.01.2024', status: 'vip',
     tags: ['VIP', 'Юр. лицо', 'Долгосрочная аренда'],
+    telegramNotifications: { enabled: true, types: ['payment', 'rental', 'documents'] },
     notes: [
       { id: 'n1', text: 'Планируют расширение — интересуются ещё 2 ячейками на 3 этаже', author: 'Менеджер', date: '20.02.2026' },
       { id: 'n2', text: 'Оплата всегда вовремя, лояльный клиент', author: 'Бухгалтер', date: '15.01.2026' },
@@ -104,9 +111,11 @@ const initialCustomers: Customer[] = [
   {
     id: 'C-002', name: 'Иванов Петр Сергеевич', type: 'individual',
     phone: '+7 (999) 234-56-78', email: 'petrov@gmail.com',
+    telegram: '@petrov_ps',
     rentals: 1, totalSpent: '₽ 42 000', totalSpentNum: 42000,
     registeredAt: '01.02.2024', status: 'active',
     tags: ['Физ. лицо'],
+    telegramNotifications: { enabled: true, types: ['payment', 'rental'] },
     notes: [],
     rentalHistory: [
       { id: 'r3', cell: 'B-05', size: '3 м²', startDate: '01.02.2024', endDate: '01.08.2026', amount: '₽ 4 500/мес', status: 'active' },
@@ -257,12 +266,36 @@ const CustomerDetail = ({
                 <Mail className="h-4 w-4" /> {customer.email}
               </button>
             )}
+            {customer.telegram && (
+              <a href={`https://t.me/${customer.telegram.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 hover:text-primary transition-colors">
+                <MessageSquare className="h-4 w-4" /> {customer.telegram}
+              </a>
+            )}
             {customer.address && (
               <span className="flex items-center gap-1.5">
                 <MapPin className="h-4 w-4" /> {customer.address}
               </span>
             )}
           </div>
+          {/* Telegram notifications indicator */}
+          {customer.telegramNotifications?.enabled && (
+            <div className="flex items-center gap-2 mt-2 text-xs">
+              <Badge variant="outline" className="gap-1 text-xs" style={{
+                borderColor: 'hsl(var(--status-active) / 0.3)',
+                color: 'hsl(var(--status-active))',
+                backgroundColor: 'hsl(var(--status-active) / 0.1)',
+              }}>
+                <MessageSquare className="h-3 w-3" />
+                TG-уведомления
+              </Badge>
+              {customer.telegramNotifications.types.map(t => (
+                <span key={t} className="text-muted-foreground">
+                  {t === 'payment' ? '💳 Оплата' : t === 'rental' ? '📦 Аренда' : '📄 Документы'}
+                </span>
+              ))}
+            </div>
+          )}
           <div className="flex gap-2 mt-3 flex-wrap">
             {customer.tags.map((tag) => (
               <Badge key={tag} variant="outline" className="text-xs">
@@ -715,6 +748,15 @@ const AdminCustomers = () => {
                               <div className="flex items-center gap-1.5">
                                 <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                                 {customer.email}
+                              </div>
+                            )}
+                            {customer.telegram && (
+                              <div className="flex items-center gap-1.5">
+                                <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+                                {customer.telegram}
+                                {customer.telegramNotifications?.enabled && (
+                                  <span className="text-xs" style={{ color: 'hsl(var(--status-active))' }}>✓ TG</span>
+                                )}
                               </div>
                             )}
                           </div>
