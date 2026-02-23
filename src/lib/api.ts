@@ -56,6 +56,31 @@ export async function deleteCell(id: string): Promise<void> {
   });
 }
 
+// ============ Фото ячеек ============
+
+export async function uploadCellPhotos(cellId: string, files: File[]): Promise<{ url: string; sortOrder: number }[]> {
+  const formData = new FormData();
+  files.forEach(file => formData.append('photos', file));
+
+  const res = await fetch(`${API_BASE}/api/cells/${cellId}/photos`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.error || 'Ошибка загрузки фото');
+  }
+  return json.data;
+}
+
+export async function deleteCellPhoto(cellId: string, url: string): Promise<void> {
+  await fetchApi(`/api/cells/${cellId}/photos`, {
+    method: 'DELETE',
+    body: JSON.stringify({ url }),
+  });
+}
+
 // ============ Клиенты ============
 
 export interface CustomerData {

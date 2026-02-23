@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { calculatePrice, StorageCell, CellStatus, CELL_STATUS_LABELS, RESERVATION_HOURS } from '@/types/storage';
 import { useCells, useCreateCell, useUpdateCell, useDeleteCell } from '@/hooks/useCells';
+import { uploadCellPhotos, deleteCellPhoto } from '@/lib/api';
 import { useRentals, useCreateRental, useExtendRental, useReleaseRental } from '@/hooks/useRentals';
 import { useCustomers, useCreateCustomer } from '@/hooks/useCustomers';
 import CellProjectionPreview from '@/components/admin/CellProjectionPreview';
@@ -676,15 +677,16 @@ const AdminCells = () => {
     setPhotoPreviews([]);
   };
 
-  const handleAddCell = () => {
+  const handleAddCell = async () => {
     const w = parseFloat(formData.width);
     const d = parseFloat(formData.depth);
     const h = parseFloat(formData.height);
     const area = parseFloat((w * d).toFixed(2));
     const volume = parseFloat((w * d * h).toFixed(2));
+    const cellId = `cell-${formData.number}`;
     
     const cellData = {
-      id: `cell-${formData.number}`,
+      id: cellId,
       number: parseInt(formData.number),
       width: w,
       depth: d,
@@ -698,11 +700,20 @@ const AdminCells = () => {
       hasShelves: formData.hasShelves,
       status: 'available' as CellStatus,
       description: '',
-      photos: photoPreviews,
+      photos: [] as string[],
     };
 
     createMutation.mutate(cellData, {
-      onSuccess: () => {
+      onSuccess: async () => {
+        // Upload photos after cell is created
+        if (photos.length > 0) {
+          try {
+            await uploadCellPhotos(cellId, photos);
+            toast.success(`Ячейка создана, загружено ${photos.length} фото`);
+          } catch (err) {
+            toast.warning('Ячейка создана, но фото не загружены');
+          }
+        }
         resetForm();
         setIsAddDialogOpen(false);
       }
@@ -717,20 +728,32 @@ const AdminCells = () => {
       hasSocket: cell.hasSocket, hasShelves: cell.hasShelves, isAvailable: cell.isAvailable,
     });
     setEditPhotoPreviews(cell.photos || []);
+    setEditNewFiles([]);
+    setDeletedPhotoUrls([]);
     setIsEditDialogOpen(true);
   };
+
+  const [editNewFiles, setEditNewFiles] = useState<File[]>([]);
+  const [deletedPhotoUrls, setDeletedPhotoUrls] = useState<string[]>([]);
 
   const handleEditPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    Array.from(files).forEach(file => {
+    const newFiles = Array.from(files);
+    setEditNewFiles(prev => [...prev, ...newFiles]);
+    newFiles.forEach(file => {
       const reader = new FileReader();
       reader.onloadend = () => setEditPhotoPreviews(prev => [...prev, reader.result as string]);
       reader.readAsDataURL(file);
     });
   };
 
-  const handleSaveEdit = () => {
+  const handleDeleteExistingPhoto = (url: string, index: number) => {
+    setDeletedPhotoUrls(prev => [...prev, url]);
+    setEditPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSaveEdit = async () => {
     if (!editingCell) return;
     const w = parseFloat(editFormData.width) || editingCell.width;
     const d = parseFloat(editFormData.depth) || editingCell.depth;
@@ -750,15 +773,33 @@ const AdminCells = () => {
       pricePerMonth: calculatePrice(vol),
       hasSocket: editFormData.hasSocket,
       hasShelves: editFormData.hasShelves,
-      photos: editPhotoPreviews,
     };
 
     updateMutation.mutate({ id: editingCell.id, cell: cellData }, {
-      onSuccess: () => {
+      onSuccess: async () => {
+        // Delete removed photos
+        for (const url of deletedPhotoUrls) {
+          try {
+            await deleteCellPhoto(editingCell.id, url);
+          } catch (err) {
+            console.error('Failed to delete photo:', err);
+          }
+        }
+        // Upload new photos
+        if (editNewFiles.length > 0) {
+          try {
+            await uploadCellPhotos(editingCell.id, editNewFiles);
+            toast.success(`Обновлено, загружено ${editNewFiles.length} новых фото`);
+          } catch (err) {
+            toast.warning('Ячейка обновлена, но новые фото не загружены');
+          }
+        }
         setIsEditDialogOpen(false);
         setEditingCell(null);
+        setEditNewFiles([]);
+        setDeletedPhotoUrls([]);
         if (selectedCell?.id === editingCell.id) {
-          setSelectedCell(prev => prev ? { ...prev, ...cellData } : null);
+          setSelectedCell(null); // Force refresh
         }
       }
     });
@@ -1357,15 +1398,28 @@ const AdminCells = () => {
               </div>
               {editPhotoPreviews.length > 0 && (
                 <div className="grid grid-cols-4 gap-3">
-                  {editPhotoPreviews.map((preview, i) => (
-                    <div key={i} className="relative group aspect-square">
-                      <img src={preview} alt="" className="w-full h-full object-cover rounded-lg border" />
-                      <button onClick={() => setEditPhotoPreviews(prev => prev.filter((_, idx) => idx !== i))}
-                        className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ))}
+                  {editPhotoPreviews.map((preview, i) => {
+                    const isExistingPhoto = preview.startsWith('http');
+                    return (
+                      <div key={i} className="relative group aspect-square">
+                        <img src={preview} alt="" className="w-full h-full object-cover rounded-lg border" />
+                        <button onClick={() => {
+                          if (isExistingPhoto) {
+                            handleDeleteExistingPhoto(preview, i);
+                          } else {
+                            // Remove new file preview
+                            const existingCount = editPhotoPreviews.filter(p => p.startsWith('http')).length;
+                            const newFileIndex = i - existingCount;
+                            setEditNewFiles(prev => prev.filter((_, idx) => idx !== newFileIndex));
+                            setEditPhotoPreviews(prev => prev.filter((_, idx) => idx !== i));
+                          }
+                        }}
+                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
