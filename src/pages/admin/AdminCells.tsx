@@ -174,11 +174,11 @@ const AdminCells = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Управление ячейками</h2>
-          <p className="text-muted-foreground">
-            Всего: {storageCells.length} | Свободно: {availableCount} | Занято: {occupiedCount}
+          <h2 className="text-2xl font-bold">Ячейки</h2>
+          <p className="text-base text-muted-foreground mt-1">
+            Всего: {storageCells.length} · Свободно: {availableCount} · Занято: {occupiedCount}
           </p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
@@ -186,8 +186,8 @@ const AdminCells = () => {
           if (!open) resetForm();
         }}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
+            <Button className="gap-2 h-11 text-base">
+              <Plus className="h-5 w-5" />
               Добавить ячейку
             </Button>
           </DialogTrigger>
@@ -388,83 +388,98 @@ const AdminCells = () => {
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Поиск по ID или размерам..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Размеры</TableHead>
-                <TableHead>Объём</TableHead>
-                <TableHead>Цена/мес</TableHead>
-                <TableHead>Опции</TableHead>
-                <TableHead>Статус</TableHead>
-                <TableHead className="text-right">Действия</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-card border border-border rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <p className="text-sm text-muted-foreground">Всего ячеек</p>
+          <p className="text-2xl font-bold mt-1 text-primary">{storageCells.length}</p>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <p className="text-sm text-muted-foreground">Свободно</p>
+          <p className="text-2xl font-bold mt-1" style={{ color: 'hsl(var(--status-active))' }}>{availableCount}</p>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <p className="text-sm text-muted-foreground">Занято</p>
+          <p className="text-2xl font-bold mt-1" style={{ color: 'hsl(var(--status-pending))' }}>{occupiedCount}</p>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Поиск по ID или размерам..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 h-11"
+        />
+      </div>
+
+      {/* Table */}
+      <div className="bg-card border border-border rounded-xl overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border bg-muted/40">
+                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">ID</th>
+                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Размеры</th>
+                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Объём</th>
+                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Цена/мес</th>
+                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Опции</th>
+                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Статус</th>
+                <th className="text-right p-4 text-sm font-semibold text-muted-foreground">Действия</th>
+              </tr>
+            </thead>
+            <tbody>
               {filteredCells.map((cell) => (
-                <TableRow key={cell.id}>
-                  <TableCell className="font-medium">
+                <tr key={cell.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                  <td className="p-4">
                     <div className="flex items-center gap-2">
                       <Box className="h-4 w-4 text-muted-foreground" />
-                      {cell.id}
+                      <span className="font-medium text-sm">{cell.id}</span>
                     </div>
-                  </TableCell>
-                  <TableCell>{getDimensions(cell)}</TableCell>
-                  <TableCell>{cell.volume} м³</TableCell>
-                  <TableCell>₽ {cell.pricePerMonth.toLocaleString()}</TableCell>
-                  <TableCell>
+                  </td>
+                  <td className="p-4 text-sm">{getDimensions(cell)}</td>
+                  <td className="p-4 text-sm">{cell.volume} м³</td>
+                  <td className="p-4 font-semibold text-sm">{cell.pricePerMonth.toLocaleString('ru-RU')} ₽</td>
+                  <td className="p-4">
                     <div className="flex gap-1">
-                      {cell.hasSocket && (
-                        <Badge variant="outline" className="text-xs">
-                          Розетка
-                        </Badge>
-                      )}
-                      {cell.hasShelves && (
-                        <Badge variant="outline" className="text-xs">
-                          Стеллажи
-                        </Badge>
-                      )}
+                      {cell.hasSocket && <Badge variant="outline" className="text-xs">Розетка</Badge>}
+                      {cell.hasShelves && <Badge variant="outline" className="text-xs">Стеллажи</Badge>}
                     </div>
-                  </TableCell>
-                  <TableCell>
+                  </td>
+                  <td className="p-4">
                     <Badge
-                      variant={cell.isAvailable ? 'default' : 'secondary'}
-                      className={cell.isAvailable ? 'bg-green-500/10 text-green-600 hover:bg-green-500/20' : ''}
+                      variant="outline"
+                      style={cell.isAvailable ? {
+                        borderColor: 'hsl(var(--status-active) / 0.3)',
+                        color: 'hsl(var(--status-active))',
+                        backgroundColor: 'hsl(var(--status-active) / 0.1)',
+                      } : {
+                        borderColor: 'hsl(var(--status-pending) / 0.3)',
+                        color: 'hsl(var(--status-pending))',
+                        backgroundColor: 'hsl(var(--status-pending) / 0.1)',
+                      }}
                     >
                       {cell.isAvailable ? 'Свободна' : 'Занята'}
                     </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(cell)}>
+                  </td>
+                  <td className="p-4 text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openEditDialog(cell)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="text-destructive">
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
