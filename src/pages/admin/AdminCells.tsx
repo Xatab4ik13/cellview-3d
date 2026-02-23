@@ -38,8 +38,8 @@ import {
   RefreshCw, DoorOpen, History, ArrowLeft, User, ChevronRight,
   MoreHorizontal, Percent, Building2, UserRound, Timer, MessageSquare,
 } from 'lucide-react';
-import { storageCells as initialCells } from '@/data/storageCells';
 import { calculatePrice, StorageCell, CellStatus, CELL_STATUS_LABELS, RESERVATION_HOURS } from '@/types/storage';
+import { useCells, useCreateCell, useUpdateCell, useDeleteCell } from '@/hooks/useCells';
 import CellProjectionPreview from '@/components/admin/CellProjectionPreview';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -393,18 +393,14 @@ const CellDetailPanel = ({
 // ========== Main Component ==========
 
 const AdminCells = () => {
+  const { data: cells = [], isLoading } = useCells();
+  const createMutation = useCreateCell();
+  const updateMutation = useUpdateCell();
+  const deleteMutation = useDeleteCell();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'reserved' | 'occupied'>('all');
-  const [cells, setCells] = useState<StorageCell[]>(() => {
-    // Set cell-3 as reserved for demo
-    const reservedUntil = new Date();
-    reservedUntil.setHours(reservedUntil.getHours() + RESERVATION_HOURS);
-    return initialCells.map(c => 
-      c.id === 'cell-3' 
-        ? { ...c, status: 'reserved' as CellStatus, isAvailable: false, reservedUntil: reservedUntil.toISOString() } 
-        : c
-    );
-  });
+  
   const [customers, setCustomers] = useState<SimpleCustomer[]>(initialCustomers);
   const [rentals, setRentals] = useState<CellRental[]>(initialRentals);
   const [rentalHistory, setRentalHistory] = useState<CellRentalHistory[]>(initialHistory);
@@ -571,10 +567,16 @@ const AdminCells = () => {
       notes: assignForm.notes,
     };
 
-    setRentals(prev => [...prev, newRental]);
-    setCells(prev => prev.map(c => c.id === assigningCell.id ? { ...c, isAvailable: false, status: 'occupied' as CellStatus } : c));
-    setIsAssignDialogOpen(false);
-    toast.success(`Ячейка №${assigningCell.number} сдана клиенту ${assignCustomer.name}`);
+    updateMutation.mutate({ 
+      id: assigningCell.id, 
+      cell: { status: 'occupied' as CellStatus } 
+    }, {
+      onSuccess: () => {
+        setRentals(prev => [...prev, newRental]);
+        setIsAssignDialogOpen(false);
+        toast.success(`Ячейка №${assigningCell.number} сдана клиенту ${assignCustomer.name}`);
+      }
+    });
   };
 
   const handleRelease = (cellId: string) => {
@@ -599,22 +601,26 @@ const AdminCells = () => {
       }]);
       setRentals(prev => prev.filter(r => r.cellId !== releasingCellId));
     }
-    setCells(prev => prev.map(c => c.id === releasingCellId ? { ...c, isAvailable: true, status: 'available' as CellStatus, reservedUntil: undefined } : c));
-    setIsReleaseDialogOpen(false);
-    setReleasingCellId(null);
-    if (selectedCell?.id === releasingCellId) {
-      setSelectedCell(prev => prev ? { ...prev, isAvailable: true, status: 'available' as CellStatus, reservedUntil: undefined } : null);
-    }
-    toast.success('Ячейка освобождена');
+    updateMutation.mutate({ 
+      id: releasingCellId, 
+      cell: { status: 'available' as CellStatus, reservedUntil: undefined } 
+    }, {
+      onSuccess: () => {
+        setIsReleaseDialogOpen(false);
+        setReleasingCellId(null);
+        if (selectedCell?.id === releasingCellId) {
+          setSelectedCell(prev => prev ? { ...prev, status: 'available' as CellStatus, reservedUntil: undefined } : null);
+        }
+        toast.success('Ячейка освобождена');
+      }
+    });
   };
 
   const handleExtend = (cellId: string, months: number) => {
+    // В будущем здесь будет запрос к API для продления аренды в БД
     setRentals(prev => prev.map(r => {
       if (r.cellId !== cellId) return r;
       const newEnd = addMonths(r.endDate, months);
-      const newDiscount = getDiscount(months);
-      const basePrice = cells.find(c => c.id === cellId)?.pricePerMonth || r.pricePerMonth;
-      const newPrice = Math.round(basePrice * (1 - newDiscount / 100));
       return { ...r, endDate: newEnd, months: r.months + months };
     }));
     toast.success(`Аренда продлена на ${months} мес.`);
@@ -645,10 +651,36 @@ const AdminCells = () => {
   };
 
   const handleAddCell = () => {
-    console.log('Adding cell:', { ...formData, photos, calculatedPrice });
-    resetForm();
-    setIsAddDialogOpen(false);
-    toast.success('Ячейка добавлена');
+    const w = parseFloat(formData.width);
+    const d = parseFloat(formData.depth);
+    const h = parseFloat(formData.height);
+    const area = parseFloat((w * d).toFixed(2));
+    const volume = parseFloat((w * d * h).toFixed(2));
+    
+    const cellData = {
+      id: `cell-${formData.number}`,
+      number: parseInt(formData.number),
+      width: w,
+      depth: d,
+      height: h,
+      area,
+      volume,
+      floor: parseInt(formData.floor),
+      tier: parseInt(formData.tier),
+      pricePerMonth: calculatePrice(volume),
+      hasSocket: formData.hasSocket,
+      hasShelves: formData.hasShelves,
+      status: 'available' as CellStatus,
+      description: '',
+      photos: photoPreviews,
+    };
+
+    createMutation.mutate(cellData, {
+      onSuccess: () => {
+        resetForm();
+        setIsAddDialogOpen(false);
+      }
+    });
   };
 
   const openEditDialog = (cell: StorageCell) => {
@@ -679,8 +711,8 @@ const AdminCells = () => {
     const h = parseFloat(editFormData.height) || editingCell.height;
     const area = parseFloat((w * d).toFixed(2));
     const vol = parseFloat((w * d * h).toFixed(2));
-    const updatedCell: StorageCell = {
-      ...editingCell,
+    
+    const cellData: Partial<StorageCell> = {
       number: parseInt(editFormData.number) || editingCell.number,
       width: w,
       depth: d,
@@ -694,13 +726,16 @@ const AdminCells = () => {
       hasShelves: editFormData.hasShelves,
       photos: editPhotoPreviews,
     };
-    setCells(prev => prev.map(c => c.id === editingCell.id ? updatedCell : c));
-    if (selectedCell?.id === editingCell.id) {
-      setSelectedCell(updatedCell);
-    }
-    setIsEditDialogOpen(false);
-    setEditingCell(null);
-    toast.success(`Ячейка №${updatedCell.number} обновлена`);
+
+    updateMutation.mutate({ id: editingCell.id, cell: cellData }, {
+      onSuccess: () => {
+        setIsEditDialogOpen(false);
+        setEditingCell(null);
+        if (selectedCell?.id === editingCell.id) {
+          setSelectedCell(prev => prev ? { ...prev, ...cellData } : null);
+        }
+      }
+    });
   };
 
   const getDimensions = (cell: StorageCell) => `${cell.width} × ${cell.depth} × ${cell.height} м`;
@@ -994,9 +1029,14 @@ const AdminCells = () => {
                           {cell.status === 'reserved' && (
                             <>
                               <DropdownMenuItem onClick={() => {
-                                // Cancel reservation — return to available
-                                setCells(prev => prev.map(c => c.id === cell.id ? { ...c, status: 'available' as CellStatus, isAvailable: true, reservedUntil: undefined } : c));
-                                toast.success(`Бронь ячейки №${cell.number} отменена`);
+                                updateMutation.mutate({ 
+                                  id: cell.id, 
+                                  cell: { status: 'available' as CellStatus, reservedUntil: undefined } 
+                                }, {
+                                  onSuccess: () => {
+                                    toast.success(`Бронь ячейки №${cell.number} отменена`);
+                                  }
+                                });
                               }}>
                                 <X className="h-4 w-4 mr-2" />Отменить бронь
                               </DropdownMenuItem>
