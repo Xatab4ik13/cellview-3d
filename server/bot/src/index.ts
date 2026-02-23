@@ -1,4 +1,5 @@
 import { Telegraf, Markup } from 'telegraf';
+import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { db } from './database';
 import { handleStart, handleLogin, handleMyRentals, handleHelp, handleContact } from './handlers';
@@ -11,7 +12,22 @@ if (!BOT_TOKEN) {
   process.exit(1);
 }
 
+const SITE_URL = process.env.SITE_URL || 'https://kladovka78.ru';
+
 const bot = new Telegraf(BOT_TOKEN);
+
+/**
+ * Generate a one-time auth token for a customer and return the login URL
+ */
+async function generateAuthToken(customerId: string): Promise<string> {
+  const token = crypto.randomBytes(32).toString('hex');
+  // Token valid for 10 minutes
+  await db.query(
+    'INSERT INTO auth_tokens (token, customer_id, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))',
+    [token, customerId]
+  );
+  return `${SITE_URL}/auth?token=${token}`;
+}
 
 // Commands
 bot.start(handleStart);
@@ -29,27 +45,32 @@ bot.action(/^confirm_phone:(.+)$/, async (ctx) => {
   if (!telegramId) return;
 
   try {
-    // Link Telegram to customer by phone
     const [result] = await db.query(
       'UPDATE customers SET telegram = ?, telegram_id = ? WHERE phone = ?',
       [`@${username || telegramId}`, String(telegramId), phone]
     );
 
     if ((result as any).affectedRows > 0) {
-      await ctx.editMessageText(
-        '✅ Аккаунт успешно привязан!\n\n' +
-        'Теперь вы будете получать уведомления здесь.\n' +
-        'Используйте /rentals для просмотра аренды.',
-        Markup.inlineKeyboard([
-          [Markup.button.url('🏠 Открыть личный кабинет', `${process.env.SITE_URL}/dashboard`)],
-        ])
-      );
+      // Get customer ID for auth token
+      const [customers] = await db.query('SELECT id, name FROM customers WHERE phone = ?', [phone]);
+      const customer = (customers as any[])[0];
+
+      if (customer) {
+        const authUrl = await generateAuthToken(customer.id);
+        await ctx.editMessageText(
+          '✅ Аккаунт успешно привязан!\n\n' +
+          'Нажмите кнопку ниже для входа в личный кабинет:',
+          Markup.inlineKeyboard([
+            [Markup.button.url('🏠 Войти в личный кабинет', authUrl)],
+          ])
+        );
+      }
     } else {
       await ctx.editMessageText(
         '❌ Клиент с таким номером не найден.\n' +
         'Убедитесь, что вы зарегистрированы в системе, или обратитесь к менеджеру.',
         Markup.inlineKeyboard([
-          [Markup.button.url('📞 Связаться', `${process.env.SITE_URL}/contacts`)],
+          [Markup.button.url('📞 Связаться', `${SITE_URL}/contacts`)],
         ])
       );
     }
@@ -67,7 +88,6 @@ bot.on('contact', async (ctx) => {
 
   if (!telegramId) return;
 
-  // Normalize phone
   const normalizedPhone = phone.startsWith('+') ? phone : `+${phone}`;
 
   try {
@@ -78,13 +98,20 @@ bot.on('contact', async (ctx) => {
     );
 
     if ((result as any).affectedRows > 0) {
+      // Get customer for auth token
+      const [customers] = await db.query(
+        'SELECT id, name FROM customers WHERE telegram_id = ?',
+        [String(telegramId)]
+      );
+      const customer = (customers as any[])[0];
+      const authUrl = customer ? await generateAuthToken(customer.id) : `${SITE_URL}/dashboard`;
+
       await ctx.reply(
-        '✅ Аккаунт привязан! Добро пожаловать.\n\n' +
-        '📦 /rentals — Моя аренда\n' +
-        '❓ /help — Помощь\n' +
-        '📞 /contact — Связь с менеджером',
+        `✅ Аккаунт привязан! Добро пожаловать, ${customer?.name || ''}.\n\n` +
+        'Нажмите кнопку ниже для входа:',
         Markup.inlineKeyboard([
-          [Markup.button.url('🏠 Личный кабинет', `${process.env.SITE_URL}/dashboard`)],
+          [Markup.button.url('🏠 Войти в личный кабинет', authUrl)],
+          [Markup.button.url('📦 Каталог ячеек', `${SITE_URL}/catalog`)],
         ])
       );
     } else {
@@ -99,14 +126,16 @@ bot.on('contact', async (ctx) => {
         [uuid, fullName, normalizedPhone, `@${username || telegramId}`, String(telegramId), 'individual']
       );
 
+      // Generate auth token for the new customer
+      const authUrl = await generateAuthToken(uuid);
+
       await ctx.reply(
-        '✅ Добро пожаловать! Аккаунт создан.\n\n' +
-        `👤 ${fullName}\n` +
+        `✅ Добро пожаловать, ${fullName}! Аккаунт создан.\n\n` +
         `📱 ${normalizedPhone}\n\n` +
-        'Теперь вы можете выбрать и забронировать ячейку:',
+        'Нажмите кнопку ниже для входа в личный кабинет:',
         Markup.inlineKeyboard([
-          [Markup.button.url('📦 Выбрать ячейку', `${process.env.SITE_URL}/catalog`)],
-          [Markup.button.url('🏠 Личный кабинет', `${process.env.SITE_URL}/dashboard`)],
+          [Markup.button.url('🏠 Войти в личный кабинет', authUrl)],
+          [Markup.button.url('📦 Выбрать ячейку', `${SITE_URL}/catalog`)],
         ])
       );
     }

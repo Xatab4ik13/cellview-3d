@@ -198,6 +198,30 @@ export async function deleteRental(id: string): Promise<void> {
   await fetchApi(`/api/rentals/${id}`, { method: 'DELETE' });
 }
 
+// ============ Авторизация ============
+
+export interface AuthCustomer {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  telegram?: string;
+  type: 'individual' | 'company';
+}
+
+export async function verifyAuthToken(token: string): Promise<AuthCustomer> {
+  return fetchApi<AuthCustomer>('/api/auth/verify-token', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+  });
+}
+
+export async function fetchAuthMe(customerId: string): Promise<AuthCustomer> {
+  return fetchApi<AuthCustomer>('/api/auth/me', {
+    headers: { 'X-Customer-Id': customerId },
+  });
+}
+
 // ============ Health ============
 
 export async function checkHealth(): Promise<{ status: string; services: Record<string, string> }> {
