@@ -32,6 +32,8 @@ import {
   Send, UserPlus, Trash2, Building2, UserRound,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer } from '@/hooks/useCustomers';
+import { CustomerData } from '@/lib/api';
 
 // ========== Data ==========
 
@@ -506,7 +508,32 @@ const emptyForm: CustomerFormData = {
 
 const AdminCustomers = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+  const { data: apiCustomers = [], isLoading } = useCustomers();
+  const createMutation = useCreateCustomer();
+  const updateMutation = useUpdateCustomer();
+  const deleteMutation = useDeleteCustomer();
+
+  // Map API data to local Customer interface for UI compatibility
+  const customers: Customer[] = apiCustomers.map((c: CustomerData) => ({
+    id: c.id || '',
+    name: c.name,
+    type: c.type,
+    phone: c.phone,
+    email: c.email || '',
+    telegram: c.telegram,
+    address: undefined,
+    rentals: 0,
+    totalSpent: '₽ 0',
+    totalSpentNum: 0,
+    registeredAt: c.createdAt ? new Date(c.createdAt).toLocaleDateString('ru-RU') : '',
+    status: 'active' as const,
+    tags: [c.type === 'company' ? 'Юр. лицо' : 'Физ. лицо'],
+    telegramNotifications: undefined,
+    notes: [],
+    rentalHistory: [],
+    paymentHistory: [],
+  }));
+
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -529,7 +556,7 @@ const AdminCustomers = () => {
 
   const statusFilters = [
     { key: 'all', label: 'Все', count: customers.length },
-    { key: 'active', label: 'Активные', count: customers.filter((c) => c.status === 'active').length },
+    { key: 'active', label: 'Активные', count: customers.filter((c) => c.status === 'active' || c.status === 'vip').length },
     { key: 'vip', label: 'VIP', count: customers.filter((c) => c.status === 'vip').length },
     { key: 'debtor', label: 'Должники', count: customers.filter((c) => c.status === 'debtor').length },
   ];
@@ -562,60 +589,40 @@ const AdminCustomers = () => {
     }
 
     if (editingCustomer) {
-      // Update
-      const updated: Customer = {
-        ...editingCustomer,
-        name: formData.name.trim(),
-        type: formData.type,
-        phone: formData.phone.trim(),
-        email: formData.email.trim(),
-        address: formData.address.trim() || undefined,
-        status: formData.status,
-        tags: [
-          formData.type === 'company' ? 'Юр. лицо' : 'Физ. лицо',
-          ...(formData.status === 'vip' ? ['VIP'] : []),
-          ...(formData.status === 'debtor' ? ['Должник'] : []),
-        ],
-      };
-      setCustomers(prev => prev.map(c => c.id === editingCustomer.id ? updated : c));
-      if (selectedCustomer?.id === editingCustomer.id) {
-        setSelectedCustomer(updated);
-      }
-      toast.success(`Клиент "${updated.name}" обновлён`);
+      updateMutation.mutate({
+        id: editingCustomer.id,
+        data: {
+          name: formData.name.trim(),
+          type: formData.type,
+          phone: formData.phone.trim(),
+          email: formData.email.trim() || undefined,
+        }
+      }, {
+        onSuccess: () => {
+          setIsFormOpen(false);
+          setSelectedCustomer(null);
+        }
+      });
     } else {
-      // Create
-      const newCustomer: Customer = {
-        id: `C-${Date.now()}`,
-        name: formData.name.trim(),
+      createMutation.mutate({
         type: formData.type,
+        name: formData.name.trim(),
         phone: formData.phone.trim(),
-        email: formData.email.trim(),
-        address: formData.address.trim() || undefined,
-        rentals: 0,
-        totalSpent: '₽ 0',
-        totalSpentNum: 0,
-        registeredAt: formatToday(),
-        status: formData.status,
-        tags: [
-          formData.type === 'company' ? 'Юр. лицо' : 'Физ. лицо',
-          ...(formData.status === 'vip' ? ['VIP'] : []),
-        ],
-        notes: [],
-        rentalHistory: [],
-        paymentHistory: [],
-      };
-      setCustomers(prev => [newCustomer, ...prev]);
-      toast.success(`Клиент "${newCustomer.name}" создан`);
+        email: formData.email.trim() || undefined,
+      }, {
+        onSuccess: () => setIsFormOpen(false)
+      });
     }
-    setIsFormOpen(false);
   };
 
   const handleDelete = () => {
     if (!deleteTarget) return;
-    setCustomers(prev => prev.filter(c => c.id !== deleteTarget.id));
-    if (selectedCustomer?.id === deleteTarget.id) setSelectedCustomer(null);
-    toast.success(`Клиент "${deleteTarget.name}" удалён`);
-    setDeleteTarget(null);
+    deleteMutation.mutate(deleteTarget.id, {
+      onSuccess: () => {
+        if (selectedCustomer?.id === deleteTarget.id) setSelectedCustomer(null);
+        setDeleteTarget(null);
+      }
+    });
   };
 
   const handleCall = (phone: string, name: string) => {
@@ -624,7 +631,7 @@ const AdminCustomers = () => {
   };
 
   const handleUpdateCustomer = (updated: Customer) => {
-    setCustomers(prev => prev.map(c => c.id === updated.id ? updated : c));
+    // For local UI updates (notes etc) — will be persisted via API later
     setSelectedCustomer(updated);
   };
 

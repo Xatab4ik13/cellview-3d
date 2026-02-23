@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +40,8 @@ import {
 } from 'lucide-react';
 import { calculatePrice, StorageCell, CellStatus, CELL_STATUS_LABELS, RESERVATION_HOURS } from '@/types/storage';
 import { useCells, useCreateCell, useUpdateCell, useDeleteCell } from '@/hooks/useCells';
+import { useRentals, useCreateRental, useExtendRental, useReleaseRental } from '@/hooks/useRentals';
+import { useCustomers, useCreateCustomer } from '@/hooks/useCustomers';
 import CellProjectionPreview from '@/components/admin/CellProjectionPreview';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -400,9 +402,48 @@ const AdminCells = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'reserved' | 'occupied'>('all');
+
+  // Rentals from API
+  const { data: apiRentals = [] } = useRentals({ status: 'active' });
+  const createRentalMutation = useCreateRental();
+  const extendRentalMutation = useExtendRental();
+  const releaseRentalMutation = useReleaseRental();
   
-  const [customers, setCustomers] = useState<SimpleCustomer[]>(initialCustomers);
-  const [rentals, setRentals] = useState<CellRental[]>(initialRentals);
+  // Customers from API
+  const { data: apiCustomers = [] } = useCustomers();
+  const createCustomerMutation = useCreateCustomer();
+
+  const customers: SimpleCustomer[] = useMemo(() => 
+    apiCustomers.map(c => ({
+      id: c.id || '',
+      name: c.name,
+      phone: c.phone,
+      email: c.email || '',
+      telegram: c.telegram,
+      type: c.type,
+    })), [apiCustomers]);
+
+  // Map API rentals to local CellRental format
+  const rentals: CellRental[] = useMemo(() =>
+    apiRentals.map(r => ({
+      id: r.id,
+      cellId: r.cellId,
+      customerId: r.customerId,
+      customerName: r.customerName,
+      customerPhone: r.customerPhone,
+      customerEmail: r.customerEmail || '',
+      customerType: r.customerType,
+      startDate: r.startDate,
+      endDate: r.endDate,
+      months: r.months,
+      discount: r.discount,
+      pricePerMonth: r.pricePerMonth,
+      totalAmount: r.totalAmount,
+      autoRenew: r.autoRenew,
+      status: r.status === 'active' ? 'active' : 'expired',
+      notes: r.notes || '',
+    })), [apiRentals]);
+
   const [rentalHistory, setRentalHistory] = useState<CellRentalHistory[]>(initialHistory);
   const [selectedCell, setSelectedCell] = useState<StorageCell | null>(null);
 
@@ -530,49 +571,35 @@ const AdminCells = () => {
       toast.error('Укажите имя и телефон клиента');
       return;
     }
-    const newId = `C-${Date.now()}`;
-    const newCustomer: SimpleCustomer = {
-      id: newId,
+    createCustomerMutation.mutate({
       name: newCustomerForm.name.trim(),
       phone: newCustomerForm.phone.trim(),
-      email: newCustomerForm.email.trim(),
+      email: newCustomerForm.email.trim() || undefined,
       type: newCustomerForm.type,
-    };
-    setCustomers(prev => [...prev, newCustomer]);
-    setAssignForm(prev => ({ ...prev, customerId: newId }));
-    setIsCreatingCustomer(false);
-    setNewCustomerForm({ name: '', phone: '', email: '', type: 'individual' });
-    toast.success(`Клиент "${newCustomer.name}" создан`);
+    }, {
+      onSuccess: (result) => {
+        setAssignForm(prev => ({ ...prev, customerId: result.id }));
+        setIsCreatingCustomer(false);
+        setNewCustomerForm({ name: '', phone: '', email: '', type: 'individual' });
+      }
+    });
   };
 
   const handleAssign = () => {
     if (!assigningCell || !assignCustomer) return;
 
-    const newRental: CellRental = {
-      id: `R-${Date.now()}`,
+    createRentalMutation.mutate({
       cellId: assigningCell.id,
       customerId: assignCustomer.id,
-      customerName: assignCustomer.name,
-      customerPhone: assignCustomer.phone,
-      customerEmail: assignCustomer.email,
-      customerType: assignCustomer.type,
       startDate: assignForm.startDate,
-      endDate: addMonths(assignForm.startDate, assignForm.months),
       months: assignForm.months,
-      discount: assignDiscount,
       pricePerMonth: assignFinalPrice,
+      discount: assignDiscount,
       totalAmount: assignTotal,
       autoRenew: assignForm.autoRenew,
-      status: 'active',
       notes: assignForm.notes,
-    };
-
-    updateMutation.mutate({ 
-      id: assigningCell.id, 
-      cell: { status: 'occupied' as CellStatus } 
     }, {
       onSuccess: () => {
-        setRentals(prev => [...prev, newRental]);
         setIsAssignDialogOpen(false);
         toast.success(`Ячейка №${assigningCell.number} сдана клиенту ${assignCustomer.name}`);
       }
@@ -588,42 +615,41 @@ const AdminCells = () => {
     if (!releasingCellId) return;
     const rental = getRental(releasingCellId);
     if (rental) {
-      // Move to history
-      setRentalHistory(prev => [...prev, {
-        id: `H-${Date.now()}`,
-        cellId: rental.cellId,
-        customerName: rental.customerName,
-        customerPhone: rental.customerPhone,
-        startDate: rental.startDate,
-        endDate: new Date().toISOString().split('T')[0],
-        months: rental.months,
-        pricePerMonth: rental.pricePerMonth,
-      }]);
-      setRentals(prev => prev.filter(r => r.cellId !== releasingCellId));
-    }
-    updateMutation.mutate({ 
-      id: releasingCellId, 
-      cell: { status: 'available' as CellStatus, reservedUntil: undefined } 
-    }, {
-      onSuccess: () => {
-        setIsReleaseDialogOpen(false);
-        setReleasingCellId(null);
-        if (selectedCell?.id === releasingCellId) {
-          setSelectedCell(prev => prev ? { ...prev, status: 'available' as CellStatus, reservedUntil: undefined } : null);
+      releaseRentalMutation.mutate(rental.id, {
+        onSuccess: () => {
+          setIsReleaseDialogOpen(false);
+          setReleasingCellId(null);
+          if (selectedCell?.id === releasingCellId) {
+            setSelectedCell(prev => prev ? { ...prev, status: 'available' as CellStatus, reservedUntil: undefined } : null);
+          }
+          toast.success('Ячейка освобождена');
         }
-        toast.success('Ячейка освобождена');
-      }
-    });
+      });
+    } else {
+      // No rental — just update cell status
+      updateMutation.mutate({ 
+        id: releasingCellId, 
+        cell: { status: 'available' as CellStatus, reservedUntil: undefined } 
+      }, {
+        onSuccess: () => {
+          setIsReleaseDialogOpen(false);
+          setReleasingCellId(null);
+          if (selectedCell?.id === releasingCellId) {
+            setSelectedCell(prev => prev ? { ...prev, status: 'available' as CellStatus, reservedUntil: undefined } : null);
+          }
+          toast.success('Ячейка освобождена');
+        }
+      });
+    }
   };
 
   const handleExtend = (cellId: string, months: number) => {
-    // В будущем здесь будет запрос к API для продления аренды в БД
-    setRentals(prev => prev.map(r => {
-      if (r.cellId !== cellId) return r;
-      const newEnd = addMonths(r.endDate, months);
-      return { ...r, endDate: newEnd, months: r.months + months };
-    }));
-    toast.success(`Аренда продлена на ${months} мес.`);
+    const rental = getRental(cellId);
+    if (rental) {
+      extendRentalMutation.mutate({ id: rental.id, months });
+    } else {
+      toast.error('Аренда не найдена');
+    }
   };
 
   // Photo handlers
