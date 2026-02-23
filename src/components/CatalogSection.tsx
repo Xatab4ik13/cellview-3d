@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { storageCells } from '@/data/storageCells';
+import { useCells } from '@/hooks/useCells';
 import { StorageCell, FilterOptions } from '@/types/storage';
 import CellCardVariantB from './CellCardVariantB';
 import CellModal from './CellModal';
@@ -21,6 +21,7 @@ import {
 const ITEMS_PER_PAGE = 8;
 
 const CatalogSection = () => {
+  const { data: storageCells = [], isLoading } = useCells();
   const [selectedCell, setSelectedCell] = useState<StorageCell | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
