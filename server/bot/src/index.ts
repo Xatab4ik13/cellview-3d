@@ -92,10 +92,11 @@ bot.on('contact', async (ctx) => {
       const firstName = ctx.from?.first_name || '';
       const lastName = ctx.from?.last_name || '';
       const fullName = `${firstName} ${lastName}`.trim() || 'Клиент';
+      const uuid = crypto.randomUUID();
 
       await db.query(
-        'INSERT INTO customers (name, phone, telegram, telegram_id, type) VALUES (?, ?, ?, ?, ?)',
-        [fullName, normalizedPhone, `@${username || telegramId}`, String(telegramId), 'individual']
+        'INSERT INTO customers (id, name, phone, telegram, telegram_id, type) VALUES (?, ?, ?, ?, ?, ?)',
+        [uuid, fullName, normalizedPhone, `@${username || telegramId}`, String(telegramId), 'individual']
       );
 
       await ctx.reply(
