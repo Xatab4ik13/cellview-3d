@@ -13,7 +13,10 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Security & parsing
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginOpenerPolicy: { policy: 'unsafe-none' },
+}));
 app.use(cors({
   origin: (process.env.CORS_ORIGIN || 'https://kladovka78.ru').split(',').map(s => s.trim()),
   credentials: true,
