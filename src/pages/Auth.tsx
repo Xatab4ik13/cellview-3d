@@ -1,4 +1,4 @@
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,10 +9,20 @@ import { verifyAuthToken, createAuthSession, pollAuthSession } from '@/lib/api';
 
 const TELEGRAM_BOT_USERNAME = 'kladovka78_bot';
 
+interface BookingData {
+  cellId?: number;
+  cellNumber?: number;
+  duration?: number;
+  totalPrice?: number;
+}
+
 const Auth = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
+
+  const bookingData = location.state as BookingData | null;
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [polling, setPolling] = useState(false);
@@ -20,21 +30,34 @@ const Auth = () => {
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const bookingRef = useRef(bookingData);
 
   const saveAndRedirect = useCallback((customer: any) => {
     localStorage.setItem('kladovka78_customer', JSON.stringify(customer));
     localStorage.setItem('kladovka78_customer_id', customer.id);
     setVerified(true);
-    setTimeout(() => navigate('/dashboard', { replace: true }), 1200);
+
+    const booking = bookingRef.current;
+    setTimeout(() => {
+      if (booking?.cellId) {
+        navigate('/checkout', { state: booking, replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
+    }, 1200);
   }, [navigate]);
 
   // Check if already logged in
   useEffect(() => {
     const existing = localStorage.getItem('kladovka78_customer');
     if (existing && !token) {
-      navigate('/dashboard', { replace: true });
+      if (bookingData?.cellId) {
+        navigate('/checkout', { state: bookingData, replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     }
-  }, [navigate, token]);
+  }, [navigate, token, bookingData]);
 
   // Legacy: verify token from URL (old links)
   useEffect(() => {
@@ -113,7 +136,7 @@ const Auth = () => {
                 <>
                   <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
                   <p className="text-lg font-medium">Вход выполнен!</p>
-                  <p className="text-sm text-muted-foreground">Перенаправляем в личный кабинет...</p>
+                  <p className="text-sm text-muted-foreground">Перенаправляем...</p>
                 </>
               )}
               {error && (
@@ -151,14 +174,23 @@ const Auth = () => {
                 )}
               </div>
               <CardTitle className="text-2xl">
-                {verified ? 'Вход выполнен!' : polling ? 'Ожидаем вход...' : 'Личный кабинет'}
+                {verified
+                  ? 'Вход выполнен!'
+                  : polling
+                    ? 'Ожидаем вход...'
+                    : bookingData
+                      ? 'Вход для бронирования'
+                      : 'Личный кабинет'
+                }
               </CardTitle>
               <CardDescription className="text-base">
                 {verified
-                  ? 'Перенаправляем в личный кабинет...'
+                  ? bookingData ? 'Перенаправляем на оплату...' : 'Перенаправляем в личный кабинет...'
                   : polling
                     ? 'Нажмите «Старт» в Telegram-боте. Сайт автоматически войдёт в ваш аккаунт.'
-                    : 'Войдите через Telegram-бот для доступа к личному кабинету'
+                    : bookingData
+                      ? `Войдите через Telegram для бронирования ячейки №${bookingData.cellNumber}`
+                      : 'Войдите через Telegram-бот для доступа к личному кабинету'
                 }
               </CardDescription>
             </CardHeader>
@@ -167,6 +199,25 @@ const Auth = () => {
               {error && (
                 <div className="p-4 bg-destructive/5 rounded-xl border border-destructive/20 text-center">
                   <p className="text-sm text-destructive">{error}</p>
+                </div>
+              )}
+
+              {bookingData && !verified && (
+                <div className="p-4 bg-primary/5 rounded-xl border border-primary/20">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-muted-foreground">Ячейка</span>
+                    <span className="font-bold">№{bookingData.cellNumber}</span>
+                  </div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-muted-foreground">Срок</span>
+                    <span className="font-bold">{bookingData.duration} мес.</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-primary/10">
+                    <span className="text-muted-foreground">Итого</span>
+                    <span className="text-xl font-extrabold text-primary">
+                      {bookingData.totalPrice?.toLocaleString('ru-RU')} ₽
+                    </span>
+                  </div>
                 </div>
               )}
 
@@ -190,7 +241,7 @@ const Auth = () => {
                   )}
 
                   <p className="text-xs text-center text-muted-foreground">
-                    Нажмите кнопку «Старт» в боте — сайт автоматически откроет ваш ЛК.
+                    Нажмите кнопку «Старт» в боте — сайт автоматически {bookingData ? 'перейдёт к оплате' : 'откроет ваш ЛК'}.
                     <br />
                     Ваши данные надёжно защищены.
                   </p>
@@ -199,7 +250,7 @@ const Auth = () => {
             </CardContent>
           </Card>
 
-          {!verified && !polling && (
+          {!verified && !polling && !bookingData && (
             <Card>
               <CardContent className="pt-6">
                 <h3 className="font-semibold mb-4 text-center">Что доступно в личном кабинете</h3>

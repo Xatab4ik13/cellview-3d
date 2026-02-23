@@ -231,15 +231,14 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
                 size="lg"
                 onClick={() => {
                   onClose();
-                  // Если авторизован — сразу на оплату, иначе — на авторизацию
-                  const user = localStorage.getItem('user');
+                  const customer = localStorage.getItem('kladovka78_customer');
                   const bookingState = { 
                     cellId: cell.id, 
                     cellNumber: cell.number, 
                     duration: selectedDuration, 
                     totalPrice: calculateTotalPrice(selectedDuration) 
                   };
-                  if (user) {
+                  if (customer) {
                     navigate('/checkout', { state: bookingState });
                   } else {
                     navigate('/auth', { state: bookingState });
