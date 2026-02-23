@@ -17,6 +17,8 @@ const routeTitles: Record<string, string> = {
   '/admin/analytics': 'Аналитика',
   '/admin/settings': 'Настройки',
   '/admin/site': 'Управление сайтом',
+  '/admin/cameras': 'Видеонаблюдение',
+  '/admin/documents': 'Документы',
 };
 
 const CrmTopBar = () => {
