@@ -36,7 +36,7 @@ import {
   Plus, Search, Edit, Trash2, Box, Upload, X, Image,
   UserPlus, Eye, Key, Phone, Mail, Calendar, Clock,
   RefreshCw, DoorOpen, History, ArrowLeft, User, ChevronRight,
-  MoreHorizontal, Percent,
+  MoreHorizontal, Percent, Building2, UserRound,
 } from 'lucide-react';
 import { storageCells as initialCells } from '@/data/storageCells';
 import { calculatePrice, StorageCell } from '@/types/storage';
@@ -94,7 +94,7 @@ interface SimpleCustomer {
 
 // ========== Mock Data ==========
 
-const mockCustomers: SimpleCustomer[] = [
+const initialCustomers: SimpleCustomer[] = [
   { id: 'C-001', name: 'ООО "ТехноСервис"', phone: '+7 (999) 123-45-67', email: 'info@technoservice.ru', type: 'company' },
   { id: 'C-002', name: 'Иванов Петр Сергеевич', phone: '+7 (999) 234-56-78', email: 'petrov@gmail.com', type: 'individual' },
   { id: 'C-003', name: 'ИП Смирнова А.В.', phone: '+7 (999) 345-67-89', email: 'smirnova@mail.ru', type: 'company' },
@@ -377,6 +377,7 @@ const AdminCells = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'occupied'>('all');
   const [cells, setCells] = useState<StorageCell[]>(initialCells);
+  const [customers, setCustomers] = useState<SimpleCustomer[]>(initialCustomers);
   const [rentals, setRentals] = useState<CellRental[]>(initialRentals);
   const [rentalHistory, setRentalHistory] = useState<CellRentalHistory[]>(initialHistory);
   const [selectedCell, setSelectedCell] = useState<StorageCell | null>(null);
@@ -391,6 +392,10 @@ const AdminCells = () => {
   // Assign dialog
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [assigningCell, setAssigningCell] = useState<StorageCell | null>(null);
+  const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
+  const [newCustomerForm, setNewCustomerForm] = useState({
+    name: '', phone: '', email: '', type: 'individual' as 'company' | 'individual',
+  });
   const [assignForm, setAssignForm] = useState({
     customerId: '',
     months: 1,
@@ -439,7 +444,7 @@ const AdminCells = () => {
   const nextNumber = cells.length > 0 ? Math.max(...cells.map(c => c.number)) + 1 : 1;
 
   // Assign computed
-  const assignCustomer = mockCustomers.find(c => c.id === assignForm.customerId);
+  const assignCustomer = customers.find(c => c.id === assignForm.customerId);
   const assignDiscount = getDiscount(assignForm.months);
   const assignBasePrice = assigningCell?.pricePerMonth || 0;
   const assignFinalPrice = Math.round(assignBasePrice * (1 - assignDiscount / 100));
@@ -456,7 +461,29 @@ const AdminCells = () => {
       notes: '',
       startDate: new Date().toISOString().split('T')[0],
     });
+    setIsCreatingCustomer(false);
+    setNewCustomerForm({ name: '', phone: '', email: '', type: 'individual' });
     setIsAssignDialogOpen(true);
+  };
+
+  const handleCreateInlineCustomer = () => {
+    if (!newCustomerForm.name.trim() || !newCustomerForm.phone.trim()) {
+      toast.error('Укажите имя и телефон клиента');
+      return;
+    }
+    const newId = `C-${Date.now()}`;
+    const newCustomer: SimpleCustomer = {
+      id: newId,
+      name: newCustomerForm.name.trim(),
+      phone: newCustomerForm.phone.trim(),
+      email: newCustomerForm.email.trim(),
+      type: newCustomerForm.type,
+    };
+    setCustomers(prev => [...prev, newCustomer]);
+    setAssignForm(prev => ({ ...prev, customerId: newId }));
+    setIsCreatingCustomer(false);
+    setNewCustomerForm({ name: '', phone: '', email: '', type: 'individual' });
+    toast.success(`Клиент "${newCustomer.name}" создан`);
   };
 
   const handleAssign = () => {
@@ -917,24 +944,77 @@ const AdminCells = () => {
           </DialogHeader>
 
           <div className="grid gap-4 py-2">
-            {/* Customer select */}
+            {/* Customer select or create */}
             <div className="grid gap-2">
-              <Label>Клиент</Label>
-              <Select value={assignForm.customerId} onValueChange={(v) => setAssignForm(prev => ({ ...prev, customerId: v }))}>
-                <SelectTrigger className="h-11">
-                  <SelectValue placeholder="Выберите клиента..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockCustomers.map(c => (
-                    <SelectItem key={c.id} value={c.id}>
-                      <div className="flex items-center gap-2">
-                        <span>{c.name}</span>
-                        <span className="text-xs text-muted-foreground">· {c.phone}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center justify-between">
+                <Label>Клиент</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs gap-1 text-primary"
+                  onClick={() => {
+                    setIsCreatingCustomer(!isCreatingCustomer);
+                    if (!isCreatingCustomer) {
+                      setAssignForm(prev => ({ ...prev, customerId: '' }));
+                    }
+                  }}
+                >
+                  {isCreatingCustomer ? (
+                    <><ArrowLeft className="h-3 w-3" />Выбрать из списка</>
+                  ) : (
+                    <><Plus className="h-3 w-3" />Новый клиент</>
+                  )}
+                </Button>
+              </div>
+
+              {isCreatingCustomer ? (
+                <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
+                  {/* Type toggle */}
+                  <div className="flex gap-2">
+                    <Button type="button" size="sm" variant={newCustomerForm.type === 'individual' ? 'default' : 'outline'}
+                      className="flex-1 gap-1.5 h-9" onClick={() => setNewCustomerForm(p => ({ ...p, type: 'individual' }))}>
+                      <UserRound className="h-3.5 w-3.5" />Физ. лицо
+                    </Button>
+                    <Button type="button" size="sm" variant={newCustomerForm.type === 'company' ? 'default' : 'outline'}
+                      className="flex-1 gap-1.5 h-9" onClick={() => setNewCustomerForm(p => ({ ...p, type: 'company' }))}>
+                      <Building2 className="h-3.5 w-3.5" />Компания
+                    </Button>
+                  </div>
+                  <Input placeholder={newCustomerForm.type === 'company' ? 'Название компании *' : 'ФИО *'}
+                    value={newCustomerForm.name}
+                    onChange={(e) => setNewCustomerForm(p => ({ ...p, name: e.target.value }))}
+                    className="h-10" />
+                  <Input placeholder="Телефон *" value={newCustomerForm.phone}
+                    onChange={(e) => setNewCustomerForm(p => ({ ...p, phone: e.target.value }))}
+                    className="h-10" />
+                  <Input placeholder="Email (необязательно)" value={newCustomerForm.email}
+                    onChange={(e) => setNewCustomerForm(p => ({ ...p, email: e.target.value }))}
+                    className="h-10" />
+                  <Button type="button" onClick={handleCreateInlineCustomer}
+                    disabled={!newCustomerForm.name.trim() || !newCustomerForm.phone.trim()}
+                    className="w-full h-9 gap-1.5">
+                    <UserPlus className="h-4 w-4" />
+                    Создать и выбрать
+                  </Button>
+                </div>
+              ) : (
+                <Select value={assignForm.customerId} onValueChange={(v) => setAssignForm(prev => ({ ...prev, customerId: v }))}>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Выберите клиента..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers.map(c => (
+                      <SelectItem key={c.id} value={c.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{c.name}</span>
+                          <span className="text-xs text-muted-foreground">· {c.phone}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             {/* Start date */}
