@@ -1,0 +1,42 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /var/www/kladovka78/server
+
+            # Pull latest changes
+            git pull origin main
+
+            # Install dependencies
+            npm ci --production
+
+            # Build TypeScript
+            npm run build
+
+            # Run migrations
+            npm run migrate || true
+
+            # Restart with PM2
+            pm2 restart kladovka78-api || pm2 start ecosystem.config.js
+
+            echo "✅ Backend deployed successfully"
