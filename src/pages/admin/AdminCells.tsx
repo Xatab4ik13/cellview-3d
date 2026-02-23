@@ -595,17 +595,43 @@ const AdminCells = () => {
   if (selectedCell) {
     const updatedCell = cells.find(c => c.id === selectedCell.id) || selectedCell;
     return (
-      <AnimatePresence mode="wait">
-        <CellDetailPanel
-          key={updatedCell.id}
-          cell={updatedCell}
-          rental={getRental(updatedCell.id)}
-          history={getCellHistory(updatedCell.id)}
-          onClose={() => setSelectedCell(null)}
-          onRelease={() => handleRelease(updatedCell.id)}
-          onExtend={(months) => handleExtend(updatedCell.id, months)}
-        />
-      </AnimatePresence>
+      <>
+        <AnimatePresence mode="wait">
+          <CellDetailPanel
+            key={updatedCell.id}
+            cell={updatedCell}
+            rental={getRental(updatedCell.id)}
+            history={getCellHistory(updatedCell.id)}
+            onClose={() => setSelectedCell(null)}
+            onRelease={() => handleRelease(updatedCell.id)}
+            onExtend={(months) => handleExtend(updatedCell.id, months)}
+          />
+        </AnimatePresence>
+
+        {/* Release Confirmation (detail view) */}
+        <AlertDialog open={isReleaseDialogOpen} onOpenChange={setIsReleaseDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Освободить ячейку?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {releasingCellId && getRental(releasingCellId) && (
+                  <>
+                    Текущий арендатор: <strong>{getRental(releasingCellId)!.customerName}</strong><br />
+                    Аренда до: <strong>{formatDate(getRental(releasingCellId)!.endDate)}</strong><br /><br />
+                    Аренда будет завершена и перенесена в историю. Это действие нельзя отменить.
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Отмена</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmRelease} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Освободить
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
     );
   }
 
@@ -620,7 +646,7 @@ const AdminCells = () => {
             Всего: {cells.length} · Свободно: {availableCount} · Занято: {occupiedCount}
           </p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={(open) => { setIsAddDialogOpen(open); if (!open) resetForm(); }}>
+        <Dialog modal open={isAddDialogOpen} onOpenChange={(open) => { setIsAddDialogOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
             <Button className="gap-2 h-11 text-base">
               <Plus className="h-5 w-5" />
@@ -878,7 +904,7 @@ const AdminCells = () => {
       </div>
 
       {/* ========== Assign Cell Dialog ========== */}
-      <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
+      <Dialog modal open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -1013,7 +1039,7 @@ const AdminCells = () => {
       </AlertDialog>
 
       {/* ========== Edit Dialog ========== */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog modal open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Редактировать ячейку №{editingCell?.number}</DialogTitle>
