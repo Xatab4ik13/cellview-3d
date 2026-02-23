@@ -16,42 +16,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-
-interface SiteDocument {
-  id: string;
-  title: string;
-  path: string;
-  content: string;
-  isPublished: boolean;
-  updatedAt: string;
-}
-
-const initialDocuments: SiteDocument[] = [
-  {
-    id: 'doc-1',
-    title: 'Политика конфиденциальности',
-    path: '/privacy',
-    content: 'Настоящая Политика конфиденциальности определяет порядок обработки и защиты персональных данных пользователей сайта kladovka78.ru.\n\n1. Общие положения\nОператор обработки персональных данных — ООО «Кладовка78».\n\n2. Цели обработки\nПерсональные данные обрабатываются в целях предоставления услуг аренды складских ячеек, информирования клиентов об условиях аренды и обеспечения безопасности.\n\n3. Условия обработки\nОбработка персональных данных осуществляется с согласия субъекта персональных данных.',
-    isPublished: true,
-    updatedAt: '2025-01-15',
-  },
-  {
-    id: 'doc-2',
-    title: 'Согласие на обработку данных',
-    path: '/consent',
-    content: 'Я даю согласие на обработку моих персональных данных в соответствии с Федеральным законом от 27.07.2006 №152-ФЗ «О персональных данных».\n\nПеречень данных: ФИО, номер телефона, адрес электронной почты.\n\nЦель обработки: оформление договора аренды складской ячейки, связь с клиентом.',
-    isPublished: true,
-    updatedAt: '2025-01-15',
-  },
-  {
-    id: 'doc-3',
-    title: 'Публичная оферта',
-    path: '/docs',
-    content: 'Настоящий документ является официальным предложением (публичной офертой) ООО «Кладовка78» заключить договор аренды складской ячейки на условиях, изложенных ниже.\n\n1. Предмет договора\nАрендодатель предоставляет Арендатору во временное пользование складскую ячейку для хранения имущества.\n\n2. Условия оплаты\nОплата производится ежемесячно, не позднее 5-го числа текущего месяца.',
-    isPublished: true,
-    updatedAt: '2025-02-01',
-  },
-];
+import { defaultDocuments, iconMap, type SiteDocument } from '@/data/siteDocuments';
 
 const AdminSite = () => {
   const [siteData, setSiteData] = useState({
@@ -73,10 +38,10 @@ const AdminSite = () => {
     showContacts: true,
   });
 
-  const [documents, setDocuments] = useState<SiteDocument[]>(initialDocuments);
+  const [documents, setDocuments] = useState<SiteDocument[]>(defaultDocuments);
   const [isDocDialogOpen, setIsDocDialogOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<SiteDocument | null>(null);
-  const [docForm, setDocForm] = useState({ title: '', path: '', content: '' });
+  const [docForm, setDocForm] = useState({ title: '', description: '' });
   const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
   const [viewingDoc, setViewingDoc] = useState<SiteDocument | null>(null);
 
@@ -86,33 +51,34 @@ const AdminSite = () => {
 
   const openNewDoc = () => {
     setEditingDoc(null);
-    setDocForm({ title: '', path: '/', content: '' });
+    setDocForm({ title: '', description: '' });
     setIsDocDialogOpen(true);
   };
 
   const openEditDoc = (doc: SiteDocument) => {
     setEditingDoc(doc);
-    setDocForm({ title: doc.title, path: doc.path, content: doc.content });
+    setDocForm({ title: doc.title, description: doc.description });
     setIsDocDialogOpen(true);
   };
 
   const handleSaveDoc = () => {
-    if (!docForm.title.trim() || !docForm.content.trim()) {
-      toast.error('Заполните название и содержание документа');
+    if (!docForm.title.trim() || !docForm.description.trim()) {
+      toast.error('Заполните название и описание документа');
       return;
     }
     const now = new Date().toISOString().split('T')[0];
     if (editingDoc) {
       setDocuments(prev => prev.map(d =>
-        d.id === editingDoc.id ? { ...d, title: docForm.title, path: docForm.path, content: docForm.content, updatedAt: now } : d
+        d.id === editingDoc.id ? { ...d, title: docForm.title, description: docForm.description, updatedAt: now } : d
       ));
       toast.success(`Документ "${docForm.title}" обновлён`);
     } else {
       const newDoc: SiteDocument = {
         id: `doc-${Date.now()}`,
         title: docForm.title.trim(),
-        path: docForm.path.trim() || `/${docForm.title.toLowerCase().replace(/\s+/g, '-')}`,
-        content: docForm.content.trim(),
+        description: docForm.description.trim(),
+        icon: 'FileText',
+        type: 'PDF',
         isPublished: false,
         updatedAt: now,
       };
@@ -292,7 +258,7 @@ const AdminSite = () => {
                     </div>
                     <div className="min-w-0">
                       <p className="font-medium text-sm truncate">{doc.title}</p>
-                      <p className="text-xs text-muted-foreground">{doc.path} · Обновлён {formatDate(doc.updatedAt)}</p>
+                      <p className="text-xs text-muted-foreground truncate">{doc.description} · {doc.type} · Обновлён {formatDate(doc.updatedAt)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -344,29 +310,18 @@ const AdminSite = () => {
               />
             </div>
             <div className="grid gap-2">
-              <Label>URL-путь на сайте</Label>
-              <Input
-                placeholder="/rules"
-                value={docForm.path}
-                onChange={e => setDocForm(p => ({ ...p, path: e.target.value }))}
-                className="h-11"
-              />
-              <p className="text-xs text-muted-foreground">Путь по которому документ будет доступен: kladovka78.ru{docForm.path || '/...'}</p>
-            </div>
-            <div className="grid gap-2">
-              <Label>Содержание документа</Label>
+              <Label>Описание</Label>
               <Textarea
-                placeholder="Текст документа..."
-                value={docForm.content}
-                onChange={e => setDocForm(p => ({ ...p, content: e.target.value }))}
-                className="min-h-[250px] text-sm leading-relaxed"
+                placeholder="Краткое описание документа..."
+                value={docForm.description}
+                onChange={e => setDocForm(p => ({ ...p, description: e.target.value }))}
+                className="min-h-[100px] text-sm leading-relaxed"
               />
-              <p className="text-xs text-muted-foreground text-right">{docForm.content.length} символов</p>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDocDialogOpen(false)}>Отмена</Button>
-            <Button onClick={handleSaveDoc} disabled={!docForm.title.trim() || !docForm.content.trim()}>
+            <Button onClick={handleSaveDoc} disabled={!docForm.title.trim() || !docForm.description.trim()}>
               {editingDoc ? 'Сохранить' : 'Создать'}
             </Button>
           </DialogFooter>
@@ -379,11 +334,11 @@ const AdminSite = () => {
           <DialogHeader>
             <DialogTitle>{viewingDoc?.title}</DialogTitle>
             <DialogDescription>
-              Путь: {viewingDoc?.path} · Обновлён {viewingDoc && formatDate(viewingDoc.updatedAt)}
+              {viewingDoc?.type} · Обновлён {viewingDoc && formatDate(viewingDoc.updatedAt)}
             </DialogDescription>
           </DialogHeader>
           <div className="p-4 bg-muted/30 rounded-lg border border-border whitespace-pre-wrap text-sm leading-relaxed">
-            {viewingDoc?.content}
+            {viewingDoc?.description}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setViewingDoc(null)}>Закрыть</Button>
