@@ -5,8 +5,10 @@ import { AppError } from '../middleware/errorHandler';
 export const cellsRouter = Router();
 
 // GET /api/cells — публичный каталог с фото
-cellsRouter.get('/', async (_req: Request, res: Response, next: NextFunction) => {
+cellsRouter.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    
     const [cells] = await pool.query(`
       SELECT 
         c.id, c.number, c.width, c.height, c.depth, c.area, c.volume,
@@ -30,7 +32,9 @@ cellsRouter.get('/', async (_req: Request, res: Response, next: NextFunction) =>
       if (!photoMap.has(photo.cell_id)) {
         photoMap.set(photo.cell_id, []);
       }
-      photoMap.get(photo.cell_id)!.push(photo.url);
+      // Преобразуем относительные пути в абсолютные URL
+      const photoUrl = photo.url.startsWith('http') ? photo.url : `${baseUrl}${photo.url}`;
+      photoMap.get(photo.cell_id)!.push(photoUrl);
     }
 
     const cellsWithPhotos = (cells as any[]).map(cell => ({
@@ -50,6 +54,8 @@ cellsRouter.get('/', async (_req: Request, res: Response, next: NextFunction) =>
 // GET /api/cells/:id — одна ячейка
 cellsRouter.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    
     const [cells] = await pool.query(
       `SELECT 
         id, number, width, height, depth, area, volume,
@@ -78,7 +84,9 @@ cellsRouter.get('/:id', async (req: Request, res: Response, next: NextFunction) 
         isAvailable: cell.status === 'available',
         hasSocket: !!cell.hasSocket,
         hasShelves: !!cell.hasShelves,
-        photos: (photos as any[]).map(p => p.url),
+        photos: (photos as any[]).map(p => 
+          p.url.startsWith('http') ? p.url : `${baseUrl}${p.url}`
+        ),
       },
     });
   } catch (error) {
