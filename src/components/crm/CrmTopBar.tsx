@@ -25,38 +25,38 @@ const CrmTopBar = () => {
 
   return (
     <header
-      className="h-14 border-b border-border bg-card flex items-center px-4 gap-4 sticky top-0 z-10"
+      className="h-16 border-b border-border bg-card flex items-center px-6 gap-5 sticky top-0 z-10"
       style={{ boxShadow: 'var(--shadow-top-bar)' }}
     >
       <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
       
-      <h1 className="text-[15px] font-semibold text-foreground mr-auto">{title}</h1>
+      <h1 className="text-lg font-semibold text-foreground mr-auto">{title}</h1>
 
       {/* Search */}
-      <div className="hidden md:flex items-center relative max-w-[280px] w-full">
-        <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+      <div className="hidden md:flex items-center relative max-w-[320px] w-full">
+        <Search className="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none" />
         <Input
           placeholder="Поиск клиентов, ячеек..."
-          className="pl-8 h-8 text-[13px] bg-muted/40 border-transparent focus:border-border focus:bg-card transition-all"
+          className="pl-9 h-10 text-sm bg-muted/40 border-transparent focus:border-border focus:bg-card transition-all"
         />
       </div>
 
       {/* Quick action */}
-      <Button size="sm" className="h-8 gap-1.5 text-[13px] shadow-sm">
-        <Plus className="h-3.5 w-3.5" />
+      <Button size="default" className="h-10 gap-2 text-sm shadow-sm">
+        <Plus className="h-4 w-4" />
         <span className="hidden lg:inline">Новая заявка</span>
       </Button>
 
       {/* Notifications */}
-      <Button variant="ghost" size="icon" className="relative h-8 w-8 text-muted-foreground hover:text-foreground">
-        <Bell className="h-4 w-4" />
-        <Badge className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 text-[10px] bg-[hsl(var(--status-overdue))] text-white border-0">
+      <Button variant="ghost" size="icon" className="relative h-10 w-10 text-muted-foreground hover:text-foreground">
+        <Bell className="h-5 w-5" />
+        <Badge className="absolute -top-0.5 -right-0.5 h-5 min-w-5 px-1.5 text-xs bg-[hsl(var(--status-overdue))] text-white border-0">
           3
         </Badge>
       </Button>
 
       {/* Profile avatar */}
-      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[13px] font-semibold cursor-pointer hover:bg-primary/20 transition-colors">
+      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold cursor-pointer hover:bg-primary/20 transition-colors">
         А
       </div>
     </header>

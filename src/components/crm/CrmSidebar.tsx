@@ -105,19 +105,19 @@ const CrmSidebar = () => {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
-      <SidebarHeader className="p-4 border-b border-border">
+      <SidebarHeader className="p-5 border-b border-border">
         <div className="flex items-center gap-3">
-          <img src={logo} alt="Кладовка78" className="h-8 w-8 object-contain shrink-0" />
+          <img src={logo} alt="Кладовка78" className="h-9 w-9 object-contain shrink-0" />
           {!isCollapsed && (
             <div className="overflow-hidden">
-              <p className="font-bold text-sm truncate">Кладовка78</p>
-              <p className="text-[11px] text-muted-foreground">CRM</p>
+              <p className="font-bold text-base truncate">Кладовка78</p>
+              <p className="text-xs text-muted-foreground">CRM</p>
             </div>
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="py-2">
+      <SidebarContent className="py-3">
         {navGroups.map((group) => (
           <Collapsible
             key={group.label}
@@ -127,11 +127,11 @@ const CrmSidebar = () => {
             <SidebarGroup>
               {!isCollapsed && (
                 <CollapsibleTrigger asChild>
-                  <SidebarGroupLabel className="cursor-pointer select-none flex items-center justify-between pr-2 text-[11px] uppercase tracking-wider text-muted-foreground/70 hover:text-muted-foreground transition-colors">
+                  <SidebarGroupLabel className="cursor-pointer select-none flex items-center justify-between pr-3 text-xs uppercase tracking-wider text-muted-foreground/70 hover:text-muted-foreground transition-colors">
                     {group.label}
                     <ChevronDown
                       className={cn(
-                        'h-3 w-3 transition-transform duration-200',
+                        'h-3.5 w-3.5 transition-transform duration-200',
                         openGroups[group.label] ? 'rotate-0' : '-rotate-90'
                       )}
                     />
@@ -148,7 +148,7 @@ const CrmSidebar = () => {
                           isActive={isActive(item.url)}
                           tooltip={item.title}
                           className={cn(
-                            'transition-all duration-150',
+                            'transition-all duration-150 h-10',
                             isActive(item.url)
                               ? 'bg-primary/10 text-primary font-medium shadow-sm'
                               : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
@@ -159,8 +159,8 @@ const CrmSidebar = () => {
                             end={item.url === '/admin'}
                             className="flex items-center gap-3"
                           >
-                            <item.icon className="h-4 w-4 shrink-0" />
-                            <span className="text-[13px]">{item.title}</span>
+                            <item.icon className="h-5 w-5 shrink-0" />
+                            <span className="text-sm">{item.title}</span>
                           </NavLink>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -173,14 +173,13 @@ const CrmSidebar = () => {
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="p-3 border-t border-border">
+      <SidebarFooter className="p-4 border-t border-border">
         <Button
           variant="ghost"
-          size="sm"
           onClick={handleLogout}
-          className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive text-[13px]"
+          className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive text-sm h-10"
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-5 w-5" />
           {!isCollapsed && <span>Выйти</span>}
         </Button>
       </SidebarFooter>
