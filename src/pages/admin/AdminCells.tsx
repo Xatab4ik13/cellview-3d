@@ -36,10 +36,10 @@ import {
   Plus, Search, Edit, Trash2, Box, Upload, X, Image,
   UserPlus, Eye, Key, Phone, Mail, Calendar, Clock,
   RefreshCw, DoorOpen, History, ArrowLeft, User, ChevronRight,
-  MoreHorizontal, Percent, Building2, UserRound,
+  MoreHorizontal, Percent, Building2, UserRound, Timer, MessageSquare,
 } from 'lucide-react';
 import { storageCells as initialCells } from '@/data/storageCells';
-import { calculatePrice, StorageCell } from '@/types/storage';
+import { calculatePrice, StorageCell, CellStatus, CELL_STATUS_LABELS, RESERVATION_HOURS } from '@/types/storage';
 import CellProjectionPreview from '@/components/admin/CellProjectionPreview';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -89,16 +89,17 @@ interface SimpleCustomer {
   name: string;
   phone: string;
   email: string;
+  telegram?: string;
   type: 'company' | 'individual';
 }
 
 // ========== Mock Data ==========
 
 const initialCustomers: SimpleCustomer[] = [
-  { id: 'C-001', name: 'ООО "ТехноСервис"', phone: '+7 (999) 123-45-67', email: 'info@technoservice.ru', type: 'company' },
-  { id: 'C-002', name: 'Иванов Петр Сергеевич', phone: '+7 (999) 234-56-78', email: 'petrov@gmail.com', type: 'individual' },
+  { id: 'C-001', name: 'ООО "ТехноСервис"', phone: '+7 (999) 123-45-67', email: 'info@technoservice.ru', telegram: '@technoservice', type: 'company' },
+  { id: 'C-002', name: 'Иванов Петр Сергеевич', phone: '+7 (999) 234-56-78', email: 'petrov@gmail.com', telegram: '@petrov_ps', type: 'individual' },
   { id: 'C-003', name: 'ИП Смирнова А.В.', phone: '+7 (999) 345-67-89', email: 'smirnova@mail.ru', type: 'company' },
-  { id: 'C-004', name: 'Козлов Андрей', phone: '+7 (999) 456-78-90', email: '', type: 'individual' },
+  { id: 'C-004', name: 'Козлов Андрей', phone: '+7 (999) 456-78-90', email: '', telegram: '@kozlov_a', type: 'individual' },
   { id: 'C-005', name: 'ООО "Логистик Плюс"', phone: '+7 (999) 567-89-01', email: 'info@logistic-plus.ru', type: 'company' },
 ];
 
@@ -188,18 +189,36 @@ const CellDetailPanel = ({
             <h2 className="text-2xl font-bold">Ячейка №{cell.number}</h2>
             <Badge
               variant="outline"
-              style={cell.isAvailable ? {
+              style={cell.status === 'available' ? {
                 borderColor: 'hsl(var(--status-active) / 0.3)',
                 color: 'hsl(var(--status-active))',
                 backgroundColor: 'hsl(var(--status-active) / 0.1)',
+              } : cell.status === 'reserved' ? {
+                borderColor: 'hsl(var(--status-new) / 0.3)',
+                color: 'hsl(var(--status-new))',
+                backgroundColor: 'hsl(var(--status-new) / 0.1)',
               } : {
                 borderColor: 'hsl(var(--status-pending) / 0.3)',
                 color: 'hsl(var(--status-pending))',
                 backgroundColor: 'hsl(var(--status-pending) / 0.1)',
               }}
             >
-              {cell.isAvailable ? 'Свободна' : 'Занята'}
+              {CELL_STATUS_LABELS[cell.status]}
             </Badge>
+            {cell.status === 'reserved' && cell.reservedUntil && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Timer className="h-3 w-3" />
+                Осталось: {(() => {
+                  const until = new Date(cell.reservedUntil);
+                  const now = new Date();
+                  const diff = until.getTime() - now.getTime();
+                  if (diff <= 0) return 'Истекла';
+                  const hours = Math.floor(diff / (1000 * 60 * 60));
+                  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                  return `${hours}ч ${minutes}м`;
+                })()}
+              </span>
+            )}
           </div>
           <p className="text-sm text-muted-foreground mt-1">
             {cell.width}×{cell.depth}×{cell.height} м · {cell.volume} м³ · Ярус {cell.tier}
@@ -375,8 +394,17 @@ const CellDetailPanel = ({
 
 const AdminCells = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'occupied'>('all');
-  const [cells, setCells] = useState<StorageCell[]>(initialCells);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'reserved' | 'occupied'>('all');
+  const [cells, setCells] = useState<StorageCell[]>(() => {
+    // Set cell-3 as reserved for demo
+    const reservedUntil = new Date();
+    reservedUntil.setHours(reservedUntil.getHours() + RESERVATION_HOURS);
+    return initialCells.map(c => 
+      c.id === 'cell-3' 
+        ? { ...c, status: 'reserved' as CellStatus, isAvailable: false, reservedUntil: reservedUntil.toISOString() } 
+        : c
+    );
+  });
   const [customers, setCustomers] = useState<SimpleCustomer[]>(initialCustomers);
   const [rentals, setRentals] = useState<CellRental[]>(initialRentals);
   const [rentalHistory, setRentalHistory] = useState<CellRentalHistory[]>(initialHistory);
@@ -428,13 +456,48 @@ const AdminCells = () => {
   const filteredCells = cells.filter((cell) => {
     const matchSearch = cell.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       `${cell.width} × ${cell.depth} × ${cell.height}`.includes(searchQuery);
-    if (statusFilter === 'available') return matchSearch && cell.isAvailable;
-    if (statusFilter === 'occupied') return matchSearch && !cell.isAvailable;
+    if (statusFilter === 'available') return matchSearch && cell.status === 'available';
+    if (statusFilter === 'reserved') return matchSearch && cell.status === 'reserved';
+    if (statusFilter === 'occupied') return matchSearch && cell.status === 'occupied';
     return matchSearch;
   });
 
-  const availableCount = cells.filter(c => c.isAvailable).length;
-  const occupiedCount = cells.filter(c => !c.isAvailable).length;
+  const availableCount = cells.filter(c => c.status === 'available').length;
+  const reservedCount = cells.filter(c => c.status === 'reserved').length;
+  const occupiedCount = cells.filter(c => c.status === 'occupied').length;
+
+  // Helper to get status badge styles
+  const getStatusStyle = (status: CellStatus) => {
+    switch (status) {
+      case 'available': return {
+        borderColor: 'hsl(var(--status-active) / 0.3)',
+        color: 'hsl(var(--status-active))',
+        backgroundColor: 'hsl(var(--status-active) / 0.1)',
+      };
+      case 'reserved': return {
+        borderColor: 'hsl(var(--status-new) / 0.3)',
+        color: 'hsl(var(--status-new))',
+        backgroundColor: 'hsl(var(--status-new) / 0.1)',
+      };
+      case 'occupied': return {
+        borderColor: 'hsl(var(--status-pending) / 0.3)',
+        color: 'hsl(var(--status-pending))',
+        backgroundColor: 'hsl(var(--status-pending) / 0.1)',
+      };
+    }
+  };
+
+  // Format remaining reservation time
+  const getReservationTimeLeft = (reservedUntil?: string) => {
+    if (!reservedUntil) return null;
+    const until = new Date(reservedUntil);
+    const now = new Date();
+    const diff = until.getTime() - now.getTime();
+    if (diff <= 0) return 'Истекла';
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}ч ${minutes}м`;
+  };
 
   const volume = (parseFloat(formData.width) || 0) * (parseFloat(formData.depth) || 0) * (parseFloat(formData.height) || 0);
   const calculatedPrice = volume > 0 ? calculatePrice(volume) : 0;
@@ -509,7 +572,7 @@ const AdminCells = () => {
     };
 
     setRentals(prev => [...prev, newRental]);
-    setCells(prev => prev.map(c => c.id === assigningCell.id ? { ...c, isAvailable: false } : c));
+    setCells(prev => prev.map(c => c.id === assigningCell.id ? { ...c, isAvailable: false, status: 'occupied' as CellStatus } : c));
     setIsAssignDialogOpen(false);
     toast.success(`Ячейка №${assigningCell.number} сдана клиенту ${assignCustomer.name}`);
   };
@@ -536,11 +599,11 @@ const AdminCells = () => {
       }]);
       setRentals(prev => prev.filter(r => r.cellId !== releasingCellId));
     }
-    setCells(prev => prev.map(c => c.id === releasingCellId ? { ...c, isAvailable: true } : c));
+    setCells(prev => prev.map(c => c.id === releasingCellId ? { ...c, isAvailable: true, status: 'available' as CellStatus, reservedUntil: undefined } : c));
     setIsReleaseDialogOpen(false);
     setReleasingCellId(null);
     if (selectedCell?.id === releasingCellId) {
-      setSelectedCell(prev => prev ? { ...prev, isAvailable: true } : null);
+      setSelectedCell(prev => prev ? { ...prev, isAvailable: true, status: 'available' as CellStatus, reservedUntil: undefined } : null);
     }
     toast.success('Ячейка освобождена');
   };
@@ -694,7 +757,7 @@ const AdminCells = () => {
         <div>
           <h2 className="text-2xl font-bold">Ячейки</h2>
           <p className="text-base text-muted-foreground mt-1">
-            Всего: {cells.length} · Свободно: {availableCount} · Занято: {occupiedCount}
+            Всего: {cells.length} · Свободно: {availableCount} · В брони: {reservedCount} · Занято: {occupiedCount}
           </p>
         </div>
         <Dialog modal open={isAddDialogOpen} onOpenChange={(open) => { setIsAddDialogOpen(open); if (!open) resetForm(); }}>
@@ -802,7 +865,7 @@ const AdminCells = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <div className="bg-card border border-border rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
           <p className="text-sm text-muted-foreground">Всего ячеек</p>
           <p className="text-2xl font-bold mt-1 text-primary">{cells.length}</p>
@@ -810,6 +873,10 @@ const AdminCells = () => {
         <div className="bg-card border border-border rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
           <p className="text-sm text-muted-foreground">Свободно</p>
           <p className="text-2xl font-bold mt-1" style={{ color: 'hsl(var(--status-active))' }}>{availableCount}</p>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <p className="text-sm text-muted-foreground">В брони</p>
+          <p className="text-2xl font-bold mt-1" style={{ color: 'hsl(var(--status-new))' }}>{reservedCount}</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-4" style={{ boxShadow: 'var(--shadow-card)' }}>
           <p className="text-sm text-muted-foreground">Занято</p>
@@ -823,6 +890,7 @@ const AdminCells = () => {
           <TabsList className="h-11">
             <TabsTrigger value="all" className="text-sm px-4">Все ({cells.length})</TabsTrigger>
             <TabsTrigger value="available" className="text-sm px-4">Свободные ({availableCount})</TabsTrigger>
+            <TabsTrigger value="reserved" className="text-sm px-4">В брони ({reservedCount})</TabsTrigger>
             <TabsTrigger value="occupied" className="text-sm px-4">Занятые ({occupiedCount})</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -892,20 +960,20 @@ const AdminCells = () => {
                       )}
                     </td>
                     <td className="p-4">
-                      <Badge
-                        variant="outline"
-                        style={cell.isAvailable ? {
-                          borderColor: 'hsl(var(--status-active) / 0.3)',
-                          color: 'hsl(var(--status-active))',
-                          backgroundColor: 'hsl(var(--status-active) / 0.1)',
-                        } : {
-                          borderColor: 'hsl(var(--status-pending) / 0.3)',
-                          color: 'hsl(var(--status-pending))',
-                          backgroundColor: 'hsl(var(--status-pending) / 0.1)',
-                        }}
-                      >
-                        {cell.isAvailable ? 'Свободна' : 'Занята'}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          style={getStatusStyle(cell.status)}
+                        >
+                          {CELL_STATUS_LABELS[cell.status]}
+                        </Badge>
+                        {cell.status === 'reserved' && cell.reservedUntil && (
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Timer className="h-3 w-3" />
+                            {getReservationTimeLeft(cell.reservedUntil)}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
@@ -918,15 +986,28 @@ const AdminCells = () => {
                           <DropdownMenuItem onClick={() => setSelectedCell(cell)}>
                             <Eye className="h-4 w-4 mr-2" />Подробнее
                           </DropdownMenuItem>
-                          {cell.isAvailable ? (
+                          {cell.status === 'available' && (
                             <DropdownMenuItem onClick={() => openAssignDialog(cell)}>
                               <UserPlus className="h-4 w-4 mr-2" />Сдать ячейку
                             </DropdownMenuItem>
-                          ) : (
+                          )}
+                          {cell.status === 'reserved' && (
                             <>
                               <DropdownMenuItem onClick={() => {
-                                setSelectedCell(cell);
+                                // Cancel reservation — return to available
+                                setCells(prev => prev.map(c => c.id === cell.id ? { ...c, status: 'available' as CellStatus, isAvailable: true, reservedUntil: undefined } : c));
+                                toast.success(`Бронь ячейки №${cell.number} отменена`);
                               }}>
+                                <X className="h-4 w-4 mr-2" />Отменить бронь
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openAssignDialog(cell)}>
+                                <Key className="h-4 w-4 mr-2" />Оформить аренду
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          {cell.status === 'occupied' && (
+                            <>
+                              <DropdownMenuItem onClick={() => setSelectedCell(cell)}>
                                 <Key className="h-4 w-4 mr-2" />Просмотр аренды
                               </DropdownMenuItem>
                               <DropdownMenuItem className="text-destructive" onClick={() => handleRelease(cell.id)}>

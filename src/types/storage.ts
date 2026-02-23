@@ -1,3 +1,5 @@
+export type CellStatus = 'available' | 'reserved' | 'occupied';
+
 export interface StorageCell {
   id: string;
   number: number;
@@ -10,10 +12,20 @@ export interface StorageCell {
   tier: number;
   pricePerMonth: number;
   isAvailable: boolean;
+  status: CellStatus;
+  reservedUntil?: string; // ISO datetime when reservation expires
   hasSocket: boolean;
   hasShelves: boolean;
   photos: string[];
 }
+
+export const CELL_STATUS_LABELS: Record<CellStatus, string> = {
+  available: 'Свободна',
+  reserved: 'В брони',
+  occupied: 'Занята',
+};
+
+export const RESERVATION_HOURS = 2;
 
 export interface FilterOptions {
   minArea?: number;

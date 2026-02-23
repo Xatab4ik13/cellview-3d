@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { StorageCell, calculatePrice } from '@/types/storage';
+import { StorageCell, calculatePrice, RESERVATION_HOURS } from '@/types/storage';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -227,6 +227,9 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
               <Button className="w-full" size="lg">
                 Забронировать за {calculateTotalPrice(selectedDuration).toLocaleString('ru-RU')} ₽
               </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Ячейка будет зарезервирована на {RESERVATION_HOURS} часа для оплаты
+              </p>
               <Button variant="outline" className="w-full" size="lg">
                 Связаться с менеджером
               </Button>
