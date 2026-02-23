@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, Key, CreditCard, Bell, FileText, LogOut, Video } from 'lucide-react';
 import Header from '@/components/Header';
@@ -13,9 +13,21 @@ import InfoSection from '@/components/dashboard/InfoSection';
 import SurveillanceSection from '@/components/dashboard/SurveillanceSection';
 import { Button } from '@/components/ui/button';
 
+export interface BookingState {
+  cellId: number;
+  cellNumber: number;
+  duration: number;
+  totalPrice: number;
+  pricePerMonth: number;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = location.state as { booking?: BookingState } | null;
+
   const [activeTab, setActiveTab] = useState('profile');
+  const [pendingBooking, setPendingBooking] = useState<BookingState | null>(null);
 
   useEffect(() => {
     const customer = localStorage.getItem('kladovka78_customer');
@@ -23,6 +35,16 @@ const Dashboard = () => {
       navigate('/auth');
     }
   }, [navigate]);
+
+  // Accept booking from navigation state
+  useEffect(() => {
+    if (locationState?.booking) {
+      setPendingBooking(locationState.booking);
+      setActiveTab('rentals');
+      // Clear location state to prevent re-trigger on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [locationState]);
 
   const handleLogout = () => {
     localStorage.removeItem('kladovka78_customer');
@@ -46,7 +68,6 @@ const Dashboard = () => {
       
       <main className="flex-1 pt-40 pb-20">
         <div className="container mx-auto px-4">
-          {/* Header with accent gradient */}
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Личный кабинет</h1>
@@ -94,7 +115,11 @@ const Dashboard = () => {
             </TabsContent>
             
             <TabsContent value="rentals" className="mt-6">
-              <RentalsSection />
+              <RentalsSection 
+                pendingBooking={pendingBooking} 
+                onClearBooking={() => setPendingBooking(null)}
+                onGoToProfile={() => setActiveTab('profile')}
+              />
             </TabsContent>
             
             <TabsContent value="surveillance" className="mt-6">

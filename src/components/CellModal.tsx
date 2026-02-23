@@ -236,10 +236,11 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
                     cellId: cell.id, 
                     cellNumber: cell.number, 
                     duration: selectedDuration, 
-                    totalPrice: calculateTotalPrice(selectedDuration) 
+                    totalPrice: calculateTotalPrice(selectedDuration),
+                    pricePerMonth: monthlyPrice,
                   };
                   if (customer) {
-                    navigate('/checkout', { state: bookingState });
+                    navigate('/dashboard', { state: { booking: bookingState } });
                   } else {
                     navigate('/auth', { state: bookingState });
                   }

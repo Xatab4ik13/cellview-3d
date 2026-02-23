@@ -40,7 +40,7 @@ const Auth = () => {
     const booking = bookingRef.current;
     setTimeout(() => {
       if (booking?.cellId) {
-        navigate('/checkout', { state: booking, replace: true });
+        navigate('/dashboard', { state: { booking }, replace: true });
       } else {
         navigate('/dashboard', { replace: true });
       }
@@ -52,7 +52,7 @@ const Auth = () => {
     const existing = localStorage.getItem('kladovka78_customer');
     if (existing && !token) {
       if (bookingData?.cellId) {
-        navigate('/checkout', { state: bookingData, replace: true });
+        navigate('/dashboard', { state: { booking: bookingData }, replace: true });
       } else {
         navigate('/dashboard', { replace: true });
       }
