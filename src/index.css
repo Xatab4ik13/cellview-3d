@@ -293,6 +293,15 @@
     background: linear-gradient(180deg, transparent 60%, hsl(45, 100%, 70%) 60%);
     padding: 0 4px;
   }
+
+  /* Hide sidebar scrollbar */
+  .crm-zone [data-sidebar="content"] {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .crm-zone [data-sidebar="content"]::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer utilities {
