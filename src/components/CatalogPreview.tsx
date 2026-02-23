@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { storageCells } from '@/data/storageCells';
+import { useCells } from '@/hooks/useCells';
 import { StorageCell } from '@/types/storage';
 import CellCardVariantB from './CellCardVariantB';
 import CellModal from './CellModal';
@@ -10,6 +10,7 @@ import { ArrowRight } from 'lucide-react';
 const PREVIEW_COUNT = 8;
 
 const CatalogPreview = () => {
+  const { data: storageCells = [], isLoading } = useCells();
   const [selectedCell, setSelectedCell] = useState<StorageCell | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
