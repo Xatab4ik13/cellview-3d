@@ -58,13 +58,6 @@ const occupancyData = [
   { month: 'Фев', occupied: 38, total: 42 },
 ];
 
-const funnelData = [
-  { name: 'Заявки', value: 48, color: 'hsl(210, 80%, 55%)' },
-  { name: 'Звонки', value: 32, color: 'hsl(38, 95%, 50%)' },
-  { name: 'Показы', value: 18, color: 'hsl(220, 65%, 50%)' },
-  { name: 'Договоры', value: 12, color: 'hsl(268, 60%, 55%)' },
-  { name: 'Аренды', value: 10, color: 'hsl(152, 70%, 40%)' },
-];
 
 const cellSizeDistribution = [
   { name: '1-3 м²', value: 12, color: 'hsl(210, 80%, 55%)' },
@@ -241,38 +234,7 @@ const AdminAnalytics = () => {
         </CrmCard>
       </div>
 
-      {/* Charts Row 2 */}
-      <div className="grid gap-5 lg:grid-cols-3">
-        {/* Funnel */}
-        <CrmCard>
-          <h3 className="text-base font-semibold mb-1">Воронка конверсий</h3>
-          <p className="text-sm text-muted-foreground mb-6">Заявка → Аренда</p>
-          <div className="space-y-3">
-            {funnelData.map((item, i) => (
-              <motion.div
-                key={item.name}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm">{item.name}</span>
-                  <span className="text-sm font-semibold">{item.value}</span>
-                </div>
-                <div className="h-3 bg-muted rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(item.value / funnelData[0].value) * 100}%` }}
-                    transition={{ duration: 0.8, delay: i * 0.1 }}
-                    className="h-full rounded-full"
-                    style={{ backgroundColor: item.color }}
-                  />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </CrmCard>
-
+      <div className="grid gap-5 lg:grid-cols-2">
         {/* Cell Size Distribution */}
         <CrmCard>
           <h3 className="text-base font-semibold mb-1">Распределение по размеру</h3>

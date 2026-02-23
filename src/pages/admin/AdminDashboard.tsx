@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Box, Key, Users, CreditCard, TrendingUp, AlertCircle, ArrowUpRight } from 'lucide-react';
+import { Box, Key, Users, CreditCard, TrendingUp, Clock, ArrowUpRight, Timer } from 'lucide-react';
 import CrmCard from '@/components/crm/CrmCard';
 import AnimatedCounter from '@/components/crm/AnimatedCounter';
 import { motion } from 'framer-motion';
@@ -48,10 +48,9 @@ const stats = [
   },
 ];
 
-const recentApplications = [
-  { id: 1, name: 'Иван Петров', phone: '+7 (999) 123-45-67', cellSize: '3 м²', date: '15 мин назад', status: 'new' },
-  { id: 2, name: 'Анна Сидорова', phone: '+7 (999) 234-56-78', cellSize: '5 м²', date: '2 часа назад', status: 'new' },
-  { id: 3, name: 'Петр Козлов', phone: '+7 (999) 345-67-89', cellSize: '10 м²', date: 'Вчера', status: 'processing' },
+const recentReservations = [
+  { id: 1, cellNumber: 3, size: '1.88 м²', timeLeft: '1ч 45м', price: '3 000 ₽/мес' },
+  { id: 2, cellNumber: 10, size: '2.02 м²', timeLeft: '0ч 32м', price: '3 200 ₽/мес' },
 ];
 
 const expiringRentals = [
@@ -59,14 +58,6 @@ const expiringRentals = [
   { id: 2, customer: 'Мария Иванова', cell: 'B-05', expiresIn: '5 дней', amount: '₽ 4 200' },
   { id: 3, customer: 'ИП Смирнов', cell: 'C-22', expiresIn: '7 дней', amount: '₽ 12 000' },
 ];
-
-const statusDot = (status: string) => {
-  const colors: Record<string, string> = {
-    new: 'bg-[hsl(var(--status-new))]',
-    processing: 'bg-[hsl(var(--status-pending))]',
-  };
-  return <span className={`inline-block h-2.5 w-2.5 rounded-full ${colors[status] || 'bg-muted-foreground'}`} />;
-};
 
 const container = {
   animate: {
@@ -116,44 +107,51 @@ const AdminDashboard = () => {
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
-        {/* Recent Applications */}
+        {/* Active Reservations */}
         <CrmCard>
           <div className="flex items-center justify-between mb-5">
             <div>
               <h3 className="text-base font-semibold flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-[hsl(var(--status-new))]" />
-                Новые заявки
+                <Timer className="h-5 w-5 text-[hsl(var(--status-new))]" />
+                Активные брони
               </h3>
-              <p className="text-sm text-muted-foreground mt-0.5">Требуют обработки</p>
+              <p className="text-sm text-muted-foreground mt-0.5">Ожидают оплаты (2ч)</p>
             </div>
             <button
-              onClick={() => navigate('/admin/applications')}
+              onClick={() => navigate('/admin/cells')}
               className="text-sm text-primary hover:underline flex items-center gap-1"
             >
               Все <ArrowUpRight className="h-4 w-4" />
             </button>
           </div>
           <div className="space-y-3">
-            {recentApplications.map((app) => (
+            {recentReservations.length > 0 ? recentReservations.map((res) => (
               <motion.div
-                key={app.id}
+                key={res.id}
                 whileHover={{ x: 3 }}
-                onClick={() => navigate('/admin/applications')}
+                onClick={() => navigate('/admin/cells')}
                 className="flex items-center justify-between p-4 rounded-lg bg-muted/40 hover:bg-muted/70 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  {statusDot(app.status)}
+                  <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'hsl(var(--status-new) / 0.1)' }}>
+                    <Box className="h-5 w-5" style={{ color: 'hsl(var(--status-new))' }} />
+                  </div>
                   <div>
-                    <p className="text-sm font-medium">{app.name}</p>
-                    <p className="text-sm text-muted-foreground">{app.phone}</p>
+                    <p className="text-sm font-medium">Ячейка №{res.cellNumber}</p>
+                    <p className="text-sm text-muted-foreground">{res.size}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium">{app.cellSize}</p>
-                  <p className="text-xs text-muted-foreground">{app.date}</p>
+                  <p className="text-sm font-semibold flex items-center gap-1" style={{ color: 'hsl(var(--status-new))' }}>
+                    <Clock className="h-3.5 w-3.5" />
+                    {res.timeLeft}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{res.price}</p>
                 </div>
               </motion.div>
-            ))}
+            )) : (
+              <p className="text-sm text-muted-foreground text-center py-6">Нет активных броней</p>
+            )}
           </div>
         </CrmCard>
 
