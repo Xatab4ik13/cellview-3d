@@ -22,11 +22,9 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCells from "./pages/admin/AdminCells";
 import AdminRentals from "./pages/admin/AdminRentals";
 import AdminCustomers from "./pages/admin/AdminCustomers";
-import AdminApplications from "./pages/admin/AdminApplications";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminFunnel from "./pages/admin/AdminFunnel";
-import AdminTasks from "./pages/admin/AdminTasks";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminCameras from "./pages/admin/AdminCameras";
 import AdminDocuments from "./pages/admin/AdminDocuments";
@@ -59,11 +57,9 @@ const App = () => (
             <Route path="cells" element={<AdminCells />} />
             <Route path="rentals" element={<AdminRentals />} />
             <Route path="customers" element={<AdminCustomers />} />
-            <Route path="applications" element={<AdminApplications />} />
             <Route path="payments" element={<AdminPayments />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route path="funnel" element={<AdminFunnel />} />
-            <Route path="tasks" element={<AdminTasks />} />
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="cameras" element={<AdminCameras />} />
             <Route path="documents" element={<AdminDocuments />} />
