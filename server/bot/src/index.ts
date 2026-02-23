@@ -94,8 +94,8 @@ bot.on('contact', async (ctx) => {
       const fullName = `${firstName} ${lastName}`.trim() || 'Клиент';
 
       await db.query(
-        'INSERT INTO customers (name, phone, telegram, telegram_id, type, status) VALUES (?, ?, ?, ?, ?, ?)',
-        [fullName, normalizedPhone, `@${username || telegramId}`, String(telegramId), 'individual', 'active']
+        'INSERT INTO customers (name, phone, telegram, telegram_id, type) VALUES (?, ?, ?, ?, ?)',
+        [fullName, normalizedPhone, `@${username || telegramId}`, String(telegramId), 'individual']
       );
 
       await ctx.reply(
