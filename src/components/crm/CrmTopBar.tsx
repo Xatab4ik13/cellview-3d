@@ -29,12 +29,12 @@ const CrmTopBar = () => {
 
   return (
     <header
-      className="h-16 border-b border-border bg-card flex items-center px-6 gap-5 sticky top-0 z-10"
+      className="h-14 md:h-16 border-b border-border bg-card flex items-center px-3 md:px-6 gap-2 md:gap-5 sticky top-0 z-10"
       style={{ boxShadow: 'var(--shadow-top-bar)' }}
     >
-      <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
+      <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors shrink-0" />
       
-      <h1 className="text-lg font-semibold text-foreground mr-auto">{title}</h1>
+      <h1 className="text-sm md:text-lg font-semibold text-foreground mr-auto truncate">{title}</h1>
 
       {/* Search */}
       <div className="hidden md:flex items-center relative max-w-[320px] w-full">
@@ -47,19 +47,19 @@ const CrmTopBar = () => {
 
       {/* Quick action */}
       <Button
-        size="default"
-        className="h-10 gap-2 text-sm shadow-sm"
+        size="icon"
+        className="h-9 w-9 md:h-10 md:w-auto md:px-4 gap-2 text-sm shadow-sm shrink-0"
         onClick={() => navigate('/admin/applications')}
       >
         <Plus className="h-4 w-4" />
-        <span className="hidden lg:inline">Новая заявка</span>
+        <span className="hidden md:inline">Новая заявка</span>
       </Button>
 
       {/* Notifications */}
       <Button
         variant="ghost"
         size="icon"
-        className="relative h-10 w-10 text-muted-foreground hover:text-foreground"
+        className="relative h-9 w-9 md:h-10 md:w-10 text-muted-foreground hover:text-foreground shrink-0"
         onClick={() => toast.info('Уведомления будут доступны после подключения базы данных')}
       >
         <Bell className="h-5 w-5" />
@@ -71,7 +71,7 @@ const CrmTopBar = () => {
       {/* Profile avatar */}
       <div
         onClick={() => navigate('/admin/settings')}
-        className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold cursor-pointer hover:bg-primary/20 transition-colors"
+        className="h-9 w-9 md:h-10 md:w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold cursor-pointer hover:bg-primary/20 transition-colors shrink-0"
       >
         А
       </div>
