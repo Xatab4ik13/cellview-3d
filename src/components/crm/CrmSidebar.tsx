@@ -84,7 +84,7 @@ const navGroups: NavGroup[] = [
 const CrmSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { state } = useSidebar();
+  const { state, setOpenMobile, isMobile } = useSidebar();
   const isCollapsed = state === 'collapsed';
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     CRM: true,
@@ -163,6 +163,9 @@ const CrmSidebar = () => {
                             to={item.url}
                             end={item.url === '/admin'}
                             className="flex items-center gap-3"
+                            onClick={() => {
+                              if (isMobile) setOpenMobile(false);
+                            }}
                           >
                             <item.icon className="h-5 w-5 shrink-0" />
                             <span className="text-sm">{item.title}</span>
