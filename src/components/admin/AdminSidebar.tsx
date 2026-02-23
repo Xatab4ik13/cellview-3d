@@ -31,7 +31,7 @@ const menuItems = [
   { title: 'Ячейки', url: '/admin/cells', icon: Box },
   { title: 'Аренды', url: '/admin/rentals', icon: Key },
   { title: 'Клиенты', url: '/admin/customers', icon: Users },
-  { title: 'Заявки', url: '/admin/applications', icon: FileText },
+  
   { title: 'Платежи', url: '/admin/payments', icon: CreditCard },
   { title: 'Настройки', url: '/admin/settings', icon: Settings },
 ];

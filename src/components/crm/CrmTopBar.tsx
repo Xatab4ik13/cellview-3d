@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 const routeTitles: Record<string, string> = {
   '/admin': 'Дашборд',
   '/admin/customers': 'Клиенты',
-  '/admin/funnel': 'Воронка продаж',
+  
   '/admin/cells': 'Ячейки',
   '/admin/rentals': 'Аренды',
   '/admin/payments': 'Платежи',

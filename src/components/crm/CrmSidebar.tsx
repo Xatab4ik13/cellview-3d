@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard,
   Users,
-  Kanban,
+  
   Box,
   Key,
   CreditCard,
@@ -49,7 +49,6 @@ const navGroups: NavGroup[] = [
     items: [
       { title: 'Дашборд', url: '/admin', icon: LayoutDashboard },
       { title: 'Клиенты', url: '/admin/customers', icon: Users },
-      { title: 'Воронка', url: '/admin/funnel', icon: Kanban },
     ],
   },
   {
