@@ -2,7 +2,7 @@ import { Telegraf, Markup } from 'telegraf';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { db } from './database';
-import { handleStart, handleLogin, handleMyRentals, handleHelp, handleContact } from './handlers';
+import { handleStart, handleLogin, handleMyRentals, handleHelp, handleContact, generateAuthToken } from './handlers';
 
 dotenv.config();
 
@@ -15,19 +15,6 @@ if (!BOT_TOKEN) {
 const SITE_URL = process.env.SITE_URL || 'https://kladovka78.ru';
 
 const bot = new Telegraf(BOT_TOKEN);
-
-/**
- * Generate a one-time auth token for a customer and return the login URL
- */
-async function generateAuthToken(customerId: string): Promise<string> {
-  const token = crypto.randomBytes(32).toString('hex');
-  // Token valid for 10 minutes
-  await db.query(
-    'INSERT INTO auth_tokens (token, customer_id, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))',
-    [token, customerId]
-  );
-  return `${SITE_URL}/auth?token=${token}`;
-}
 
 // Commands
 bot.start(handleStart);
@@ -51,7 +38,6 @@ bot.action(/^confirm_phone:(.+)$/, async (ctx) => {
     );
 
     if ((result as any).affectedRows > 0) {
-      // Get customer ID for auth token
       const [customers] = await db.query('SELECT id, name FROM customers WHERE phone = ?', [phone]);
       const customer = (customers as any[])[0];
 
@@ -67,8 +53,7 @@ bot.action(/^confirm_phone:(.+)$/, async (ctx) => {
       }
     } else {
       await ctx.editMessageText(
-        '❌ Клиент с таким номером не найден.\n' +
-        'Убедитесь, что вы зарегистрированы в системе, или обратитесь к менеджеру.',
+        '❌ Клиент с таким номером не найден.',
         Markup.inlineKeyboard([
           [Markup.button.url('📞 Связаться', `${SITE_URL}/contacts`)],
         ])
@@ -91,14 +76,12 @@ bot.on('contact', async (ctx) => {
   const normalizedPhone = phone.startsWith('+') ? phone : `+${phone}`;
 
   try {
-    // Try to link existing customer
     const [result] = await db.query(
       'UPDATE customers SET telegram = ?, telegram_id = ? WHERE phone LIKE ?',
       [`@${username || telegramId}`, String(telegramId), `%${normalizedPhone.slice(-10)}%`]
     );
 
     if ((result as any).affectedRows > 0) {
-      // Get customer for auth token
       const [customers] = await db.query(
         'SELECT id, name FROM customers WHERE telegram_id = ?',
         [String(telegramId)]
@@ -126,7 +109,6 @@ bot.on('contact', async (ctx) => {
         [uuid, fullName, normalizedPhone, `@${username || telegramId}`, String(telegramId), 'individual']
       );
 
-      // Generate auth token for the new customer
       const authUrl = await generateAuthToken(uuid);
 
       await ctx.reply(
@@ -153,6 +135,5 @@ bot.launch()
     process.exit(1);
   });
 
-// Graceful shutdown
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));

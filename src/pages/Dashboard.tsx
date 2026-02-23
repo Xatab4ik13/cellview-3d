@@ -18,15 +18,15 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('profile');
 
   useEffect(() => {
-    // Check if user is authenticated
-    const user = localStorage.getItem('user');
-    if (!user) {
+    const customer = localStorage.getItem('kladovka78_customer');
+    if (!customer) {
       navigate('/auth');
     }
   }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
+    localStorage.removeItem('kladovka78_customer');
+    localStorage.removeItem('kladovka78_customer_id');
     navigate('/');
   };
 

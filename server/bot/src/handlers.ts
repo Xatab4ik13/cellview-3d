@@ -1,7 +1,20 @@
 import { Context, Markup } from 'telegraf';
+import crypto from 'crypto';
 import { db } from './database';
 
 const SITE_URL = process.env.SITE_URL || 'https://kladovka78.ru';
+
+/**
+ * Generate a one-time auth token for a customer and return the login URL
+ */
+export async function generateAuthToken(customerId: string): Promise<string> {
+  const token = crypto.randomBytes(32).toString('hex');
+  await db.query(
+    'INSERT INTO auth_tokens (token, customer_id, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))',
+    [token, customerId]
+  );
+  return `${SITE_URL}/auth?token=${token}`;
+}
 
 /**
  * /start — приветствие + deep link обработка
@@ -9,7 +22,6 @@ const SITE_URL = process.env.SITE_URL || 'https://kladovka78.ru';
 export async function handleStart(ctx: Context) {
   const startPayload = (ctx as any).startPayload as string | undefined;
   const telegramId = ctx.from?.id;
-  const username = ctx.from?.username;
   const firstName = ctx.from?.first_name || 'друг';
 
   // Check if user is already linked
@@ -20,17 +32,13 @@ export async function handleStart(ctx: Context) {
   const linkedCustomer = (existing as any[])[0];
 
   if (startPayload?.startsWith('book_')) {
-    // Deep link from booking: book_{cellId}_{duration}
-    const parts = startPayload.split('_');
-    const cellId = parts[1];
-    const duration = parts[2];
-
     if (linkedCustomer) {
+      const authUrl = await generateAuthToken(linkedCustomer.id);
       await ctx.reply(
         `👋 ${linkedCustomer.name}, вы хотите забронировать ячейку.\n\n` +
         `Перейдите на сайт для завершения бронирования:`,
         Markup.inlineKeyboard([
-          [Markup.button.url('💳 Перейти к оплате', `${SITE_URL}/checkout`)],
+          [Markup.button.url('🏠 Войти и забронировать', authUrl)],
           [Markup.button.url('📦 Каталог ячеек', `${SITE_URL}/catalog`)],
         ])
       );
@@ -47,13 +55,14 @@ export async function handleStart(ctx: Context) {
     return;
   }
 
-  if (startPayload === 'login') {
+  if (startPayload === 'login' || !startPayload) {
     if (linkedCustomer) {
+      const authUrl = await generateAuthToken(linkedCustomer.id);
       await ctx.reply(
         `✅ ${linkedCustomer.name}, ваш аккаунт уже привязан!\n\n` +
         `Перейдите в личный кабинет:`,
         Markup.inlineKeyboard([
-          [Markup.button.url('🏠 Личный кабинет', `${SITE_URL}/dashboard`)],
+          [Markup.button.url('🏠 Личный кабинет', authUrl)],
         ])
       );
     } else {
@@ -67,23 +76,6 @@ export async function handleStart(ctx: Context) {
     }
     return;
   }
-
-  // Default start
-  const greeting = linkedCustomer
-    ? `👋 Привет, ${linkedCustomer.name}!\n\nВаш аккаунт привязан. Вот что я умею:`
-    : `👋 Привет, ${firstName}!\n\nЯ бот склада самообслуживания Кладовка78.\nПривяжите аккаунт, чтобы получать уведомления.`;
-
-  await ctx.reply(
-    greeting + '\n\n' +
-    '📦 /rentals — Моя аренда\n' +
-    '🔑 /login — Привязать аккаунт\n' +
-    '❓ /help — Помощь\n' +
-    '📞 /contact — Связь с менеджером',
-    Markup.inlineKeyboard([
-      [Markup.button.url('🌐 Открыть сайт', SITE_URL)],
-      [Markup.button.url('📦 Каталог ячеек', `${SITE_URL}/catalog`)],
-    ])
-  );
 }
 
 /**
@@ -93,16 +85,18 @@ export async function handleLogin(ctx: Context) {
   const telegramId = ctx.from?.id;
 
   const [existing] = await db.query(
-    'SELECT name FROM customers WHERE telegram_id = ?',
+    'SELECT id, name FROM customers WHERE telegram_id = ?',
     [String(telegramId)]
   );
 
   if ((existing as any[]).length > 0) {
+    const customer = (existing as any[])[0];
+    const authUrl = await generateAuthToken(customer.id);
     await ctx.reply(
-      `✅ Ваш аккаунт уже привязан (${(existing as any[])[0].name}).\n\n` +
+      `✅ Ваш аккаунт уже привязан (${customer.name}).\n\n` +
       `Перейдите в личный кабинет:`,
       Markup.inlineKeyboard([
-        [Markup.button.url('🏠 Личный кабинет', `${SITE_URL}/dashboard`)],
+        [Markup.button.url('🏠 Личный кабинет', authUrl)],
       ])
     );
     return;
@@ -130,13 +124,12 @@ export async function handleMyRentals(ctx: Context) {
     );
 
     if ((customers as any[]).length === 0) {
-      await ctx.reply(
-        '❌ Аккаунт не привязан. Используйте /login',
-      );
+      await ctx.reply('❌ Аккаунт не привязан. Используйте /login');
       return;
     }
 
     const customerId = (customers as any[])[0].id;
+    const authUrl = await generateAuthToken(customerId);
 
     const [rentals] = await db.query(`
       SELECT r.*, c.number as cell_number
@@ -171,7 +164,7 @@ export async function handleMyRentals(ctx: Context) {
     await ctx.reply(message, {
       parse_mode: 'Markdown',
       ...Markup.inlineKeyboard([
-        [Markup.button.url('🏠 Личный кабинет', `${SITE_URL}/dashboard`)],
+        [Markup.button.url('🏠 Личный кабинет', authUrl)],
       ]),
     });
   } catch (err) {
