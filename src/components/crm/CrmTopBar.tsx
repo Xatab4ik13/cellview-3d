@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,16 @@ const CrmTopBar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const title = routeTitles[location.pathname] || 'CRM';
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      // Navigate to customers page with search
+      navigate(`/admin/customers`);
+      toast.info(`Поиск: "${searchQuery.trim()}" — перейдите на нужную страницу`);
+      setSearchQuery('');
+    }
+  };
 
   return (
     <header
@@ -41,6 +52,9 @@ const CrmTopBar = () => {
         <Search className="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none" />
         <Input
           placeholder="Поиск клиентов, ячеек..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={handleSearch}
           className="pl-9 h-10 text-sm bg-muted/40 border-transparent focus:border-border focus:bg-card transition-all"
         />
       </div>

@@ -8,41 +8,30 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
-  Search,
-  MoreHorizontal,
-  Eye,
-  Edit,
-  Phone,
-  Mail,
-  Building,
-  User,
-  Plus,
-  X,
-  ArrowLeft,
-  Key,
-  CreditCard,
-  MessageSquare,
-  Tag,
-  Calendar,
-  MapPin,
-  Clock,
-  Send,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import {
+  Search, MoreHorizontal, Eye, Edit, Phone, Mail, Building, User, Plus, X,
+  ArrowLeft, Key, CreditCard, MessageSquare, Tag, Calendar, MapPin, Clock,
+  Send, UserPlus, Trash2, Building2, UserRound,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 // ========== Data ==========
 
@@ -90,19 +79,13 @@ interface PaymentRecord {
   description: string;
 }
 
-const mockCustomers: Customer[] = [
+const initialCustomers: Customer[] = [
   {
-    id: 'C-001',
-    name: 'ООО "ТехноСервис"',
-    type: 'company',
-    phone: '+7 (999) 123-45-67',
-    email: 'info@technoservice.ru',
+    id: 'C-001', name: 'ООО "ТехноСервис"', type: 'company',
+    phone: '+7 (999) 123-45-67', email: 'info@technoservice.ru',
     address: 'г. Санкт-Петербург, ул. Ленина 42',
-    rentals: 2,
-    totalSpent: '₽ 156 000',
-    totalSpentNum: 156000,
-    registeredAt: '15.01.2024',
-    status: 'vip',
+    rentals: 2, totalSpent: '₽ 156 000', totalSpentNum: 156000,
+    registeredAt: '15.01.2024', status: 'vip',
     tags: ['VIP', 'Юр. лицо', 'Долгосрочная аренда'],
     notes: [
       { id: 'n1', text: 'Планируют расширение — интересуются ещё 2 ячейками на 3 этаже', author: 'Менеджер', date: '20.02.2026' },
@@ -119,16 +102,10 @@ const mockCustomers: Customer[] = [
     ],
   },
   {
-    id: 'C-002',
-    name: 'Иванов Петр Сергеевич',
-    type: 'individual',
-    phone: '+7 (999) 234-56-78',
-    email: 'petrov@gmail.com',
-    rentals: 1,
-    totalSpent: '₽ 42 000',
-    totalSpentNum: 42000,
-    registeredAt: '01.02.2024',
-    status: 'active',
+    id: 'C-002', name: 'Иванов Петр Сергеевич', type: 'individual',
+    phone: '+7 (999) 234-56-78', email: 'petrov@gmail.com',
+    rentals: 1, totalSpent: '₽ 42 000', totalSpentNum: 42000,
+    registeredAt: '01.02.2024', status: 'active',
     tags: ['Физ. лицо'],
     notes: [],
     rentalHistory: [
@@ -140,16 +117,10 @@ const mockCustomers: Customer[] = [
     ],
   },
   {
-    id: 'C-003',
-    name: 'ИП Смирнова А.В.',
-    type: 'company',
-    phone: '+7 (999) 345-67-89',
-    email: 'smirnova@mail.ru',
-    rentals: 1,
-    totalSpent: '₽ 72 000',
-    totalSpentNum: 72000,
-    registeredAt: '10.12.2023',
-    status: 'active',
+    id: 'C-003', name: 'ИП Смирнова А.В.', type: 'company',
+    phone: '+7 (999) 345-67-89', email: 'smirnova@mail.ru',
+    rentals: 1, totalSpent: '₽ 72 000', totalSpentNum: 72000,
+    registeredAt: '10.12.2023', status: 'active',
     tags: ['ИП', 'Сезонная'],
     notes: [
       { id: 'n3', text: 'Хранит сезонный товар, активность с марта по октябрь', author: 'Менеджер', date: '10.03.2025' },
@@ -163,16 +134,10 @@ const mockCustomers: Customer[] = [
     ],
   },
   {
-    id: 'C-004',
-    name: 'Козлов Андрей',
-    type: 'individual',
-    phone: '+7 (999) 456-78-90',
-    email: '',
-    rentals: 0,
-    totalSpent: '₽ 18 000',
-    totalSpentNum: 18000,
-    registeredAt: '20.11.2023',
-    status: 'debtor',
+    id: 'C-004', name: 'Козлов Андрей', type: 'individual',
+    phone: '+7 (999) 456-78-90', email: '',
+    rentals: 0, totalSpent: '₽ 18 000', totalSpentNum: 18000,
+    registeredAt: '20.11.2023', status: 'debtor',
     tags: ['Должник', 'Физ. лицо'],
     notes: [
       { id: 'n4', text: 'Задолженность 2 месяца, не выходит на связь', author: 'Менеджер', date: '15.02.2026' },
@@ -211,11 +176,55 @@ const paymentStatusConfig: Record<string, { label: string; className: string }> 
   overdue: { label: 'Просрочено', className: 'bg-[hsl(var(--status-overdue))]/10 text-[hsl(var(--status-overdue))]' },
 };
 
+const formatToday = () => {
+  const d = new Date();
+  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
 // ========== Customer Detail Panel ==========
 
-const CustomerDetail = ({ customer, onClose }: { customer: Customer; onClose: () => void }) => {
+const CustomerDetail = ({
+  customer,
+  onClose,
+  onUpdate,
+  onEdit,
+}: {
+  customer: Customer;
+  onClose: () => void;
+  onUpdate: (updated: Customer) => void;
+  onEdit: () => void;
+}) => {
   const [newNote, setNewNote] = useState('');
   const s = statusConfig[customer.status];
+
+  const handleAddNote = () => {
+    if (!newNote.trim()) return;
+    const note: Note = {
+      id: `n-${Date.now()}`,
+      text: newNote.trim(),
+      author: 'Администратор',
+      date: formatToday(),
+    };
+    onUpdate({ ...customer, notes: [note, ...customer.notes] });
+    setNewNote('');
+    toast.success('Заметка добавлена');
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    onUpdate({ ...customer, notes: customer.notes.filter(n => n.id !== noteId) });
+    toast.success('Заметка удалена');
+  };
+
+  const handleCall = () => {
+    window.open(`tel:${customer.phone.replace(/\D/g, '')}`, '_self');
+    toast.info(`Звонок: ${customer.name}`);
+  };
+
+  const handleEmail = () => {
+    if (customer.email) {
+      window.open(`mailto:${customer.email}`, '_blank');
+    }
+  };
 
   return (
     <motion.div
@@ -240,13 +249,13 @@ const CustomerDetail = ({ customer, onClose }: { customer: Customer; onClose: ()
             <Badge className={s.className}>{s.label}</Badge>
           </div>
           <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground flex-wrap">
-            <span className="flex items-center gap-1.5">
+            <button onClick={handleCall} className="flex items-center gap-1.5 hover:text-primary transition-colors">
               <Phone className="h-4 w-4" /> {customer.phone}
-            </span>
+            </button>
             {customer.email && (
-              <span className="flex items-center gap-1.5">
+              <button onClick={handleEmail} className="flex items-center gap-1.5 hover:text-primary transition-colors">
                 <Mail className="h-4 w-4" /> {customer.email}
-              </span>
+              </button>
             )}
             {customer.address && (
               <span className="flex items-center gap-1.5">
@@ -262,6 +271,21 @@ const CustomerDetail = ({ customer, onClose }: { customer: Customer; onClose: ()
             ))}
           </div>
         </div>
+        <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={onEdit}>
+          <Edit className="h-4 w-4" /> Редактировать
+        </Button>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="flex gap-2 flex-wrap">
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={handleCall}>
+          <Phone className="h-4 w-4" /> Позвонить
+        </Button>
+        {customer.email && (
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleEmail}>
+            <Mail className="h-4 w-4" /> Написать
+          </Button>
+        )}
       </div>
 
       {/* Stats */}
@@ -290,76 +314,84 @@ const CustomerDetail = ({ customer, onClose }: { customer: Customer; onClose: ()
             <CreditCard className="h-4 w-4" /> Платежи
           </TabsTrigger>
           <TabsTrigger value="notes" className="gap-2">
-            <MessageSquare className="h-4 w-4" /> Заметки
+            <MessageSquare className="h-4 w-4" /> Заметки ({customer.notes.length})
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="rentals" className="mt-4">
           <CrmCard hover={false}>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ячейка</TableHead>
-                  <TableHead>Размер</TableHead>
-                  <TableHead>Период</TableHead>
-                  <TableHead>Стоимость</TableHead>
-                  <TableHead>Статус</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {customer.rentalHistory.map((r) => {
-                  const rs = rentalStatusConfig[r.status];
-                  return (
-                    <TableRow key={r.id}>
-                      <TableCell className="font-medium">{r.cell}</TableCell>
-                      <TableCell>{r.size}</TableCell>
-                      <TableCell className="text-sm">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                          {r.startDate} — {r.endDate}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium">{r.amount}</TableCell>
-                      <TableCell>
-                        <Badge className={rs.className}>{rs.label}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            {customer.rentalHistory.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Ячейка</TableHead>
+                    <TableHead>Размер</TableHead>
+                    <TableHead>Период</TableHead>
+                    <TableHead>Стоимость</TableHead>
+                    <TableHead>Статус</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {customer.rentalHistory.map((r) => {
+                    const rs = rentalStatusConfig[r.status];
+                    return (
+                      <TableRow key={r.id}>
+                        <TableCell className="font-medium">{r.cell}</TableCell>
+                        <TableCell>{r.size}</TableCell>
+                        <TableCell className="text-sm">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                            {r.startDate} — {r.endDate}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">{r.amount}</TableCell>
+                        <TableCell>
+                          <Badge className={rs.className}>{rs.label}</Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">Нет истории аренд</p>
+            )}
           </CrmCard>
         </TabsContent>
 
         <TabsContent value="payments" className="mt-4">
           <CrmCard hover={false}>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Дата</TableHead>
-                  <TableHead>Описание</TableHead>
-                  <TableHead>Способ</TableHead>
-                  <TableHead>Сумма</TableHead>
-                  <TableHead>Статус</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {customer.paymentHistory.map((p) => {
-                  const ps = paymentStatusConfig[p.status];
-                  return (
-                    <TableRow key={p.id}>
-                      <TableCell className="text-sm">{p.date}</TableCell>
-                      <TableCell className="text-sm">{p.description}</TableCell>
-                      <TableCell className="text-sm">{p.method}</TableCell>
-                      <TableCell className="font-medium">{p.amount}</TableCell>
-                      <TableCell>
-                        <Badge className={ps.className}>{ps.label}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            {customer.paymentHistory.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Дата</TableHead>
+                    <TableHead>Описание</TableHead>
+                    <TableHead>Способ</TableHead>
+                    <TableHead>Сумма</TableHead>
+                    <TableHead>Статус</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {customer.paymentHistory.map((p) => {
+                    const ps = paymentStatusConfig[p.status];
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell className="text-sm">{p.date}</TableCell>
+                        <TableCell className="text-sm">{p.description}</TableCell>
+                        <TableCell className="text-sm">{p.method}</TableCell>
+                        <TableCell className="font-medium">{p.amount}</TableCell>
+                        <TableCell>
+                          <Badge className={ps.className}>{ps.label}</Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">Нет истории платежей</p>
+            )}
           </CrmCard>
         </TabsContent>
 
@@ -372,17 +404,36 @@ const CustomerDetail = ({ customer, onClose }: { customer: Customer; onClose: ()
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
                 className="min-h-[80px] text-sm"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAddNote();
+                }}
               />
-              <Button size="icon" className="shrink-0 h-10 w-10 self-end">
+              <Button
+                size="icon"
+                className="shrink-0 h-10 w-10 self-end"
+                onClick={handleAddNote}
+                disabled={!newNote.trim()}
+              >
                 <Send className="h-4 w-4" />
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground mt-2">Ctrl+Enter для отправки</p>
           </CrmCard>
 
           {/* Notes list */}
           {customer.notes.map((note) => (
             <CrmCard key={note.id} hover={false}>
-              <p className="text-sm">{note.text}</p>
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm flex-1">{note.text}</p>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                  onClick={() => handleDeleteNote(note.id)}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
               <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <User className="h-3 w-3" /> {note.author}
@@ -403,14 +454,38 @@ const CustomerDetail = ({ customer, onClose }: { customer: Customer; onClose: ()
   );
 };
 
+// ========== Customer Form ==========
+
+interface CustomerFormData {
+  name: string;
+  type: 'company' | 'individual';
+  phone: string;
+  email: string;
+  address: string;
+  status: 'active' | 'inactive' | 'vip' | 'debtor';
+}
+
+const emptyForm: CustomerFormData = {
+  name: '', type: 'individual', phone: '', email: '', address: '', status: 'active',
+};
+
 // ========== Main Component ==========
 
 const AdminCustomers = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const filteredCustomers = mockCustomers.filter((c) => {
+  // Create/Edit dialog
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [formData, setFormData] = useState<CustomerFormData>(emptyForm);
+
+  // Delete confirmation
+  const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null);
+
+  const filteredCustomers = customers.filter((c) => {
     const matchesSearch =
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.phone.includes(searchQuery) ||
@@ -420,171 +495,382 @@ const AdminCustomers = () => {
   });
 
   const statusFilters = [
-    { key: 'all', label: 'Все', count: mockCustomers.length },
-    { key: 'active', label: 'Активные', count: mockCustomers.filter((c) => c.status === 'active').length },
-    { key: 'vip', label: 'VIP', count: mockCustomers.filter((c) => c.status === 'vip').length },
-    { key: 'debtor', label: 'Должники', count: mockCustomers.filter((c) => c.status === 'debtor').length },
+    { key: 'all', label: 'Все', count: customers.length },
+    { key: 'active', label: 'Активные', count: customers.filter((c) => c.status === 'active').length },
+    { key: 'vip', label: 'VIP', count: customers.filter((c) => c.status === 'vip').length },
+    { key: 'debtor', label: 'Должники', count: customers.filter((c) => c.status === 'debtor').length },
   ];
 
+  // ========== Handlers ==========
+
+  const openCreateDialog = () => {
+    setEditingCustomer(null);
+    setFormData(emptyForm);
+    setIsFormOpen(true);
+  };
+
+  const openEditDialog = (customer: Customer) => {
+    setEditingCustomer(customer);
+    setFormData({
+      name: customer.name,
+      type: customer.type,
+      phone: customer.phone,
+      email: customer.email,
+      address: customer.address || '',
+      status: customer.status,
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleSave = () => {
+    if (!formData.name.trim() || !formData.phone.trim()) {
+      toast.error('Заполните имя и телефон');
+      return;
+    }
+
+    if (editingCustomer) {
+      // Update
+      const updated: Customer = {
+        ...editingCustomer,
+        name: formData.name.trim(),
+        type: formData.type,
+        phone: formData.phone.trim(),
+        email: formData.email.trim(),
+        address: formData.address.trim() || undefined,
+        status: formData.status,
+        tags: [
+          formData.type === 'company' ? 'Юр. лицо' : 'Физ. лицо',
+          ...(formData.status === 'vip' ? ['VIP'] : []),
+          ...(formData.status === 'debtor' ? ['Должник'] : []),
+        ],
+      };
+      setCustomers(prev => prev.map(c => c.id === editingCustomer.id ? updated : c));
+      if (selectedCustomer?.id === editingCustomer.id) {
+        setSelectedCustomer(updated);
+      }
+      toast.success(`Клиент "${updated.name}" обновлён`);
+    } else {
+      // Create
+      const newCustomer: Customer = {
+        id: `C-${Date.now()}`,
+        name: formData.name.trim(),
+        type: formData.type,
+        phone: formData.phone.trim(),
+        email: formData.email.trim(),
+        address: formData.address.trim() || undefined,
+        rentals: 0,
+        totalSpent: '₽ 0',
+        totalSpentNum: 0,
+        registeredAt: formatToday(),
+        status: formData.status,
+        tags: [
+          formData.type === 'company' ? 'Юр. лицо' : 'Физ. лицо',
+          ...(formData.status === 'vip' ? ['VIP'] : []),
+        ],
+        notes: [],
+        rentalHistory: [],
+        paymentHistory: [],
+      };
+      setCustomers(prev => [newCustomer, ...prev]);
+      toast.success(`Клиент "${newCustomer.name}" создан`);
+    }
+    setIsFormOpen(false);
+  };
+
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    setCustomers(prev => prev.filter(c => c.id !== deleteTarget.id));
+    if (selectedCustomer?.id === deleteTarget.id) setSelectedCustomer(null);
+    toast.success(`Клиент "${deleteTarget.name}" удалён`);
+    setDeleteTarget(null);
+  };
+
+  const handleCall = (phone: string, name: string) => {
+    window.open(`tel:${phone.replace(/\D/g, '')}`, '_self');
+    toast.info(`Звонок: ${name}`);
+  };
+
+  const handleUpdateCustomer = (updated: Customer) => {
+    setCustomers(prev => prev.map(c => c.id === updated.id ? updated : c));
+    setSelectedCustomer(updated);
+  };
+
   return (
-    <AnimatePresence mode="wait">
-      {selectedCustomer ? (
-        <CustomerDetail
-          key="detail"
-          customer={selectedCustomer}
-          onClose={() => setSelectedCustomer(null)}
-        />
-      ) : (
-        <motion.div
-          key="list"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0, x: -20 }}
-          className="space-y-6"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight">Клиенты</h2>
-              <p className="text-base text-muted-foreground mt-1">
-                Всего: {mockCustomers.length} · Активных:{' '}
-                {mockCustomers.filter((c) => c.status === 'active' || c.status === 'vip').length}
-              </p>
-            </div>
-            <Button className="h-10 gap-2">
-              <Plus className="h-4 w-4" />
-              Новый клиент
-            </Button>
-          </div>
-
-          {/* Filters */}
-          <div className="flex items-center gap-3">
-            {statusFilters.map((f) => (
-              <Button
-                key={f.key}
-                variant={statusFilter === f.key ? 'default' : 'outline'}
-                size="sm"
-                className="h-9 gap-1.5 text-sm"
-                onClick={() => setStatusFilter(f.key)}
-              >
-                {f.label}
-                <Badge
-                  variant="secondary"
-                  className={`text-xs h-5 min-w-5 justify-center ml-1 ${
-                    statusFilter === f.key ? 'bg-primary-foreground/20 text-primary-foreground' : ''
-                  }`}
-                >
-                  {f.count}
-                </Badge>
+    <>
+      <AnimatePresence mode="wait">
+        {selectedCustomer ? (
+          <CustomerDetail
+            key="detail"
+            customer={selectedCustomer}
+            onClose={() => setSelectedCustomer(null)}
+            onUpdate={handleUpdateCustomer}
+            onEdit={() => openEditDialog(selectedCustomer)}
+          />
+        ) : (
+          <motion.div
+            key="list"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight">Клиенты</h2>
+                <p className="text-base text-muted-foreground mt-1">
+                  Всего: {customers.length} · Активных: {customers.filter((c) => c.status === 'active' || c.status === 'vip').length}
+                </p>
+              </div>
+              <Button className="h-10 gap-2" onClick={openCreateDialog}>
+                <Plus className="h-4 w-4" />
+                Новый клиент
               </Button>
-            ))}
+            </div>
 
-            <div className="ml-auto relative max-w-[280px] w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            {/* Filters */}
+            <div className="flex items-center gap-3">
+              {statusFilters.map((f) => (
+                <Button
+                  key={f.key}
+                  variant={statusFilter === f.key ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-9 gap-1.5 text-sm"
+                  onClick={() => setStatusFilter(f.key)}
+                >
+                  {f.label}
+                  <Badge
+                    variant="secondary"
+                    className={`text-xs h-5 min-w-5 justify-center ml-1 ${
+                      statusFilter === f.key ? 'bg-primary-foreground/20 text-primary-foreground' : ''
+                    }`}
+                  >
+                    {f.count}
+                  </Badge>
+                </Button>
+              ))}
+
+              <div className="ml-auto relative max-w-[280px] w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Поиск клиентов..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 h-9"
+                />
+              </div>
+            </div>
+
+            {/* Table */}
+            <CrmCard hover={false}>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Клиент</TableHead>
+                    <TableHead>Контакты</TableHead>
+                    <TableHead>Аренд</TableHead>
+                    <TableHead>Оборот</TableHead>
+                    <TableHead>С нами с</TableHead>
+                    <TableHead>Статус</TableHead>
+                    <TableHead className="text-right">Действия</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCustomers.map((customer, i) => {
+                    const s = statusConfig[customer.status];
+                    return (
+                      <motion.tr
+                        key={customer.id}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.04 }}
+                        className="border-b border-border hover:bg-muted/40 transition-colors cursor-pointer"
+                        onClick={() => setSelectedCustomer(customer)}
+                      >
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                                {getInitials(customer.name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="text-sm font-semibold">{customer.name}</p>
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                                {customer.type === 'company' ? (
+                                  <><Building className="h-3 w-3" /> Юр. лицо</>
+                                ) : (
+                                  <><User className="h-3 w-3" /> Физ. лицо</>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1 text-sm">
+                            <div className="flex items-center gap-1.5">
+                              <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                              {customer.phone}
+                            </div>
+                            {customer.email && (
+                              <div className="flex items-center gap-1.5">
+                                <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                                {customer.email}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-sm">{customer.rentals}</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm font-semibold">{customer.totalSpent}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{customer.registeredAt}</TableCell>
+                        <TableCell>
+                          <Badge className={s.className}>{s.label}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setSelectedCustomer(customer)}>
+                                <Eye className="h-4 w-4 mr-2" /> Профиль
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openEditDialog(customer)}>
+                                <Edit className="h-4 w-4 mr-2" /> Редактировать
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleCall(customer.phone, customer.name)}>
+                                <Phone className="h-4 w-4 mr-2" /> Позвонить
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => setDeleteTarget(customer)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" /> Удалить
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </motion.tr>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CrmCard>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ========== Create/Edit Customer Dialog ========== */}
+      <Dialog modal open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {editingCustomer ? <Edit className="h-5 w-5 text-primary" /> : <UserPlus className="h-5 w-5 text-primary" />}
+              {editingCustomer ? `Редактировать: ${editingCustomer.name}` : 'Новый клиент'}
+            </DialogTitle>
+            <DialogDescription>
+              {editingCustomer ? 'Измените данные клиента' : 'Заполните информацию о новом клиенте'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-2">
+            {/* Type toggle */}
+            <div className="flex gap-2">
+              <Button type="button" size="sm"
+                variant={formData.type === 'individual' ? 'default' : 'outline'}
+                className="flex-1 gap-1.5 h-10"
+                onClick={() => setFormData(p => ({ ...p, type: 'individual' }))}
+              >
+                <UserRound className="h-4 w-4" /> Физ. лицо
+              </Button>
+              <Button type="button" size="sm"
+                variant={formData.type === 'company' ? 'default' : 'outline'}
+                className="flex-1 gap-1.5 h-10"
+                onClick={() => setFormData(p => ({ ...p, type: 'company' }))}
+              >
+                <Building2 className="h-4 w-4" /> Компания / ИП
+              </Button>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>{formData.type === 'company' ? 'Название компании *' : 'ФИО *'}</Label>
               <Input
-                placeholder="Поиск клиентов..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9"
+                placeholder={formData.type === 'company' ? 'ООО "Компания"' : 'Иванов Иван Иванович'}
+                value={formData.name}
+                onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))}
+                className="h-11"
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Телефон *</Label>
+                <Input placeholder="+7 (___) ___-__-__" value={formData.phone}
+                  onChange={(e) => setFormData(p => ({ ...p, phone: e.target.value }))}
+                  className="h-11" />
+              </div>
+              <div className="grid gap-2">
+                <Label>Email</Label>
+                <Input placeholder="email@example.com" value={formData.email}
+                  onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))}
+                  className="h-11" />
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Адрес</Label>
+              <Input placeholder="г. Город, ул. Улица, д. 1" value={formData.address}
+                onChange={(e) => setFormData(p => ({ ...p, address: e.target.value }))}
+                className="h-11" />
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Статус</Label>
+              <Select value={formData.status} onValueChange={(v) => setFormData(p => ({ ...p, status: v as any }))}>
+                <SelectTrigger className="h-11">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Активен</SelectItem>
+                  <SelectItem value="vip">VIP</SelectItem>
+                  <SelectItem value="inactive">Неактивен</SelectItem>
+                  <SelectItem value="debtor">Должник</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          {/* Table */}
-          <CrmCard hover={false}>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Клиент</TableHead>
-                  <TableHead>Контакты</TableHead>
-                  <TableHead>Аренд</TableHead>
-                  <TableHead>Оборот</TableHead>
-                  <TableHead>С нами с</TableHead>
-                  <TableHead>Статус</TableHead>
-                  <TableHead className="text-right">Действия</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCustomers.map((customer, i) => {
-                  const s = statusConfig[customer.status];
-                  return (
-                    <motion.tr
-                      key={customer.id}
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.04 }}
-                      className="border-b border-border hover:bg-muted/40 transition-colors cursor-pointer"
-                      onClick={() => setSelectedCustomer(customer)}
-                    >
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                              {getInitials(customer.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="text-sm font-semibold">{customer.name}</p>
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                              {customer.type === 'company' ? (
-                                <><Building className="h-3 w-3" /> Юр. лицо</>
-                              ) : (
-                                <><User className="h-3 w-3" /> Физ. лицо</>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1 text-sm">
-                          <div className="flex items-center gap-1.5">
-                            <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                            {customer.phone}
-                          </div>
-                          {customer.email && (
-                            <div className="flex items-center gap-1.5">
-                              <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                              {customer.email}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-sm">{customer.rentals}</Badge>
-                      </TableCell>
-                      <TableCell className="text-sm font-semibold">{customer.totalSpent}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{customer.registeredAt}</TableCell>
-                      <TableCell>
-                        <Badge className={s.className}>{s.label}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setSelectedCustomer(customer)}>
-                              <Eye className="h-4 w-4 mr-2" /> Профиль
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="h-4 w-4 mr-2" /> Редактировать
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Phone className="h-4 w-4 mr-2" /> Позвонить
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </motion.tr>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CrmCard>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsFormOpen(false)}>Отмена</Button>
+            <Button onClick={handleSave} disabled={!formData.name.trim() || !formData.phone.trim()}>
+              {editingCustomer ? 'Сохранить' : 'Создать клиента'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ========== Delete Confirmation ========== */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить клиента?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Клиент <strong>{deleteTarget?.name}</strong> будет удалён вместе со всей историей. Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 
