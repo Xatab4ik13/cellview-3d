@@ -11,6 +11,9 @@ import FAQ from "./pages/FAQ";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
+import Docs from "./pages/Docs";
+import Privacy from "./pages/Privacy";
+import Consent from "./pages/Consent";
 
 // Admin pages
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -43,6 +46,9 @@ const App = () => (
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/contacts" element={<Contacts />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/docs" element={<Docs />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/consent" element={<Consent />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           
