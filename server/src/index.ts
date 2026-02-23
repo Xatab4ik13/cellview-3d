@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3001;
 // Security & parsing
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'https://kladovka78.ru',
+  origin: (process.env.CORS_ORIGIN || 'https://kladovka78.ru').split(',').map(s => s.trim()),
   credentials: true,
 }));
 app.use(express.json());
