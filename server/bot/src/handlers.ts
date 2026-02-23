@@ -1,19 +1,25 @@
 import { Context, Markup } from 'telegraf';
-import crypto from 'crypto';
 import { db } from './database';
 
 const SITE_URL = process.env.SITE_URL || 'https://kladovka78.ru';
+const API_URL = process.env.API_URL || 'https://api.kladovka78.ru';
 
 /**
- * Generate a one-time auth token for a customer and return the login URL
+ * Confirm a polling auth session via API
  */
-export async function generateAuthToken(customerId: string): Promise<string> {
-  const token = crypto.randomBytes(32).toString('hex');
-  await db.query(
-    'INSERT INTO auth_tokens (token, customer_id, expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))',
-    [token, customerId]
-  );
-  return `${SITE_URL}/auth?token=${token}`;
+async function confirmAuthSession(sessionId: string, customerId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_URL}/api/auth/session/${sessionId}/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ customerId }),
+    });
+    const json = await res.json();
+    return json.success === true;
+  } catch (err) {
+    console.error('Failed to confirm auth session:', err);
+    return false;
+  }
 }
 
 /**
@@ -31,14 +37,45 @@ export async function handleStart(ctx: Context) {
   );
   const linkedCustomer = (existing as any[])[0];
 
+  // Handle seamless polling auth: login_<sessionId>
+  if (startPayload?.startsWith('login_')) {
+    const sessionId = startPayload.replace('login_', '');
+
+    if (linkedCustomer) {
+      // Confirm the session via API — site will auto-detect
+      const confirmed = await confirmAuthSession(sessionId, linkedCustomer.id);
+      if (confirmed) {
+        await ctx.reply(
+          `✅ ${linkedCustomer.name}, вход выполнен!\n\n` +
+          `Вернитесь на сайт — он автоматически откроет личный кабинет.`,
+          Markup.inlineKeyboard([
+            [Markup.button.url('🏠 Открыть сайт', SITE_URL)],
+          ])
+        );
+      } else {
+        await ctx.reply('⚠️ Сессия истекла. Попробуйте ещё раз на сайте.');
+      }
+    } else {
+      // New user — ask for phone, save sessionId for after registration
+      (ctx as any).session = { pendingSessionId: sessionId };
+      await ctx.reply(
+        `👋 Привет, ${firstName}!\n\n` +
+        `Для входа поделитесь номером телефона:`,
+        Markup.keyboard([
+          [Markup.button.contactRequest('📱 Отправить номер телефона')],
+        ]).resize().oneTime()
+      );
+    }
+    return;
+  }
+
+  // Handle booking deep link: book_<cellId>_<duration>
   if (startPayload?.startsWith('book_')) {
     if (linkedCustomer) {
-      const authUrl = await generateAuthToken(linkedCustomer.id);
       await ctx.reply(
         `👋 ${linkedCustomer.name}, вы хотите забронировать ячейку.\n\n` +
-        `Перейдите на сайт для завершения бронирования:`,
+        `Вернитесь на сайт для завершения бронирования.`,
         Markup.inlineKeyboard([
-          [Markup.button.url('🏠 Войти и забронировать', authUrl)],
           [Markup.button.url('📦 Каталог ячеек', `${SITE_URL}/catalog`)],
         ])
       );
@@ -55,26 +92,23 @@ export async function handleStart(ctx: Context) {
     return;
   }
 
-  if (startPayload === 'login' || !startPayload) {
-    if (linkedCustomer) {
-      const authUrl = await generateAuthToken(linkedCustomer.id);
-      await ctx.reply(
-        `✅ ${linkedCustomer.name}, ваш аккаунт уже привязан!\n\n` +
-        `Перейдите в личный кабинет:`,
-        Markup.inlineKeyboard([
-          [Markup.button.url('🏠 Личный кабинет', authUrl)],
-        ])
-      );
-    } else {
-      await ctx.reply(
-        `👋 Привет, ${firstName}!\n\n` +
-        `Для входа в личный кабинет поделитесь номером телефона:`,
-        Markup.keyboard([
-          [Markup.button.contactRequest('📱 Отправить номер телефона')],
-        ]).resize().oneTime()
-      );
-    }
-    return;
+  // Default /start or /start login
+  if (linkedCustomer) {
+    await ctx.reply(
+      `✅ ${linkedCustomer.name}, ваш аккаунт привязан!\n\n` +
+      `Для входа в личный кабинет используйте кнопку «Войти» на сайте.`,
+      Markup.inlineKeyboard([
+        [Markup.button.url('🏠 Открыть сайт', SITE_URL)],
+      ])
+    );
+  } else {
+    await ctx.reply(
+      `👋 Привет, ${firstName}!\n\n` +
+      `Для входа в личный кабинет поделитесь номером телефона:`,
+      Markup.keyboard([
+        [Markup.button.contactRequest('📱 Отправить номер телефона')],
+      ]).resize().oneTime()
+    );
   }
 }
 
@@ -91,12 +125,11 @@ export async function handleLogin(ctx: Context) {
 
   if ((existing as any[]).length > 0) {
     const customer = (existing as any[])[0];
-    const authUrl = await generateAuthToken(customer.id);
     await ctx.reply(
       `✅ Ваш аккаунт уже привязан (${customer.name}).\n\n` +
-      `Перейдите в личный кабинет:`,
+      `Используйте кнопку «Войти» на сайте для входа в ЛК.`,
       Markup.inlineKeyboard([
-        [Markup.button.url('🏠 Личный кабинет', authUrl)],
+        [Markup.button.url('🏠 Открыть сайт', SITE_URL)],
       ])
     );
     return;
@@ -129,7 +162,6 @@ export async function handleMyRentals(ctx: Context) {
     }
 
     const customerId = (customers as any[])[0].id;
-    const authUrl = await generateAuthToken(customerId);
 
     const [rentals] = await db.query(`
       SELECT r.*, c.number as cell_number
@@ -164,7 +196,7 @@ export async function handleMyRentals(ctx: Context) {
     await ctx.reply(message, {
       parse_mode: 'Markdown',
       ...Markup.inlineKeyboard([
-        [Markup.button.url('🏠 Личный кабинет', authUrl)],
+        [Markup.button.url('🏠 Открыть сайт', SITE_URL)],
       ]),
     });
   } catch (err) {
@@ -183,11 +215,9 @@ export async function handleHelp(ctx: Context) {
     '📦 /rentals — Посмотреть активные аренды\n' +
     '📞 /contact — Связаться с менеджером\n\n' +
     '**Как это работает:**\n' +
-    '1️⃣ Выберите ячейку на сайте\n' +
-    '2️⃣ Нажмите "Забронировать"\n' +
-    '3️⃣ Авторизуйтесь через этого бота\n' +
-    '4️⃣ Оплатите на сайте\n' +
-    '5️⃣ Получайте уведомления здесь!',
+    '1️⃣ Нажмите «Войти» на сайте\n' +
+    '2️⃣ Нажмите «Старт» в этом боте\n' +
+    '3️⃣ Сайт автоматически откроет ваш ЛК!',
     { parse_mode: 'Markdown' }
   );
 }
