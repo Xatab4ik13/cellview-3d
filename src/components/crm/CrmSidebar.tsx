@@ -28,6 +28,8 @@ import {
   Globe,
   LogOut,
   ChevronDown,
+  Video,
+  FolderOpen,
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -59,6 +61,7 @@ const navGroups: NavGroup[] = [
     items: [
       { title: 'Ячейки', url: '/admin/cells', icon: Box },
       { title: 'Аренды', url: '/admin/rentals', icon: Key },
+      { title: 'Камеры', url: '/admin/cameras', icon: Video },
     ],
   },
   {
@@ -66,6 +69,7 @@ const navGroups: NavGroup[] = [
     items: [
       { title: 'Платежи', url: '/admin/payments', icon: CreditCard },
       { title: 'Аналитика', url: '/admin/analytics', icon: BarChart3 },
+      { title: 'Документы', url: '/admin/documents', icon: FolderOpen },
     ],
   },
   {
@@ -104,17 +108,16 @@ const CrmSidebar = () => {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
-      <SidebarHeader className="p-5 border-b border-border">
-        <div className="flex items-center gap-3">
-          <img src={logo} alt="Кладовка78" className="h-9 w-9 object-contain shrink-0" />
-          {!isCollapsed && (
-            <div className="overflow-hidden">
-              <p className="font-bold text-base truncate">Кладовка78</p>
-              <p className="text-xs text-muted-foreground">CRM</p>
-            </div>
+    <Sidebar collapsible="icon" className="border-r border-border bg-sidebar [&_[data-radix-scroll-area-viewport]]:!overflow-visible [&_[data-radix-scroll-area-scrollbar]]:hidden">
+      <SidebarHeader className="p-4 border-b border-border flex items-center justify-center">
+        <img
+          src={logo}
+          alt="Кладовка78"
+          className={cn(
+            'object-contain transition-all duration-200',
+            isCollapsed ? 'h-10 w-10' : 'h-16 w-auto max-w-[180px]'
           )}
-        </div>
+        />
       </SidebarHeader>
 
       <SidebarContent className="py-3">
