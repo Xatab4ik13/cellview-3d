@@ -8,6 +8,7 @@ export interface SiteDocument {
   type: string;
   isPublished: boolean;
   updatedAt: string;
+  fileUrl?: string; // URL to downloadable file
 }
 
 export const iconMap: Record<string, React.ElementType> = {

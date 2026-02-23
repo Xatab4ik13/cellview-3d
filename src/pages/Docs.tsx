@@ -41,10 +41,19 @@ const Docs = () => {
                       <h3 className="font-semibold">{doc.title}</h3>
                       <p className="text-sm text-muted-foreground">{doc.description}</p>
                     </div>
-                    <Button variant="outline" size="sm" className="gap-2 shrink-0">
-                      <Download className="w-4 h-4" />
-                      {doc.type}
-                    </Button>
+                    {doc.fileUrl ? (
+                      <Button variant="outline" size="sm" className="gap-2 shrink-0" asChild>
+                        <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" download>
+                          <Download className="w-4 h-4" />
+                          {doc.type}
+                        </a>
+                      </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" className="gap-2 shrink-0" disabled>
+                        <Download className="w-4 h-4" />
+                        {doc.type}
+                      </Button>
+                    )}
                   </motion.div>
                 );
               })}

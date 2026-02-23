@@ -41,7 +41,7 @@ const AdminSite = () => {
   const [documents, setDocuments] = useState<SiteDocument[]>(defaultDocuments);
   const [isDocDialogOpen, setIsDocDialogOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<SiteDocument | null>(null);
-  const [docForm, setDocForm] = useState({ title: '', description: '' });
+  const [docForm, setDocForm] = useState({ title: '', description: '', fileUrl: '' });
   const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
   const [viewingDoc, setViewingDoc] = useState<SiteDocument | null>(null);
 
@@ -51,13 +51,13 @@ const AdminSite = () => {
 
   const openNewDoc = () => {
     setEditingDoc(null);
-    setDocForm({ title: '', description: '' });
+    setDocForm({ title: '', description: '', fileUrl: '' });
     setIsDocDialogOpen(true);
   };
 
   const openEditDoc = (doc: SiteDocument) => {
     setEditingDoc(doc);
-    setDocForm({ title: doc.title, description: doc.description });
+    setDocForm({ title: doc.title, description: doc.description, fileUrl: doc.fileUrl || '' });
     setIsDocDialogOpen(true);
   };
 
@@ -69,7 +69,7 @@ const AdminSite = () => {
     const now = new Date().toISOString().split('T')[0];
     if (editingDoc) {
       setDocuments(prev => prev.map(d =>
-        d.id === editingDoc.id ? { ...d, title: docForm.title, description: docForm.description, updatedAt: now } : d
+        d.id === editingDoc.id ? { ...d, title: docForm.title, description: docForm.description, fileUrl: docForm.fileUrl.trim() || undefined, updatedAt: now } : d
       ));
       toast.success(`Документ "${docForm.title}" обновлён`);
     } else {
@@ -81,6 +81,7 @@ const AdminSite = () => {
         type: 'PDF',
         isPublished: false,
         updatedAt: now,
+        fileUrl: docForm.fileUrl.trim() || undefined,
       };
       setDocuments(prev => [...prev, newDoc]);
       toast.success(`Документ "${newDoc.title}" создан`);
@@ -317,6 +318,16 @@ const AdminSite = () => {
                 onChange={e => setDocForm(p => ({ ...p, description: e.target.value }))}
                 className="min-h-[100px] text-sm leading-relaxed"
               />
+            </div>
+            <div className="grid gap-2">
+              <Label>Ссылка на файл (URL)</Label>
+              <Input
+                placeholder="https://example.com/documents/file.pdf"
+                value={docForm.fileUrl}
+                onChange={e => setDocForm(p => ({ ...p, fileUrl: e.target.value }))}
+                className="h-11"
+              />
+              <p className="text-xs text-muted-foreground">Загрузите файл на сервер и вставьте прямую ссылку для скачивания</p>
             </div>
           </div>
           <DialogFooter>
