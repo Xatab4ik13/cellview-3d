@@ -2,47 +2,97 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, MoreHorizontal, Eye, Edit, Ban, RefreshCw, Key, Plus } from 'lucide-react';
+import { Search, MoreHorizontal, Eye, Edit, Ban, RefreshCw, Plus, Loader2 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-
-const mockRentals = [
-  { id: 'R-001', customer: 'ООО "ТехноСервис"', phone: '+7 (999) 123-45-67', cell: 'A-12', area: '10 м²', startDate: '15.01.2024', endDate: '15.04.2024', amount: 8500, status: 'active', autoRenew: true },
-  { id: 'R-002', customer: 'Иванов Петр Сергеевич', phone: '+7 (999) 234-56-78', cell: 'B-05', area: '5 м²', startDate: '01.02.2024', endDate: '01.05.2024', amount: 4200, status: 'active', autoRenew: false },
-  { id: 'R-003', customer: 'ИП Смирнова А.В.', phone: '+7 (999) 345-67-89', cell: 'C-22', area: '15 м²', startDate: '10.12.2023', endDate: '10.03.2024', amount: 12000, status: 'expiring', autoRenew: true },
-  { id: 'R-004', customer: 'Козлов Андрей', phone: '+7 (999) 456-78-90', cell: 'A-08', area: '3 м²', startDate: '20.11.2023', endDate: '20.02.2024', amount: 3000, status: 'expired', autoRenew: false },
-];
+import { useRentals, useExtendRental, useReleaseRental } from '@/hooks/useRentals';
+import { format, differenceInDays, parseISO } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   active: { label: 'Активна', color: 'var(--status-active)' },
   expiring: { label: 'Заканчивается', color: 'var(--status-pending)' },
   expired: { label: 'Истекла', color: 'var(--status-overdue)' },
+  cancelled: { label: 'Отменена', color: 'var(--status-overdue)' },
 };
+
+function getRentalDisplayStatus(rental: { status: string; endDate: string }) {
+  if (rental.status === 'cancelled') return 'cancelled';
+  if (rental.status === 'expired') return 'expired';
+  const daysLeft = differenceInDays(parseISO(rental.endDate), new Date());
+  if (daysLeft <= 7 && daysLeft >= 0) return 'expiring';
+  if (daysLeft < 0) return 'expired';
+  return 'active';
+}
+
+function formatDate(dateStr: string) {
+  try {
+    return format(parseISO(dateStr), 'dd.MM.yyyy', { locale: ru });
+  } catch {
+    return dateStr;
+  }
+}
 
 const AdminRentals = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [tab, setTab] = useState('all');
+  const { data: rentals = [], isLoading, error } = useRentals();
+  const extendMutation = useExtendRental();
+  const releaseMutation = useReleaseRental();
 
-  const filtered = mockRentals.filter(r => {
-    const matchSearch = r.customer.toLowerCase().includes(searchQuery.toLowerCase()) || r.cell.toLowerCase().includes(searchQuery.toLowerCase());
+  // Enrich with display status
+  const enriched = rentals.map(r => ({
+    ...r,
+    displayStatus: getRentalDisplayStatus(r),
+  }));
+
+  const filtered = enriched.filter(r => {
+    const matchSearch =
+      (r.customerName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.customerPhone || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      String(r.cellNumber || '').includes(searchQuery);
     if (tab === 'all') return matchSearch;
-    return matchSearch && r.status === tab;
+    return matchSearch && r.displayStatus === tab;
   });
 
   const counts = {
-    all: mockRentals.length,
-    active: mockRentals.filter(r => r.status === 'active').length,
-    expiring: mockRentals.filter(r => r.status === 'expiring').length,
-    expired: mockRentals.filter(r => r.status === 'expired').length,
+    all: enriched.length,
+    active: enriched.filter(r => r.displayStatus === 'active').length,
+    expiring: enriched.filter(r => r.displayStatus === 'expiring').length,
+    expired: enriched.filter(r => r.displayStatus === 'expired' || r.displayStatus === 'cancelled').length,
   };
 
-  const handleAction = (action: string, rental: string) => {
-    toast.info(`${action}: ${rental} — будет доступно после подключения базы данных`);
+  const handleExtend = (id: string, name: string) => {
+    extendMutation.mutate({ id, months: 1 });
   };
+
+  const handleRelease = (id: string, name: string) => {
+    if (confirm(`Завершить аренду для ${name}?`)) {
+      releaseMutation.mutate(id);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <span className="ml-3 text-muted-foreground">Загрузка аренд...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-destructive font-medium">Ошибка загрузки: {(error as Error).message}</p>
+        <p className="text-sm text-muted-foreground mt-2">Проверьте подключение к серверу</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -51,7 +101,7 @@ const AdminRentals = () => {
           <h2 className="text-2xl font-bold">Аренды</h2>
           <p className="text-base text-muted-foreground mt-1">Управление договорами аренды</p>
         </div>
-        <Button className="gap-2 h-11 text-base" onClick={() => toast.info('Создание аренды будет доступно после подключения базы данных')}>
+        <Button className="gap-2 h-11 text-base" onClick={() => toast.info('Используйте страницу "Ячейки" для оформления новой аренды')}>
           <Plus className="w-5 h-5" />
           Новая аренда
         </Button>
@@ -100,19 +150,25 @@ const AdminRentals = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/40">
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">ID</th>
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Клиент</th>
                 <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Ячейка</th>
+                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Клиент</th>
                 <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Период</th>
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Сумма</th>
+                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Сумма/мес</th>
+                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Итого</th>
                 <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Автопродление</th>
                 <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Статус</th>
                 <th className="text-right p-4 text-sm font-semibold text-muted-foreground">Действия</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((rental, i) => {
-                const sc = statusConfig[rental.status];
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                    {searchQuery ? 'Ничего не найдено' : 'Нет аренд'}
+                  </td>
+                </tr>
+              ) : filtered.map((rental, i) => {
+                const sc = statusConfig[rental.displayStatus] || statusConfig.active;
                 return (
                   <motion.tr
                     key={rental.id}
@@ -121,20 +177,21 @@ const AdminRentals = () => {
                     transition={{ delay: i * 0.03 }}
                     className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
                   >
-                    <td className="p-4 font-medium text-sm">{rental.id}</td>
                     <td className="p-4">
-                      <p className="font-medium text-sm">{rental.customer}</p>
-                      <p className="text-xs text-muted-foreground">{rental.phone}</p>
+                      <Badge variant="outline" className="font-mono text-xs">
+                        №{rental.cellNumber || '—'}
+                      </Badge>
                     </td>
                     <td className="p-4">
-                      <Badge variant="outline" className="font-mono text-xs">{rental.cell}</Badge>
-                      <p className="text-xs text-muted-foreground mt-0.5">{rental.area}</p>
+                      <p className="font-medium text-sm">{rental.customerName}</p>
+                      <p className="text-xs text-muted-foreground">{rental.customerPhone}</p>
                     </td>
                     <td className="p-4 text-sm">
-                      <p>{rental.startDate}</p>
-                      <p className="text-muted-foreground">→ {rental.endDate}</p>
+                      <p>{formatDate(rental.startDate)}</p>
+                      <p className="text-muted-foreground">→ {formatDate(rental.endDate)}</p>
                     </td>
-                    <td className="p-4 font-semibold text-sm">{rental.amount.toLocaleString('ru-RU')} ₽</td>
+                    <td className="p-4 text-sm">{rental.pricePerMonth?.toLocaleString('ru-RU')} ₽</td>
+                    <td className="p-4 font-semibold text-sm">{rental.totalAmount?.toLocaleString('ru-RU')} ₽</td>
                     <td className="p-4">
                       <Badge variant="outline" style={rental.autoRenew ? { borderColor: 'hsl(var(--status-active) / 0.3)', color: 'hsl(var(--status-active))' } : {}}>
                         {rental.autoRenew ? 'Да' : 'Нет'}
@@ -153,16 +210,10 @@ const AdminRentals = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleAction('Подробнее', rental.customer)}>
-                            <Eye className="h-4 w-4 mr-2" />Подробнее
+                          <DropdownMenuItem onClick={() => handleExtend(rental.id, rental.customerName)}>
+                            <RefreshCw className="h-4 w-4 mr-2" />Продлить на 1 мес
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleAction('Редактировать', rental.customer)}>
-                            <Edit className="h-4 w-4 mr-2" />Редактировать
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleAction('Продлить', rental.customer)}>
-                            <RefreshCw className="h-4 w-4 mr-2" />Продлить
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => handleAction('Завершить', rental.customer)}>
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleRelease(rental.id, rental.customerName)}>
                             <Ban className="h-4 w-4 mr-2" />Завершить
                           </DropdownMenuItem>
                         </DropdownMenuContent>
