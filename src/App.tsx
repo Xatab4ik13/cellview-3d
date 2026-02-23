@@ -14,7 +14,7 @@ import NotFound from "./pages/NotFound";
 
 // Admin pages
 import AdminLogin from "./pages/admin/AdminLogin";
-import AdminLayout from "./pages/admin/AdminLayout";
+import CrmLayout from "./pages/admin/CrmLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminCells from "./pages/admin/AdminCells";
 import AdminRentals from "./pages/admin/AdminRentals";
@@ -42,7 +42,7 @@ const App = () => (
           
           {/* Admin routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route path="/admin" element={<CrmLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="cells" element={<AdminCells />} />
             <Route path="rentals" element={<AdminRentals />} />
