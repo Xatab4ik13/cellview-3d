@@ -8,6 +8,7 @@ const Footer = () => {
   const navLinks = [
     { href: '/catalog', label: 'Адреса складов' },
     { href: '/pricing', label: 'Стоимость' },
+    { href: '/docs', label: 'Документация' },
     { href: '/faq', label: 'Вопрос-ответ' },
     { href: '/contacts', label: 'Контакты' },
   ];
@@ -141,12 +142,12 @@ const Footer = () => {
               <Link to="/faq" className="text-sm text-background/50 hover:text-background transition-colors">
                 FAQ
               </Link>
-              <a href="/privacy" className="text-sm text-background/50 hover:text-background transition-colors">
+              <Link to="/privacy" className="text-sm text-background/50 hover:text-background transition-colors">
                 Политика конфиденциальности
-              </a>
-              <a href="/consent" className="text-sm text-background/50 hover:text-background transition-colors">
+              </Link>
+              <Link to="/consent" className="text-sm text-background/50 hover:text-background transition-colors">
                 Согласие на обработку данных
-              </a>
+              </Link>
             </div>
           </div>
         </div>
