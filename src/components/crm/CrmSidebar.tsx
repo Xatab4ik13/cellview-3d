@@ -88,9 +88,9 @@ const CrmSidebar = () => {
   const isCollapsed = state === 'collapsed';
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     CRM: true,
-    'Склад': true,
-    'Финансы': true,
-    'Настройки': true,
+    Склад: true,
+    Финансы: true,
+    Настройки: true,
   });
 
   const handleLogout = () => {
@@ -108,16 +108,18 @@ const CrmSidebar = () => {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border bg-sidebar [&_[data-radix-scroll-area-viewport]]:!overflow-visible [&_[data-radix-scroll-area-scrollbar]]:hidden">
-      <SidebarHeader className="p-4 border-b border-border flex items-center justify-center">
-        <img
-          src={logo}
-          alt="Кладовка78"
-          className={cn(
-            'object-contain transition-all duration-200',
-            isCollapsed ? 'h-10 w-10' : 'h-16 w-auto max-w-[180px]'
-          )}
-        />
+    <Sidebar collapsible="icon" className="border-r border-border bg-sidebar">
+      <SidebarHeader className="p-3 border-b border-border">
+        <div className="flex items-center justify-center">
+          <img
+            src={logo}
+            alt="Кладовка78"
+            className={cn(
+              'object-contain transition-all duration-200',
+              isCollapsed ? 'h-10 w-10' : 'h-14 w-full'
+            )}
+          />
+        </div>
       </SidebarHeader>
 
       <SidebarContent className="py-3">
