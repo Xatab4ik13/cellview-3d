@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import CrmCard from '@/components/crm/CrmCard';
 import AnimatedCounter from '@/components/crm/AnimatedCounter';
@@ -83,6 +84,7 @@ const topClients = [
 // ========== Component ==========
 
 const AdminAnalytics = () => {
+  const navigate = useNavigate();
   const totalRevenue = revenueData.reduce((s, d) => s + d.revenue, 0);
   const avgOccupancy = Math.round(
     (occupancyData.reduce((s, d) => s + d.occupied, 0) / occupancyData.length / 42) * 100
@@ -313,7 +315,10 @@ const AdminAnalytics = () => {
         <CrmCard>
           <div className="flex items-center justify-between mb-1">
             <h3 className="text-base font-semibold">Топ клиенты</h3>
-            <button className="text-sm text-primary hover:underline flex items-center gap-0.5">
+            <button
+              onClick={() => navigate('/admin/customers')}
+              className="text-sm text-primary hover:underline flex items-center gap-0.5"
+            >
               Все <ArrowUpRight className="h-3.5 w-3.5" />
             </button>
           </div>

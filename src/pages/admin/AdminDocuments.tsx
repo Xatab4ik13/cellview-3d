@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 type DocType = 'contract' | 'act' | 'invoice' | 'receipt';
 type DocStatus = 'draft' | 'active' | 'signed' | 'expired';
@@ -79,7 +80,10 @@ const AdminDocuments = () => {
           <h2 className="text-2xl font-bold">Документы</h2>
           <p className="text-base text-muted-foreground mt-1">Договоры, акты, счета и квитанции</p>
         </div>
-        <Button className="gap-2 h-11 text-base">
+        <Button
+          className="gap-2 h-11 text-base"
+          onClick={() => toast.info('Создание документов будет доступно после подключения базы данных')}
+        >
           <FilePlus className="w-5 h-5" />
           Создать документ
         </Button>
@@ -202,10 +206,20 @@ const AdminDocuments = () => {
                         </td>
                         <td className="p-4 text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => toast.info(`Просмотр: ${doc.title} — будет доступно после подключения базы данных`)}
+                            >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => toast.info(`Скачивание: ${doc.title} — будет доступно после подключения базы данных`)}
+                            >
                               <Download className="w-4 h-4" />
                             </Button>
                           </div>

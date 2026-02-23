@@ -10,8 +10,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
-const mockApplications = [
+const initialApplications = [
   { id: 'Z-001', name: 'Иван Петров', phone: '+7 (999) 123-45-67', email: 'ivan@email.com', cellSize: '3-5 м²', message: 'Интересует ячейка для хранения сезонных вещей', source: 'Сайт', date: '15.03.2024 14:32', status: 'new' },
   { id: 'Z-002', name: 'Анна Сидорова', phone: '+7 (999) 234-56-78', email: 'anna@company.ru', cellSize: '10-15 м²', message: 'Нужна ячейка для архива документов компании', source: 'Звонок', date: '15.03.2024 11:15', status: 'processing' },
   { id: 'Z-003', name: 'ООО "Логистика"', phone: '+7 (999) 345-67-89', email: 'info@logistics.ru', cellSize: '20+ м²', message: 'Ищем склад для хранения товаров', source: 'Сайт', date: '14.03.2024 16:45', status: 'completed' },
@@ -28,12 +29,30 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.E
 const AdminApplications = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [applications, setApplications] = useState(initialApplications);
 
-  const filtered = mockApplications.filter(app => {
+  const filtered = applications.filter(app => {
     const matchSearch = app.name.toLowerCase().includes(searchQuery.toLowerCase()) || app.phone.includes(searchQuery);
     const matchStatus = statusFilter === 'all' || app.status === statusFilter;
     return matchSearch && matchStatus;
   });
+
+  const handleStatusChange = (id: string, newStatus: string) => {
+    setApplications(prev => prev.map(app =>
+      app.id === id ? { ...app, status: newStatus } : app
+    ));
+    const labels: Record<string, string> = {
+      processing: 'Заявка взята в работу',
+      completed: 'Заявка завершена',
+      rejected: 'Заявка отклонена',
+    };
+    toast.success(labels[newStatus] || 'Статус обновлён');
+  };
+
+  const handleCall = (phone: string, name: string) => {
+    window.open(`tel:${phone.replace(/\D/g, '')}`, '_self');
+    toast.info(`Звонок: ${name}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -41,7 +60,7 @@ const AdminApplications = () => {
         <div>
           <h2 className="text-2xl font-bold">Заявки</h2>
           <p className="text-base text-muted-foreground mt-1">
-            Новых: {mockApplications.filter(a => a.status === 'new').length} · В работе: {mockApplications.filter(a => a.status === 'processing').length}
+            Новых: {applications.filter(a => a.status === 'new').length} · В работе: {applications.filter(a => a.status === 'processing').length}
           </p>
         </div>
       </div>
@@ -59,7 +78,7 @@ const AdminApplications = () => {
           >
             <p className="text-sm text-muted-foreground">{cfg.label}</p>
             <p className="text-2xl font-bold mt-1" style={{ color: `hsl(${cfg.color})` }}>
-              {mockApplications.filter(a => a.status === key).length}
+              {applications.filter(a => a.status === key).length}
             </p>
           </motion.div>
         ))}
@@ -136,10 +155,18 @@ const AdminApplications = () => {
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreHorizontal className="w-4 h-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem><Phone className="h-4 w-4 mr-2" />Позвонить</DropdownMenuItem>
-                          <DropdownMenuItem><CheckCircle className="h-4 w-4 mr-2" />Взять в работу</DropdownMenuItem>
-                          <DropdownMenuItem className="text-[hsl(var(--status-active))]"><CheckCircle className="h-4 w-4 mr-2" />Завершить</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive"><XCircle className="h-4 w-4 mr-2" />Отклонить</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleCall(app.phone, app.name)}>
+                            <Phone className="h-4 w-4 mr-2" />Позвонить
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleStatusChange(app.id, 'processing')}>
+                            <CheckCircle className="h-4 w-4 mr-2" />Взять в работу
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-[hsl(var(--status-active))]" onClick={() => handleStatusChange(app.id, 'completed')}>
+                            <CheckCircle className="h-4 w-4 mr-2" />Завершить
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleStatusChange(app.id, 'rejected')}>
+                            <XCircle className="h-4 w-4 mr-2" />Отклонить
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>

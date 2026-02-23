@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'sonner';
 
 const mockRentals = [
   { id: 'R-001', customer: 'ООО "ТехноСервис"', phone: '+7 (999) 123-45-67', cell: 'A-12', area: '10 м²', startDate: '15.01.2024', endDate: '15.04.2024', amount: 8500, status: 'active', autoRenew: true },
@@ -39,6 +40,10 @@ const AdminRentals = () => {
     expired: mockRentals.filter(r => r.status === 'expired').length,
   };
 
+  const handleAction = (action: string, rental: string) => {
+    toast.info(`${action}: ${rental} — будет доступно после подключения базы данных`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -46,7 +51,7 @@ const AdminRentals = () => {
           <h2 className="text-2xl font-bold">Аренды</h2>
           <p className="text-base text-muted-foreground mt-1">Управление договорами аренды</p>
         </div>
-        <Button className="gap-2 h-11 text-base">
+        <Button className="gap-2 h-11 text-base" onClick={() => toast.info('Создание аренды будет доступно после подключения базы данных')}>
           <Plus className="w-5 h-5" />
           Новая аренда
         </Button>
@@ -148,10 +153,18 @@ const AdminRentals = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem><Eye className="h-4 w-4 mr-2" />Подробнее</DropdownMenuItem>
-                          <DropdownMenuItem><Edit className="h-4 w-4 mr-2" />Редактировать</DropdownMenuItem>
-                          <DropdownMenuItem><RefreshCw className="h-4 w-4 mr-2" />Продлить</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive"><Ban className="h-4 w-4 mr-2" />Завершить</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAction('Подробнее', rental.customer)}>
+                            <Eye className="h-4 w-4 mr-2" />Подробнее
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAction('Редактировать', rental.customer)}>
+                            <Edit className="h-4 w-4 mr-2" />Редактировать
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAction('Продлить', rental.customer)}>
+                            <RefreshCw className="h-4 w-4 mr-2" />Продлить
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleAction('Завершить', rental.customer)}>
+                            <Ban className="h-4 w-4 mr-2" />Завершить
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>

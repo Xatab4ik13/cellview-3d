@@ -78,7 +78,7 @@ const AdminSite = () => {
           <p className="text-base text-muted-foreground mt-1">Тексты, контакты, SEO и настройки отображения</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2 h-11">
+          <Button variant="outline" className="gap-2 h-11" onClick={() => window.open('/', '_blank')}>
             <Eye className="w-5 h-5" />
             Предпросмотр
           </Button>

@@ -9,13 +9,13 @@ import {
   Calendar,
   Clock,
   User,
-  Filter,
   Phone,
   Eye,
   FileText,
   AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface Task {
   id: string;
@@ -130,7 +130,14 @@ const AdminTasks = () => {
 
   const toggleTask = (id: string) => {
     setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
+      prev.map((t) => {
+        if (t.id === id) {
+          const newCompleted = !t.completed;
+          toast.success(newCompleted ? 'Задача выполнена' : 'Задача возвращена в работу');
+          return { ...t, completed: newCompleted };
+        }
+        return t;
+      })
     );
   };
 
@@ -160,7 +167,10 @@ const AdminTasks = () => {
             {todayCount} на сегодня · {overdueCount} срочных
           </p>
         </div>
-        <Button className="h-10 gap-2">
+        <Button
+          className="h-10 gap-2"
+          onClick={() => toast.info('Создание задач будет доступно после подключения базы данных')}
+        >
           <Plus className="h-4 w-4" />
           Новая задача
         </Button>
