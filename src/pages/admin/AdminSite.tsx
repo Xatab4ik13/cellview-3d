@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Globe, Type, Image, Search, Save, Eye, Palette, Layout, FileText, Phone, MapPin, Clock, ExternalLink, File, Plus, Trash2, Edit } from 'lucide-react';
+import { Globe, Type, Image, Search, Save, Eye, Palette, Layout, FileText, Phone, MapPin, Clock, ExternalLink, File, Plus, Trash2, Edit, X, Upload, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,50 +7,153 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
+interface SiteDocument {
+  id: string;
+  title: string;
+  path: string;
+  content: string;
+  isPublished: boolean;
+  updatedAt: string;
+}
+
+const initialDocuments: SiteDocument[] = [
+  {
+    id: 'doc-1',
+    title: 'Политика конфиденциальности',
+    path: '/privacy',
+    content: 'Настоящая Политика конфиденциальности определяет порядок обработки и защиты персональных данных пользователей сайта kladovka78.ru.\n\n1. Общие положения\nОператор обработки персональных данных — ООО «Кладовка78».\n\n2. Цели обработки\nПерсональные данные обрабатываются в целях предоставления услуг аренды складских ячеек, информирования клиентов об условиях аренды и обеспечения безопасности.\n\n3. Условия обработки\nОбработка персональных данных осуществляется с согласия субъекта персональных данных.',
+    isPublished: true,
+    updatedAt: '2025-01-15',
+  },
+  {
+    id: 'doc-2',
+    title: 'Согласие на обработку данных',
+    path: '/consent',
+    content: 'Я даю согласие на обработку моих персональных данных в соответствии с Федеральным законом от 27.07.2006 №152-ФЗ «О персональных данных».\n\nПеречень данных: ФИО, номер телефона, адрес электронной почты.\n\nЦель обработки: оформление договора аренды складской ячейки, связь с клиентом.',
+    isPublished: true,
+    updatedAt: '2025-01-15',
+  },
+  {
+    id: 'doc-3',
+    title: 'Публичная оферта',
+    path: '/docs',
+    content: 'Настоящий документ является официальным предложением (публичной офертой) ООО «Кладовка78» заключить договор аренды складской ячейки на условиях, изложенных ниже.\n\n1. Предмет договора\nАрендодатель предоставляет Арендатору во временное пользование складскую ячейку для хранения имущества.\n\n2. Условия оплаты\nОплата производится ежемесячно, не позднее 5-го числа текущего месяца.',
+    isPublished: true,
+    updatedAt: '2025-02-01',
+  },
+];
+
 const AdminSite = () => {
   const [siteData, setSiteData] = useState({
-    // SEO
     seoTitle: 'Кладовка78 — Аренда складских ячеек в Санкт-Петербурге',
     seoDescription: 'Надёжное хранение вещей от 1500₽/мес. Видеонаблюдение 24/7. Удобный доступ.',
     seoKeywords: 'склад, аренда ячейки, хранение вещей, Санкт-Петербург',
-    // Hero
     heroTitle: 'Надёжное хранение вещей',
     heroSubtitle: 'Арендуйте складскую ячейку от 1500₽ в месяц с круглосуточным доступом',
-    // Contacts
     phone: '+7 (812) 555-78-78',
     email: 'info@kladovka78.ru',
     address: 'Санкт-Петербург, ул. Примерная, д. 78',
     workHours: 'Пн-Вс: 08:00 — 22:00',
-    // Social
     telegram: '@kladovka78',
     whatsapp: '+78125557878',
     vk: 'https://vk.com/kladovka78',
-    // Features toggles
     showPricing: true,
     showFAQ: true,
     showCatalog: true,
     showContacts: true,
   });
 
+  const [documents, setDocuments] = useState<SiteDocument[]>(initialDocuments);
+  const [isDocDialogOpen, setIsDocDialogOpen] = useState(false);
+  const [editingDoc, setEditingDoc] = useState<SiteDocument | null>(null);
+  const [docForm, setDocForm] = useState({ title: '', path: '', content: '' });
+  const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
+  const [viewingDoc, setViewingDoc] = useState<SiteDocument | null>(null);
+
   const handleSave = () => {
     toast.success('Настройки сайта сохранены');
   };
 
-  const CardBlock = ({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) => (
+  const openNewDoc = () => {
+    setEditingDoc(null);
+    setDocForm({ title: '', path: '/', content: '' });
+    setIsDocDialogOpen(true);
+  };
+
+  const openEditDoc = (doc: SiteDocument) => {
+    setEditingDoc(doc);
+    setDocForm({ title: doc.title, path: doc.path, content: doc.content });
+    setIsDocDialogOpen(true);
+  };
+
+  const handleSaveDoc = () => {
+    if (!docForm.title.trim() || !docForm.content.trim()) {
+      toast.error('Заполните название и содержание документа');
+      return;
+    }
+    const now = new Date().toISOString().split('T')[0];
+    if (editingDoc) {
+      setDocuments(prev => prev.map(d =>
+        d.id === editingDoc.id ? { ...d, title: docForm.title, path: docForm.path, content: docForm.content, updatedAt: now } : d
+      ));
+      toast.success(`Документ "${docForm.title}" обновлён`);
+    } else {
+      const newDoc: SiteDocument = {
+        id: `doc-${Date.now()}`,
+        title: docForm.title.trim(),
+        path: docForm.path.trim() || `/${docForm.title.toLowerCase().replace(/\s+/g, '-')}`,
+        content: docForm.content.trim(),
+        isPublished: false,
+        updatedAt: now,
+      };
+      setDocuments(prev => [...prev, newDoc]);
+      toast.success(`Документ "${newDoc.title}" создан`);
+    }
+    setIsDocDialogOpen(false);
+  };
+
+  const handleDeleteDoc = () => {
+    if (!deletingDocId) return;
+    const doc = documents.find(d => d.id === deletingDocId);
+    setDocuments(prev => prev.filter(d => d.id !== deletingDocId));
+    setDeletingDocId(null);
+    toast.success(`Документ "${doc?.title}" удалён`);
+  };
+
+  const togglePublish = (id: string) => {
+    setDocuments(prev => prev.map(d => {
+      if (d.id !== id) return d;
+      const newState = !d.isPublished;
+      toast.success(newState ? 'Документ опубликован' : 'Документ снят с публикации');
+      return { ...d, isPublished: newState };
+    }));
+  };
+
+  const CardBlock = ({ title, icon: Icon, children, action }: { title: string; icon: React.ElementType; children: React.ReactNode; action?: React.ReactNode }) => (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       className="bg-card border border-border rounded-xl p-6"
       style={{ boxShadow: 'var(--shadow-card)' }}
     >
-      <div className="flex items-center gap-3 mb-5">
-        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-          <Icon className="w-5 h-5 text-primary" />
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Icon className="w-5 h-5 text-primary" />
+          </div>
+          <h3 className="font-semibold text-lg">{title}</h3>
         </div>
-        <h3 className="font-semibold text-lg">{title}</h3>
+        {action}
       </div>
       <div className="space-y-4">{children}</div>
     </motion.div>
@@ -68,6 +171,7 @@ const AdminSite = () => {
   );
 
   const update = (key: string) => (value: string) => setSiteData(prev => ({ ...prev, [key]: value }));
+  const formatDate = (d: string) => new Date(d).toLocaleDateString('ru-RU');
 
   return (
     <div className="space-y-6">
@@ -98,7 +202,6 @@ const AdminSite = () => {
           <TabsTrigger value="documents" className="text-sm px-5 gap-2"><FileText className="w-4 h-4" />Документы</TabsTrigger>
         </TabsList>
 
-        {/* Content tab */}
         <TabsContent value="content" className="space-y-6">
           <CardBlock title="Главный экран (Hero)" icon={Image}>
             <Field label="Заголовок" value={siteData.heroTitle} onChange={update('heroTitle')} />
@@ -106,7 +209,6 @@ const AdminSite = () => {
           </CardBlock>
         </TabsContent>
 
-        {/* Contacts tab */}
         <TabsContent value="contacts" className="space-y-6">
           <CardBlock title="Контактная информация" icon={Phone}>
             <div className="grid md:grid-cols-2 gap-4">
@@ -125,7 +227,6 @@ const AdminSite = () => {
           </CardBlock>
         </TabsContent>
 
-        {/* SEO tab */}
         <TabsContent value="seo" className="space-y-6">
           <CardBlock title="Поисковая оптимизация" icon={Search}>
             <Field label="Title (до 60 символов)" value={siteData.seoTitle} onChange={update('seoTitle')} />
@@ -133,7 +234,6 @@ const AdminSite = () => {
             <Field label="Description (до 160 символов)" value={siteData.seoDescription} onChange={update('seoDescription')} multiline />
             <div className="text-xs text-muted-foreground text-right">{siteData.seoDescription.length}/160</div>
             <Field label="Ключевые слова" value={siteData.seoKeywords} onChange={update('seoKeywords')} />
-            {/* Preview */}
             <div className="mt-4 p-4 bg-muted/50 rounded-lg border border-border">
               <p className="text-xs text-muted-foreground mb-2">Предпросмотр в поисковой выдаче:</p>
               <p className="text-primary text-base font-medium hover:underline cursor-pointer">{siteData.seoTitle}</p>
@@ -143,7 +243,6 @@ const AdminSite = () => {
           </CardBlock>
         </TabsContent>
 
-        {/* Pages tab */}
         <TabsContent value="pages" className="space-y-6">
           <CardBlock title="Разделы сайта" icon={Layout}>
             <p className="text-sm text-muted-foreground mb-4">Управляйте видимостью разделов на сайте</p>
@@ -169,45 +268,150 @@ const AdminSite = () => {
 
         {/* Documents tab */}
         <TabsContent value="documents" className="space-y-6">
-          <CardBlock title="Публичные документы" icon={FileText}>
-            <p className="text-sm text-muted-foreground mb-4">
-              Документы, доступные на сайте для клиентов: оферта, политика конфиденциальности, согласие на обработку данных
+          <CardBlock
+            title="Публичные документы"
+            icon={FileText}
+            action={
+              <Button className="gap-2 h-9" onClick={openNewDoc}>
+                <Plus className="w-4 h-4" />
+                Добавить документ
+              </Button>
+            }
+          >
+            <p className="text-sm text-muted-foreground mb-2">
+              Документы, доступные на сайте: оферта, политика конфиденциальности и др.
             </p>
-            {[
-              { key: 'privacy', label: 'Политика конфиденциальности', path: '/privacy', status: 'published' },
-              { key: 'consent', label: 'Согласие на обработку данных', path: '/consent', status: 'published' },
-              { key: 'docs', label: 'Публичная оферта', path: '/docs', status: 'published' },
-            ].map(doc => (
-              <div key={doc.key} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center">
-                    <File className="w-4 h-4 text-muted-foreground" />
+            {documents.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">Нет документов</p>
+            ) : (
+              documents.map(doc => (
+                <div key={doc.id} className="flex items-center justify-between py-3 border-b border-border last:border-0 gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                      <File className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm truncate">{doc.title}</p>
+                      <p className="text-xs text-muted-foreground">{doc.path} · Обновлён {formatDate(doc.updatedAt)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-sm">{doc.label}</p>
-                    <p className="text-xs text-muted-foreground">{doc.path}</p>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant="outline" className="text-xs cursor-pointer" onClick={() => togglePublish(doc.id)} style={doc.isPublished ? {
+                      borderColor: 'hsl(var(--status-active) / 0.3)',
+                      color: 'hsl(var(--status-active))',
+                      backgroundColor: 'hsl(var(--status-active) / 0.1)',
+                    } : {
+                      borderColor: 'hsl(var(--status-pending) / 0.3)',
+                      color: 'hsl(var(--status-pending))',
+                      backgroundColor: 'hsl(var(--status-pending) / 0.1)',
+                    }}>
+                      {doc.isPublished ? 'Опубликован' : 'Черновик'}
+                    </Badge>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setViewingDoc(doc)}>
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openEditDoc(doc)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:text-destructive" onClick={() => setDeletingDocId(doc.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs" style={{
-                    borderColor: 'hsl(var(--status-active) / 0.3)',
-                    color: 'hsl(var(--status-active))',
-                    backgroundColor: 'hsl(var(--status-active) / 0.1)',
-                  }}>
-                    Опубликован
-                  </Badge>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => window.open(doc.path, '_blank')}>
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => toast.info(`Редактирование "${doc.label}" будет доступно после подключения базы данных`)}>
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </CardBlock>
         </TabsContent>
       </Tabs>
+
+      {/* Document Create/Edit Dialog */}
+      <Dialog open={isDocDialogOpen} onOpenChange={setIsDocDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingDoc ? 'Редактировать документ' : 'Новый документ'}</DialogTitle>
+            <DialogDescription>
+              {editingDoc ? 'Измените содержание документа' : 'Добавьте новый публичный документ на сайт'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid gap-2">
+              <Label>Название документа</Label>
+              <Input
+                placeholder="Например: Правила пользования складом"
+                value={docForm.title}
+                onChange={e => setDocForm(p => ({ ...p, title: e.target.value }))}
+                className="h-11"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>URL-путь на сайте</Label>
+              <Input
+                placeholder="/rules"
+                value={docForm.path}
+                onChange={e => setDocForm(p => ({ ...p, path: e.target.value }))}
+                className="h-11"
+              />
+              <p className="text-xs text-muted-foreground">Путь по которому документ будет доступен: kladovka78.ru{docForm.path || '/...'}</p>
+            </div>
+            <div className="grid gap-2">
+              <Label>Содержание документа</Label>
+              <Textarea
+                placeholder="Текст документа..."
+                value={docForm.content}
+                onChange={e => setDocForm(p => ({ ...p, content: e.target.value }))}
+                className="min-h-[250px] text-sm leading-relaxed"
+              />
+              <p className="text-xs text-muted-foreground text-right">{docForm.content.length} символов</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDocDialogOpen(false)}>Отмена</Button>
+            <Button onClick={handleSaveDoc} disabled={!docForm.title.trim() || !docForm.content.trim()}>
+              {editingDoc ? 'Сохранить' : 'Создать'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Document View Dialog */}
+      <Dialog open={!!viewingDoc} onOpenChange={() => setViewingDoc(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{viewingDoc?.title}</DialogTitle>
+            <DialogDescription>
+              Путь: {viewingDoc?.path} · Обновлён {viewingDoc && formatDate(viewingDoc.updatedAt)}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-4 bg-muted/30 rounded-lg border border-border whitespace-pre-wrap text-sm leading-relaxed">
+            {viewingDoc?.content}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewingDoc(null)}>Закрыть</Button>
+            <Button onClick={() => { if (viewingDoc) { openEditDoc(viewingDoc); setViewingDoc(null); } }}>
+              <Edit className="w-4 h-4 mr-2" />
+              Редактировать
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deletingDocId} onOpenChange={() => setDeletingDocId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить документ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Документ «{documents.find(d => d.id === deletingDocId)?.title}» будет удалён с сайта. Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteDoc} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
