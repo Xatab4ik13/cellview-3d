@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { StorageCell, calculatePrice, RESERVATION_HOURS } from '@/types/storage';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +28,7 @@ interface CellModalProps {
 type DurationOption = 1 | 3 | 6 | 12;
 
 const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
+  const navigate = useNavigate();
   const [selectedDuration, setSelectedDuration] = useState<DurationOption>(1);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   
@@ -224,13 +226,32 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
 
             {/* CTA */}
             <div className="space-y-3">
-              <Button className="w-full" size="lg">
+              <Button 
+                className="w-full" 
+                size="lg"
+                onClick={() => {
+                  onClose();
+                  navigate('/auth', { 
+                    state: { 
+                      cellId: cell.id, 
+                      cellNumber: cell.number, 
+                      duration: selectedDuration, 
+                      totalPrice: calculateTotalPrice(selectedDuration) 
+                    } 
+                  });
+                }}
+              >
                 Забронировать за {calculateTotalPrice(selectedDuration).toLocaleString('ru-RU')} ₽
               </Button>
               <p className="text-xs text-center text-muted-foreground">
                 Ячейка будет зарезервирована на {RESERVATION_HOURS} часа для оплаты
               </p>
-              <Button variant="outline" className="w-full" size="lg">
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                size="lg"
+                onClick={() => window.open('https://t.me/kladovka78_bot', '_blank')}
+              >
                 Связаться с менеджером
               </Button>
             </div>
