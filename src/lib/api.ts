@@ -216,6 +216,16 @@ export async function verifyAuthToken(token: string): Promise<AuthCustomer> {
   });
 }
 
+export async function createAuthSession(): Promise<{ sessionId: string }> {
+  return fetchApi<{ sessionId: string }>('/api/auth/session', {
+    method: 'POST',
+  });
+}
+
+export async function pollAuthSession(sessionId: string): Promise<{ status: string; customer?: AuthCustomer }> {
+  return fetchApi<{ status: string; customer?: AuthCustomer }>(`/api/auth/session/${sessionId}/status`);
+}
+
 export async function fetchAuthMe(customerId: string): Promise<AuthCustomer> {
   return fetchApi<AuthCustomer>('/api/auth/me', {
     headers: { 'X-Customer-Id': customerId },
