@@ -56,6 +56,123 @@ export async function deleteCell(id: string): Promise<void> {
   });
 }
 
+// ============ Клиенты ============
+
+export interface CustomerData {
+  id?: string;
+  type: 'individual' | 'company';
+  name: string;
+  phone: string;
+  email?: string;
+  telegram?: string;
+  passportSeries?: string;
+  passportNumber?: string;
+  companyName?: string;
+  inn?: string;
+  ogrn?: string;
+  contactPerson?: string;
+  notes?: string;
+  createdAt?: string;
+}
+
+export async function fetchCustomers(search?: string, type?: string): Promise<CustomerData[]> {
+  const params = new URLSearchParams();
+  if (search) params.set('search', search);
+  if (type) params.set('type', type);
+  const qs = params.toString();
+  return fetchApi<CustomerData[]>(`/api/customers${qs ? `?${qs}` : ''}`);
+}
+
+export async function fetchCustomer(id: string): Promise<CustomerData> {
+  return fetchApi<CustomerData>(`/api/customers/${id}`);
+}
+
+export async function createCustomer(data: Partial<CustomerData>): Promise<{ id: string }> {
+  return fetchApi<{ id: string }>('/api/customers', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateCustomer(id: string, data: Partial<CustomerData>): Promise<void> {
+  await fetchApi(`/api/customers/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteCustomer(id: string): Promise<void> {
+  await fetchApi(`/api/customers/${id}`, { method: 'DELETE' });
+}
+
+// ============ Аренда ============
+
+export interface RentalData {
+  id: string;
+  cellId: string;
+  customerId: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+  customerType: 'individual' | 'company';
+  cellNumber?: number;
+  startDate: string;
+  endDate: string;
+  months: number;
+  pricePerMonth: number;
+  discount: number;
+  totalAmount: number;
+  autoRenew: boolean;
+  status: 'active' | 'expired' | 'cancelled';
+  notes?: string;
+  createdAt?: string;
+}
+
+export async function fetchRentals(filters?: { status?: string; cell_id?: string; customer_id?: string }): Promise<RentalData[]> {
+  const params = new URLSearchParams();
+  if (filters?.status) params.set('status', filters.status);
+  if (filters?.cell_id) params.set('cell_id', filters.cell_id);
+  if (filters?.customer_id) params.set('customer_id', filters.customer_id);
+  const qs = params.toString();
+  return fetchApi<RentalData[]>(`/api/rentals${qs ? `?${qs}` : ''}`);
+}
+
+export async function fetchRental(id: string): Promise<RentalData> {
+  return fetchApi<RentalData>(`/api/rentals/${id}`);
+}
+
+export async function createRental(data: {
+  cellId: string;
+  customerId: string;
+  startDate: string;
+  months: number;
+  pricePerMonth: number;
+  discount?: number;
+  totalAmount?: number;
+  autoRenew?: boolean;
+  notes?: string;
+}): Promise<{ id: string; endDate: string }> {
+  return fetchApi<{ id: string; endDate: string }>('/api/rentals', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function extendRental(id: string, months: number): Promise<{ endDate: string }> {
+  return fetchApi<{ endDate: string }>(`/api/rentals/${id}/extend`, {
+    method: 'PUT',
+    body: JSON.stringify({ months }),
+  });
+}
+
+export async function releaseRental(id: string): Promise<void> {
+  await fetchApi(`/api/rentals/${id}/release`, { method: 'PUT' });
+}
+
+export async function deleteRental(id: string): Promise<void> {
+  await fetchApi(`/api/rentals/${id}`, { method: 'DELETE' });
+}
+
 // ============ Health ============
 
 export async function checkHealth(): Promise<{ status: string; services: Record<string, string> }> {
