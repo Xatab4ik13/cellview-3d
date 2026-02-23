@@ -2,7 +2,6 @@ import { Router, Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import pool from '../config/database';
 import { AppError } from '../middleware/errorHandler';
-import { AppError } from '../middleware/errorHandler';
 
 export const authRouter = Router();
 

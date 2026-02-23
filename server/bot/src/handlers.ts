@@ -7,14 +7,14 @@ const API_URL = process.env.API_URL || 'https://api.kladovka78.ru';
 /**
  * Confirm a polling auth session via API
  */
-async function confirmAuthSession(sessionId: string, customerId: string): Promise<boolean> {
+export async function confirmAuthSession(sessionId: string, customerId: string): Promise<boolean> {
   try {
     const res = await fetch(`${API_URL}/api/auth/session/${sessionId}/confirm`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ customerId }),
     });
-    const json = await res.json();
+    const json = await res.json() as { success?: boolean };
     return json.success === true;
   } catch (err) {
     console.error('Failed to confirm auth session:', err);
