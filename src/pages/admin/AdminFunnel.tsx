@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Plus, Phone, Eye, FileText, Key, GripVertical, MoreHorizontal } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface FunnelItem {
   id: string;
@@ -81,6 +82,10 @@ const AdminFunnel = () => {
     0
   );
 
+  const handleAction = (action: string) => {
+    toast.info(`${action} — будет доступно после подключения базы данных`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -91,7 +96,7 @@ const AdminFunnel = () => {
             {totalAmount.toLocaleString('ru-RU')}/мес
           </p>
         </div>
-        <Button className="h-10 gap-2">
+        <Button className="h-10 gap-2" onClick={() => handleAction('Новая сделка')}>
           <Plus className="h-4 w-4" />
           Новая сделка
         </Button>
@@ -123,7 +128,12 @@ const AdminFunnel = () => {
                   {column.items.length}
                 </Badge>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => handleAction(`Настройки колонки "${column.title}"`)}
+              >
                 <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
               </Button>
             </div>
@@ -143,6 +153,7 @@ const AdminFunnel = () => {
                   whileTap={{ scale: 0.98 }}
                   className="bg-card rounded-lg border border-border p-4 cursor-pointer"
                   style={{ boxShadow: 'var(--shadow-card)' }}
+                  onClick={() => handleAction(`Открыть карточку: ${item.name}`)}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -168,7 +179,10 @@ const AdminFunnel = () => {
                 </motion.div>
               ))}
 
-              <button className="w-full p-3 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-card/50 transition-all flex items-center justify-center gap-2">
+              <button
+                onClick={() => handleAction(`Добавить в "${column.title}"`)}
+                className="w-full p-3 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-card/50 transition-all flex items-center justify-center gap-2"
+              >
                 <Plus className="h-4 w-4" />
                 Добавить
               </button>

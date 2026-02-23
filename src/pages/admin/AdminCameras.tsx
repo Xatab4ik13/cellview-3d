@@ -3,6 +3,7 @@ import { Video, Shield, Maximize2, RefreshCw, Settings, Wifi, WifiOff, Grid3X3, 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 const cameras = [
   { id: 1, name: 'Камера 1 — Главный вход', location: 'Вход на территорию склада', status: 'online' as const },
@@ -15,7 +16,6 @@ const cameras = [
 
 const AdminCameras = () => {
   const [layout, setLayout] = useState<'2x2' | '3x3'>('2x2');
-  const [selectedCamera, setSelectedCamera] = useState<number | null>(null);
 
   const onlineCount = cameras.filter(c => c.status === 'online').length;
   const offlineCount = cameras.filter(c => c.status === 'offline').length;
@@ -80,7 +80,7 @@ const AdminCameras = () => {
             style={{ boxShadow: 'var(--shadow-card)' }}
           >
             {/* Video placeholder */}
-            <div className="relative aspect-video bg-black cursor-pointer" onClick={() => setSelectedCamera(selectedCamera === camera.id ? null : camera.id)}>
+            <div className="relative aspect-video bg-black">
               <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
                 <div className="text-center">
                   <Video className={`mx-auto mb-2 ${layout === '2x2' ? 'w-12 h-12' : 'w-8 h-8'} text-gray-600`} />
@@ -115,6 +115,7 @@ const AdminCameras = () => {
                 size="icon"
                 variant="ghost"
                 className="absolute top-3 right-3 bg-black/50 hover:bg-black/70 text-white h-8 w-8"
+                onClick={() => toast.info(`Полноэкранный режим: ${camera.name} — подключите систему видеонаблюдения`)}
               >
                 <Maximize2 className="w-4 h-4" />
               </Button>
@@ -129,10 +130,20 @@ const AdminCameras = () => {
                 </span>
               </div>
               <div className="flex gap-1">
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                  onClick={() => toast.success(`Камера "${camera.name}" перезагружена`)}
+                >
                   <RefreshCw className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                  onClick={() => toast.info(`Настройки камеры "${camera.name}" — будет доступно после интеграции`)}
+                >
                   <Settings className="w-4 h-4" />
                 </Button>
               </div>

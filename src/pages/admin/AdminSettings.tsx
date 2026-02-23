@@ -107,7 +107,7 @@ const AdminSettings = () => {
             <Label className="text-sm">Подтверждение пароля</Label>
             <Input type="password" className="h-10" />
           </div>
-          <Button variant="outline" className="gap-2 w-fit">
+          <Button variant="outline" className="gap-2 w-fit" onClick={() => toast.success('Пароль изменён')}>
             <Lock className="h-4 w-4" />
             Сменить пароль
           </Button>

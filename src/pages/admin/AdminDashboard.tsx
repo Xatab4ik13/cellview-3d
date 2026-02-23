@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Box, Key, Users, CreditCard, TrendingUp, AlertCircle, ArrowUpRight } from 'lucide-react';
 import CrmCard from '@/components/crm/CrmCard';
 import AnimatedCounter from '@/components/crm/AnimatedCounter';
@@ -12,6 +13,7 @@ const stats = [
     trend: '+2 за месяц',
     trendUp: true,
     color: 'hsl(var(--status-new))',
+    link: '/admin/cells',
   },
   {
     title: 'Активных аренд',
@@ -21,6 +23,7 @@ const stats = [
     trend: '+12%',
     trendUp: true,
     color: 'hsl(var(--status-active))',
+    link: '/admin/rentals',
   },
   {
     title: 'Клиентов',
@@ -30,6 +33,7 @@ const stats = [
     trend: '+8%',
     trendUp: true,
     color: 'hsl(var(--primary))',
+    link: '/admin/customers',
   },
   {
     title: 'Доход / мес',
@@ -40,6 +44,7 @@ const stats = [
     trend: '+15%',
     trendUp: true,
     color: 'hsl(var(--status-active))',
+    link: '/admin/payments',
   },
 ];
 
@@ -70,6 +75,8 @@ const container = {
 };
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+
   return (
     <motion.div className="space-y-8" variants={container} initial="initial" animate="animate">
       <div>
@@ -80,7 +87,7 @@ const AdminDashboard = () => {
       {/* Stats Grid */}
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, i) => (
-          <CrmCard key={stat.title}>
+          <CrmCard key={stat.title} className="cursor-pointer" onClick={() => navigate(stat.link)}>
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm font-medium text-muted-foreground">{stat.title}</span>
               <div
@@ -119,7 +126,10 @@ const AdminDashboard = () => {
               </h3>
               <p className="text-sm text-muted-foreground mt-0.5">Требуют обработки</p>
             </div>
-            <button className="text-sm text-primary hover:underline flex items-center gap-1">
+            <button
+              onClick={() => navigate('/admin/applications')}
+              className="text-sm text-primary hover:underline flex items-center gap-1"
+            >
               Все <ArrowUpRight className="h-4 w-4" />
             </button>
           </div>
@@ -128,6 +138,7 @@ const AdminDashboard = () => {
               <motion.div
                 key={app.id}
                 whileHover={{ x: 3 }}
+                onClick={() => navigate('/admin/applications')}
                 className="flex items-center justify-between p-4 rounded-lg bg-muted/40 hover:bg-muted/70 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3">
@@ -156,7 +167,10 @@ const AdminDashboard = () => {
               </h3>
               <p className="text-sm text-muted-foreground mt-0.5">Ближайшие 7 дней</p>
             </div>
-            <button className="text-sm text-primary hover:underline flex items-center gap-1">
+            <button
+              onClick={() => navigate('/admin/rentals')}
+              className="text-sm text-primary hover:underline flex items-center gap-1"
+            >
               Все <ArrowUpRight className="h-4 w-4" />
             </button>
           </div>
@@ -165,6 +179,7 @@ const AdminDashboard = () => {
               <motion.div
                 key={rental.id}
                 whileHover={{ x: 3 }}
+                onClick={() => navigate('/admin/rentals')}
                 className="flex items-center justify-between p-4 rounded-lg bg-muted/40 hover:bg-muted/70 transition-colors cursor-pointer"
               >
                 <div>

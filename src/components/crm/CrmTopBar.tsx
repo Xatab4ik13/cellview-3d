@@ -3,7 +3,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Bell, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const routeTitles: Record<string, string> = {
   '/admin': 'Дашборд',
@@ -23,6 +24,7 @@ const routeTitles: Record<string, string> = {
 
 const CrmTopBar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const title = routeTitles[location.pathname] || 'CRM';
 
   return (
@@ -44,13 +46,22 @@ const CrmTopBar = () => {
       </div>
 
       {/* Quick action */}
-      <Button size="default" className="h-10 gap-2 text-sm shadow-sm">
+      <Button
+        size="default"
+        className="h-10 gap-2 text-sm shadow-sm"
+        onClick={() => navigate('/admin/applications')}
+      >
         <Plus className="h-4 w-4" />
         <span className="hidden lg:inline">Новая заявка</span>
       </Button>
 
       {/* Notifications */}
-      <Button variant="ghost" size="icon" className="relative h-10 w-10 text-muted-foreground hover:text-foreground">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="relative h-10 w-10 text-muted-foreground hover:text-foreground"
+        onClick={() => toast.info('Уведомления будут доступны после подключения базы данных')}
+      >
         <Bell className="h-5 w-5" />
         <Badge className="absolute -top-0.5 -right-0.5 h-5 min-w-5 px-1.5 text-xs bg-[hsl(var(--status-overdue))] text-white border-0">
           3
@@ -58,7 +69,10 @@ const CrmTopBar = () => {
       </Button>
 
       {/* Profile avatar */}
-      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold cursor-pointer hover:bg-primary/20 transition-colors">
+      <div
+        onClick={() => navigate('/admin/settings')}
+        className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold cursor-pointer hover:bg-primary/20 transition-colors"
+      >
         А
       </div>
     </header>
