@@ -24,6 +24,7 @@ import AdminPayments from "./pages/admin/AdminPayments";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminFunnel from "./pages/admin/AdminFunnel";
 import AdminTasks from "./pages/admin/AdminTasks";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="settings" element={<AdminSettings />} />
             <Route path="funnel" element={<AdminFunnel />} />
             <Route path="tasks" element={<AdminTasks />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
           </Route>
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
