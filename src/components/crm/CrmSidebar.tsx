@@ -27,7 +27,6 @@ import {
   LogOut,
   ChevronDown,
   Video,
-  FolderOpen,
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -64,7 +63,6 @@ const navGroups: NavGroup[] = [
     items: [
       { title: 'Платежи', url: '/admin/payments', icon: CreditCard },
       { title: 'Аналитика', url: '/admin/analytics', icon: BarChart3 },
-      { title: 'Документы', url: '/admin/documents', icon: FolderOpen },
     ],
   },
   {
