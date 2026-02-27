@@ -110,7 +110,7 @@ const InfoSection = () => {
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <a
-              href="tel:+78121234567"
+              href="tel:+79118108383"
               className="flex items-center gap-4 p-5 border border-border/50 rounded-xl hover:bg-secondary/50 hover:border-primary/30 transition-all group"
             >
               <div className="w-14 h-14 bg-accent/10 rounded-2xl flex items-center justify-center group-hover:bg-accent/20 transition-colors">
@@ -118,7 +118,7 @@ const InfoSection = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground font-medium">Телефон</p>
-                <p className="font-bold text-lg">8 812 123-45-67</p>
+                <p className="font-bold text-lg">8 (911) 810-83-83</p>
               </div>
             </a>
             

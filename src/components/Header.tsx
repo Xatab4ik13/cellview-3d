@@ -60,13 +60,13 @@ const Header = () => {
 
             {/* Phone - Desktop */}
             <div className="hidden lg:flex flex-col items-end">
-              <span className="text-xs text-muted-foreground">Бесплатно по РФ</span>
+              <span className="text-xs text-muted-foreground">Звоните нам</span>
               <a 
-                href="tel:+78121234567" 
+                href="tel:+79118108383" 
                 className="flex items-center gap-1 font-bold text-lg text-foreground hover:text-primary transition-colors"
               >
                 <Phone className="w-4 h-4" />
-                8 812 123-45-67
+                8 (911) 810-83-83
               </a>
             </div>
 
@@ -179,15 +179,15 @@ const Header = () => {
                   <div className="mt-auto p-4 space-y-4 border-t border-border bg-muted/30">
                     {/* Phone */}
                     <a 
-                      href="tel:+78121234567" 
+                      href="tel:+79118108383" 
                       className="flex items-center gap-3 p-3 rounded-xl bg-background border border-border hover:border-primary transition-colors"
                     >
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                         <Phone className="w-5 h-5 text-primary" />
                       </div>
                       <div>
-                        <p className="font-bold text-lg">8 812 123-45-67</p>
-                        <p className="text-xs text-muted-foreground">Бесплатно по РФ</p>
+                        <p className="font-bold text-lg">8 (911) 810-83-83</p>
+                        <p className="text-xs text-muted-foreground">Звоните нам</p>
                       </div>
                     </a>
 
