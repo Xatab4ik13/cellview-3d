@@ -868,7 +868,19 @@ const AdminCells = () => {
             className="gap-2 h-11"
             onClick={async () => {
               try {
-                await recalculateCellPrices();
+                // Попробовать bulk-эндпоинт, если задеплоен
+                try {
+                  await recalculateCellPrices();
+                } catch {
+                  // Fallback: обновить каждую ячейку по отдельности
+                  const { updateCell } = await import('@/lib/api');
+                  for (const cell of cells) {
+                    const correctPrice = calculatePrice(cell.volume);
+                    if (cell.pricePerMonth !== correctPrice) {
+                      await updateCell(cell.id, { pricePerMonth: correctPrice });
+                    }
+                  }
+                }
                 await refetchCells();
                 toast.success('Цены пересчитаны по формуле 1500₽/м³');
               } catch (e: any) {
