@@ -21,12 +21,13 @@ export const iconMap: Record<string, React.ElementType> = {
 export const defaultDocuments: SiteDocument[] = [
   {
     id: 'doc-1',
-    title: 'Договор аренды ячейки',
-    description: 'Типовой договор аренды складской ячейки для физических и юридических лиц',
+    title: 'Стандартные условия аренды кладовой',
+    description: 'Стандартные условия предоставления индивидуальной кладовой — приложение к договору аренды',
     icon: 'FileText',
-    type: 'PDF',
+    type: 'DOCX',
     isPublished: true,
-    updatedAt: '2025-01-15',
+    updatedAt: '2025-02-27',
+    fileUrl: '/docs/standard-conditions.docx',
   },
   {
     id: 'doc-2',
