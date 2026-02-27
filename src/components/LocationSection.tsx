@@ -39,7 +39,7 @@ const LocationSection = () => {
                 <div>
                   <h4 className="font-semibold text-sm">На метро</h4>
                   <p className="text-xs text-muted-foreground">
-                    Ст. Ладожская — 10 мин пешком
+                    Ст. Московская — 15 мин пешком
                   </p>
                 </div>
               </div>

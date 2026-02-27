@@ -15,8 +15,8 @@ const Slider = React.forwardRef<
     )}
     {...props}
   >
-    <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary/60 transition-all duration-200 group-hover:bg-secondary">
-      <SliderPrimitive.Range className="absolute h-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-200" />
+    <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary/60 group-hover:bg-secondary transition-colors duration-200">
+      <SliderPrimitive.Range className="absolute h-full bg-gradient-to-r from-primary to-primary/80" />
     </SliderPrimitive.Track>
     {/* Render thumb for each value (supports range sliders) */}
     {(props.value || props.defaultValue || [0]).map((_, index) => (
