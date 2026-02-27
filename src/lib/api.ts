@@ -28,12 +28,29 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
 
 // ============ Ячейки ============
 
+/** API может вернуть числовые поля как строки — приводим к number */
+function parseCell(raw: any): StorageCell {
+  return {
+    ...raw,
+    width: Number(raw.width),
+    height: Number(raw.height),
+    depth: Number(raw.depth),
+    area: Number(raw.area),
+    volume: Number(raw.volume),
+    floor: Number(raw.floor),
+    tier: Number(raw.tier),
+    pricePerMonth: Number(raw.pricePerMonth),
+  };
+}
+
 export async function fetchCells(): Promise<StorageCell[]> {
-  return fetchApi<StorageCell[]>('/api/cells');
+  const data = await fetchApi<any[]>('/api/cells');
+  return data.map(parseCell);
 }
 
 export async function fetchCell(id: string): Promise<StorageCell> {
-  return fetchApi<StorageCell>(`/api/cells/${id}`);
+  const data = await fetchApi<any>(`/api/cells/${id}`);
+  return parseCell(data);
 }
 
 export async function createCell(cell: Partial<StorageCell>): Promise<void> {
