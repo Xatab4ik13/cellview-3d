@@ -158,13 +158,12 @@ const ContactsSection = () => {
         {/* Map */}
         <div className="mt-12 aspect-[21/9] bg-muted rounded-2xl overflow-hidden border border-border">
           <iframe 
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1999.5!2d30.4!3d59.9!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNTnCsDU0JzAwLjAiTiAzMMKwMjQnMDAuMCJF!5e0!3m2!1sru!2sru!4v1600000000000!5m2!1sru!2sru"
+            src="https://yandex.ru/map-widget/v1/?ll=30.421389%2C59.858333&z=16&pt=30.421389%2C59.858333%2Cpm2rdm&lang=ru_RU"
             width="100%"
             height="100%"
             style={{ border: 0 }}
             allowFullScreen
             loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
             title="Карта расположения склада Кладовка78"
           />
         </div>

@@ -20,7 +20,7 @@ const LocationSection = () => {
           <div className="order-2 lg:order-1">
             <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-border shadow-lg">
               <iframe 
-                src="https://yandex.ru/map-widget/v1/?um=constructor%3A0&amp;source=constructor&amp;ll=30.4%2C59.9&amp;z=15&amp;pt=30.4%2C59.9%2Cpm2rdm"
+                src="https://yandex.ru/map-widget/v1/?ll=30.421389%2C59.858333&z=16&pt=30.421389%2C59.858333%2Cpm2rdm&lang=ru_RU"
                 width="100%" 
                 height="100%" 
                 style={{ border: 0 }}
