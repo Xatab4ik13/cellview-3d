@@ -6,7 +6,7 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   const navLinks = [
-    { href: '/catalog', label: 'Адреса складов' },
+    { href: '/catalog', label: 'Каталог ячеек' },
     { href: '/pricing', label: 'Стоимость' },
     { href: '/docs', label: 'Документация' },
     { href: '/faq', label: 'Вопрос-ответ' },
@@ -94,9 +94,9 @@ const Footer = () => {
                   <Phone className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-background/50 text-xs">Бесплатно по РФ</p>
-                  <a href="tel:+78121234567" className="text-background hover:text-primary transition-colors font-medium">
-                    +7 (812) 123-45-67
+                  <p className="text-background/50 text-xs">Звоните нам</p>
+                  <a href="tel:+79118108383" className="text-background hover:text-primary transition-colors font-medium">
+                    8 (911) 810-83-83
                   </a>
                 </div>
               </li>
@@ -135,9 +135,10 @@ const Footer = () => {
       <div className="border-t border-background/10">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-background/50">
-              © {currentYear} Кладовка78. Все права защищены.
-            </p>
+            <div className="text-sm text-background/50 text-center md:text-left">
+              <p>© {currentYear} ИП Пушкина Евгения Николаевна</p>
+              <p>ИНН 780529368973</p>
+            </div>
             <div className="flex gap-6">
               <Link to="/faq" className="text-sm text-background/50 hover:text-background transition-colors">
                 FAQ

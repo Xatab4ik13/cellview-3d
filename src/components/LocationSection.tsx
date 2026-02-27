@@ -105,12 +105,12 @@ const LocationSection = () => {
                   <div>
                     <h3 className="font-bold text-lg mb-1">Телефон</h3>
                     <a 
-                      href="tel:+78121234567" 
+                      href="tel:+79118108383" 
                       className="text-xl font-bold text-primary hover:underline"
                     >
-                      +7 (812) 123-45-67
+                      8 (911) 810-83-83
                     </a>
-                    <p className="text-xs text-muted-foreground mt-1">Бесплатно по России</p>
+                    <p className="text-xs text-muted-foreground mt-1">Звоните нам</p>
                   </div>
                 </div>
 
@@ -132,7 +132,7 @@ const LocationSection = () => {
                       Построить маршрут
                     </Button>
                     <Button variant="outline" className="flex-1" size="lg" asChild>
-                      <a href="tel:+78121234567">
+                      <a href="tel:+79118108383">
                         <Phone className="w-4 h-4" />
                         Позвонить
                       </a>

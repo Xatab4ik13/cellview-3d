@@ -261,7 +261,7 @@ const RentalsSection = ({ pendingBooking, onClearBooking, onGoToProfile }: Renta
       {/* Existing active rentals */}
       {rentals.map((rental) => {
         const daysLeft = getDaysLeft(rental.endDate);
-        const accessPhone = '+7 812 123-45-67';
+        const accessPhone = '8 (911) 810-83-83';
 
         return (
           <Card key={rental.id} className="border-border/50 shadow-lg overflow-hidden">

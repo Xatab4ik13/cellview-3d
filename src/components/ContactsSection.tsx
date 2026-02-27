@@ -41,12 +41,12 @@ const ContactsSection = () => {
                 <div>
                   <h3 className="font-semibold mb-1">Телефон</h3>
                   <a 
-                    href="tel:+78121234567" 
+                    href="tel:+79118108383" 
                     className="text-lg font-semibold text-primary hover:underline"
                   >
-                    +7 (812) 123-45-67
+                    8 (911) 810-83-83
                   </a>
-                  <p className="text-xs text-muted-foreground">Бесплатно по РФ</p>
+                  <p className="text-xs text-muted-foreground">Звоните нам</p>
                 </div>
               </div>
               

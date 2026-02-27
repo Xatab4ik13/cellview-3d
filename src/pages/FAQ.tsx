@@ -82,7 +82,7 @@ const FAQ = () => {
                     </Button>
                   </Link>
                   <Button variant="outline" asChild>
-                    <a href="tel:+78121234567">
+                    <a href="tel:+79118108383">
                       Позвонить
                     </a>
                   </Button>
