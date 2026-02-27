@@ -52,6 +52,19 @@ cellsRouter.get('/', async (req: Request, res: Response, next: NextFunction) => 
   }
 });
 
+// PUT /api/cells/recalculate-prices — пересчитать все цены по формуле 1500₽/м³
+cellsRouter.put('/recalculate-prices', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const [result] = await pool.query(
+      `UPDATE cells SET price_per_month = CEIL(volume * 1500 / 10) * 10`
+    );
+    const affected = (result as any).affectedRows || 0;
+    res.json({ success: true, message: `Цены пересчитаны для ${affected} ячеек` });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // GET /api/cells/:id — одна ячейка
 cellsRouter.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -151,6 +164,7 @@ cellsRouter.put('/:id', async (req: Request, res: Response, next: NextFunction) 
     next(error);
   }
 });
+
 
 // DELETE /api/cells/:id — удалить ячейку (CRM)
 cellsRouter.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {

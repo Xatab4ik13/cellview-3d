@@ -40,7 +40,7 @@ import {
 } from 'lucide-react';
 import { calculatePrice, StorageCell, CellStatus, CELL_STATUS_LABELS, RESERVATION_HOURS } from '@/types/storage';
 import { useCells, useCreateCell, useUpdateCell, useDeleteCell } from '@/hooks/useCells';
-import { uploadCellPhotos, deleteCellPhoto } from '@/lib/api';
+import { uploadCellPhotos, deleteCellPhoto, recalculateCellPrices } from '@/lib/api';
 import { useRentals, useCreateRental, useExtendRental, useReleaseRental } from '@/hooks/useRentals';
 import { useCustomers, useCreateCustomer } from '@/hooks/useCustomers';
 import CellProjectionPreview from '@/components/admin/CellProjectionPreview';
@@ -396,7 +396,7 @@ const CellDetailPanel = ({
 // ========== Main Component ==========
 
 const AdminCells = () => {
-  const { data: cells = [], isLoading } = useCells();
+  const { data: cells = [], isLoading, refetch: refetchCells } = useCells();
   const createMutation = useCreateCell();
   const updateMutation = useUpdateCell();
   const deleteMutation = useDeleteCell();
@@ -862,13 +862,30 @@ const AdminCells = () => {
             Всего: {cells.length} · Свободно: {availableCount} · В брони: {reservedCount} · Занято: {occupiedCount}
           </p>
         </div>
-        <Dialog modal open={isAddDialogOpen} onOpenChange={(open) => { setIsAddDialogOpen(open); if (!open) resetForm(); }}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 h-11 text-base">
-              <Plus className="h-5 w-5" />
-              Добавить ячейку
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="gap-2 h-11"
+            onClick={async () => {
+              try {
+                await recalculateCellPrices();
+                await refetchCells();
+                toast.success('Цены пересчитаны по формуле 1500₽/м³');
+              } catch (e: any) {
+                toast.error(`Ошибка: ${e.message}`);
+              }
+            }}
+          >
+            <RefreshCw className="h-4 w-4" />
+            Пересчитать цены
+          </Button>
+          <Dialog modal open={isAddDialogOpen} onOpenChange={(open) => { setIsAddDialogOpen(open); if (!open) resetForm(); }}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 h-11 text-base">
+                <Plus className="h-5 w-5" />
+                Добавить ячейку
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Добавить новую ячейку</DialogTitle>
@@ -964,6 +981,7 @@ const AdminCells = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Stats */}

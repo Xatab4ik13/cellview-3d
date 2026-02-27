@@ -67,6 +67,17 @@ export async function updateCell(id: string, data: Partial<StorageCell>): Promis
   });
 }
 
+export async function recalculateCellPrices(): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/cells/recalculate-prices`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.error || 'Ошибка пересчёта');
+  }
+}
+
 export async function deleteCell(id: string): Promise<void> {
   await fetchApi(`/api/cells/${id}`, {
     method: 'DELETE',
