@@ -1,7 +1,8 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Download } from 'lucide-react';
+import { Download, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { defaultDocuments, iconMap } from '@/data/siteDocuments';
 
@@ -42,12 +43,21 @@ const Docs = () => {
                       <p className="text-sm text-muted-foreground">{doc.description}</p>
                     </div>
                     {doc.fileUrl ? (
-                      <Button variant="outline" size="sm" className="gap-2 shrink-0" asChild>
-                        <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" download>
-                          <Download className="w-4 h-4" />
-                          {doc.type}
-                        </a>
-                      </Button>
+                      doc.fileUrl.startsWith('/') && !doc.fileUrl.includes('.') ? (
+                        <Button variant="outline" size="sm" className="gap-2 shrink-0" asChild>
+                          <Link to={doc.fileUrl}>
+                            <ExternalLink className="w-4 h-4" />
+                            Открыть
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" className="gap-2 shrink-0" asChild>
+                          <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" download>
+                            <Download className="w-4 h-4" />
+                            {doc.type}
+                          </a>
+                        </Button>
+                      )
                     ) : (
                       <Button variant="outline" size="sm" className="gap-2 shrink-0" disabled>
                         <Download className="w-4 h-4" />
