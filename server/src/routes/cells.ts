@@ -7,7 +7,8 @@ export const cellsRouter = Router();
 // GET /api/cells — публичный каталог с фото
 cellsRouter.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const proto = req.headers['x-forwarded-proto'] || req.protocol;
+    const baseUrl = `${proto}://${req.get('host')}`;
     
     const [cells] = await pool.query(`
       SELECT 
@@ -54,10 +55,11 @@ cellsRouter.get('/', async (req: Request, res: Response, next: NextFunction) => 
 // GET /api/cells/:id — одна ячейка
 cellsRouter.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const proto = req.headers['x-forwarded-proto'] || req.protocol;
+    const baseUrl = `${proto}://${req.get('host')}`;
     
     const [cells] = await pool.query(
-      `SELECT 
+      `SELECT
         id, number, width, height, depth, area, volume,
         floor, tier, price_per_month as pricePerMonth,
         status, has_socket as hasSocket, has_shelves as hasShelves,
