@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchCells, fetchCell, createCell, updateCell, deleteCell } from '@/lib/api';
 import { StorageCell } from '@/types/storage';
-// Fallback to local data while API is being set up
-import { storageCells as localCells } from '@/data/storageCells';
 import { toast } from 'sonner';
 
 /**
@@ -14,7 +12,6 @@ export function useCells() {
     queryFn: fetchCells,
     staleTime: 1000 * 60 * 5,
     retry: 1,
-    placeholderData: localCells,
   });
 }
 
