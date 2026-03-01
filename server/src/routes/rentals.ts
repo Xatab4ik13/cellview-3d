@@ -189,6 +189,35 @@ rentalsRouter.put('/:id/release', async (req: Request, res: Response, next: Next
   }
 });
 
+// PUT /api/rentals/:id — обновить аренду (даты, сумму)
+rentalsRouter.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { startDate, endDate, totalAmount, pricePerMonth, notes } = req.body;
+
+    const [rows] = await pool.query('SELECT * FROM rentals WHERE id = ?', [req.params.id]);
+    const rental = (rows as any[])[0];
+    if (!rental) throw new AppError('Аренда не найдена', 404);
+
+    const updates: string[] = [];
+    const params: any[] = [];
+
+    if (startDate) { updates.push('start_date = ?'); params.push(startDate); }
+    if (endDate) { updates.push('end_date = ?'); params.push(endDate); }
+    if (totalAmount !== undefined) { updates.push('total_amount = ?'); params.push(totalAmount); }
+    if (pricePerMonth !== undefined) { updates.push('monthly_price = ?'); params.push(pricePerMonth); }
+    if (notes !== undefined) { updates.push('notes = ?'); params.push(notes); }
+
+    if (updates.length === 0) throw new AppError('Нет данных для обновления', 400);
+
+    params.push(req.params.id);
+    await pool.query(`UPDATE rentals SET ${updates.join(', ')} WHERE id = ?`, params);
+
+    res.json({ success: true, message: 'Аренда обновлена' });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // DELETE /api/rentals/:id
 rentalsRouter.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {

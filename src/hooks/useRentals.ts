@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchRentals, fetchRental, createRental, extendRental, releaseRental, deleteRental, RentalData } from '@/lib/api';
+import { fetchRentals, fetchRental, createRental, updateRental, extendRental, releaseRental, deleteRental, RentalData } from '@/lib/api';
 import { toast } from 'sonner';
 
 export function useRentals(filters?: { status?: string; cell_id?: string; customer_id?: string }) {
@@ -26,6 +26,18 @@ export function useCreateRental() {
       qc.invalidateQueries({ queryKey: ['rentals'] });
       qc.invalidateQueries({ queryKey: ['cells'] });
       toast.success('Аренда оформлена');
+    },
+    onError: (e: any) => toast.error(`Ошибка: ${e.message}`),
+  });
+}
+
+export function useUpdateRental() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof updateRental>[1] }) => updateRental(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['rentals'] });
+      toast.success('Аренда обновлена');
     },
     onError: (e: any) => toast.error(`Ошибка: ${e.message}`),
   });
