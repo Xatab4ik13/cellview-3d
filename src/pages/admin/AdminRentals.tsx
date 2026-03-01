@@ -2,16 +2,17 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, MoreHorizontal, Eye, Edit, Ban, RefreshCw, Plus, Loader2 } from 'lucide-react';
+import { Search, MoreHorizontal, Edit, Ban, RefreshCw, Plus, Loader2 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from 'sonner';
-import { useRentals, useExtendRental, useReleaseRental } from '@/hooks/useRentals';
+import { useRentals, useCreateRental, useUpdateRental, useExtendRental, useReleaseRental } from '@/hooks/useRentals';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { RentalData } from '@/lib/api';
+import RentalFormDialog from '@/components/admin/RentalFormDialog';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   active: { label: 'Активна', color: 'var(--status-active)' },
@@ -40,15 +41,16 @@ function formatDate(dateStr: string) {
 const AdminRentals = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [tab, setTab] = useState('all');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingRental, setEditingRental] = useState<RentalData | null>(null);
+
   const { data: rentals = [], isLoading, error } = useRentals();
+  const createMutation = useCreateRental();
+  const updateMutation = useUpdateRental();
   const extendMutation = useExtendRental();
   const releaseMutation = useReleaseRental();
 
-  // Enrich with display status
-  const enriched = rentals.map(r => ({
-    ...r,
-    displayStatus: getRentalDisplayStatus(r),
-  }));
+  const enriched = rentals.map(r => ({ ...r, displayStatus: getRentalDisplayStatus(r) }));
 
   const filtered = enriched.filter(r => {
     const matchSearch =
@@ -66,14 +68,22 @@ const AdminRentals = () => {
     expired: enriched.filter(r => r.displayStatus === 'expired' || r.displayStatus === 'cancelled').length,
   };
 
-  const handleExtend = (id: string, name: string) => {
-    extendMutation.mutate({ id, months: 1 });
+  const handleCreate = (data: any) => {
+    createMutation.mutate(data, { onSuccess: () => setDialogOpen(false) });
   };
 
-  const handleRelease = (id: string, name: string) => {
-    if (confirm(`Завершить аренду для ${name}?`)) {
-      releaseMutation.mutate(id);
-    }
+  const handleEdit = (id: string, data: any) => {
+    updateMutation.mutate({ id, data }, { onSuccess: () => { setDialogOpen(false); setEditingRental(null); } });
+  };
+
+  const openEdit = (rental: RentalData) => {
+    setEditingRental(rental);
+    setDialogOpen(true);
+  };
+
+  const openCreate = () => {
+    setEditingRental(null);
+    setDialogOpen(true);
   };
 
   if (isLoading) {
@@ -101,7 +111,7 @@ const AdminRentals = () => {
           <h2 className="text-2xl font-bold">Аренды</h2>
           <p className="text-base text-muted-foreground mt-1">Управление договорами аренды</p>
         </div>
-        <Button className="gap-2 h-11 text-base" onClick={() => toast.info('Используйте страницу "Ячейки" для оформления новой аренды')}>
+        <Button className="gap-2 h-11 text-base" onClick={openCreate}>
           <Plus className="w-5 h-5" />
           Новая аренда
         </Button>
@@ -210,12 +220,19 @@ const AdminRentals = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleExtend(rental.id, rental.customerName)}>
+                          <DropdownMenuItem onClick={() => openEdit(rental)}>
+                            <Edit className="h-4 w-4 mr-2" />Редактировать
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => extendMutation.mutate({ id: rental.id, months: 1 })}>
                             <RefreshCw className="h-4 w-4 mr-2" />Продлить на 1 мес
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => handleRelease(rental.id, rental.customerName)}>
-                            <Ban className="h-4 w-4 mr-2" />Завершить
-                          </DropdownMenuItem>
+                          {rental.displayStatus !== 'expired' && (
+                            <DropdownMenuItem className="text-destructive" onClick={() => {
+                              if (confirm(`Завершить аренду для ${rental.customerName}?`)) releaseMutation.mutate(rental.id);
+                            }}>
+                              <Ban className="h-4 w-4 mr-2" />Завершить
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
@@ -226,6 +243,15 @@ const AdminRentals = () => {
           </table>
         </div>
       </div>
+
+      <RentalFormDialog
+        open={dialogOpen}
+        onClose={() => { setDialogOpen(false); setEditingRental(null); }}
+        onSubmitCreate={handleCreate}
+        onSubmitEdit={handleEdit}
+        editRental={editingRental}
+        isSubmitting={createMutation.isPending || updateMutation.isPending}
+      />
     </div>
   );
 };

@@ -211,6 +211,13 @@ export async function createRental(data: {
   });
 }
 
+export async function updateRental(id: string, data: { startDate?: string; endDate?: string; totalAmount?: number; pricePerMonth?: number; notes?: string }): Promise<void> {
+  await fetchApi(`/api/rentals/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
 export async function extendRental(id: string, months: number): Promise<{ endDate: string }> {
   return fetchApi<{ endDate: string }>(`/api/rentals/${id}/extend`, {
     method: 'PUT',
