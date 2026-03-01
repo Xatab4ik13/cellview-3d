@@ -6,10 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, ChevronLeft } from 'lucide-react';
 import { useCells } from '@/hooks/useCells';
-import { useCustomers } from '@/hooks/useCustomers';
-import { RentalData } from '@/lib/api';
+import { useCustomers, useCreateCustomer } from '@/hooks/useCustomers';
+import { RentalData, CustomerData } from '@/lib/api';
 
 interface RentalFormDialogProps {
   open: boolean;
@@ -34,6 +34,7 @@ export default function RentalFormDialog({ open, onClose, onSubmitCreate, onSubm
   const isEdit = !!editRental;
   const { data: cells = [] } = useCells();
   const { data: customers = [] } = useCustomers();
+  const createCustomerMutation = useCreateCustomer();
 
   const [cellId, setCellId] = useState('');
   const [customerId, setCustomerId] = useState('');
@@ -43,6 +44,12 @@ export default function RentalFormDialog({ open, onClose, onSubmitCreate, onSubm
   const [totalAmount, setTotalAmount] = useState('');
   const [autoRenew, setAutoRenew] = useState(false);
   const [notes, setNotes] = useState('');
+
+  // Inline new customer form
+  const [showNewCustomer, setShowNewCustomer] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newEmail, setNewEmail] = useState('');
 
   const availableCells = cells.filter(c => c.status === 'available' || c.status === 'reserved');
 
@@ -66,6 +73,10 @@ export default function RentalFormDialog({ open, onClose, onSubmitCreate, onSubm
       setAutoRenew(false);
       setNotes('');
     }
+    setShowNewCustomer(false);
+    setNewName('');
+    setNewPhone('');
+    setNewEmail('');
   }, [editRental, open]);
 
   // Auto-select price when cell is picked (create mode)
@@ -75,6 +86,23 @@ export default function RentalFormDialog({ open, onClose, onSubmitCreate, onSubm
       if (cell) setPricePerMonth(String(cell.pricePerMonth));
     }
   }, [cellId, isEdit, cells]);
+
+  const handleCreateCustomer = async () => {
+    if (!newName.trim() || !newPhone.trim()) return;
+    try {
+      const result = await createCustomerMutation.mutateAsync({
+        name: newName.trim(),
+        phone: newPhone.trim(),
+        email: newEmail.trim() || undefined,
+        type: 'individual',
+      });
+      setCustomerId(result.id);
+      setShowNewCustomer(false);
+      setNewName('');
+      setNewPhone('');
+      setNewEmail('');
+    } catch {}
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,18 +154,58 @@ export default function RentalFormDialog({ open, onClose, onSubmitCreate, onSubm
                   </SelectContent>
                 </Select>
               </div>
+
               <div className="space-y-2">
-                <Label>Клиент</Label>
-                <Select value={customerId} onValueChange={setCustomerId} required>
-                  <SelectTrigger><SelectValue placeholder="Выберите клиента" /></SelectTrigger>
-                  <SelectContent>
-                    {customers.map(c => (
-                      <SelectItem key={c.id} value={c.id!}>
-                        {c.name} — {c.phone}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center justify-between">
+                  <Label>Клиент</Label>
+                  {!showNewCustomer && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs gap-1 text-primary"
+                      onClick={() => setShowNewCustomer(true)}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Новый клиент
+                    </Button>
+                  )}
+                </div>
+
+                {showNewCustomer ? (
+                  <div className="space-y-3 rounded-lg border border-border p-3 bg-muted/30">
+                    <div className="flex items-center gap-2">
+                      <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setShowNewCustomer(false)}>
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <span className="text-sm font-medium">Новый клиент</span>
+                    </div>
+                    <Input placeholder="ФИО *" value={newName} onChange={e => setNewName(e.target.value)} />
+                    <Input placeholder="Телефон *" value={newPhone} onChange={e => setNewPhone(e.target.value)} />
+                    <Input placeholder="Email (необязательно)" value={newEmail} onChange={e => setNewEmail(e.target.value)} />
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="w-full"
+                      disabled={!newName.trim() || !newPhone.trim() || createCustomerMutation.isPending}
+                      onClick={handleCreateCustomer}
+                    >
+                      {createCustomerMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      Создать клиента
+                    </Button>
+                  </div>
+                ) : (
+                  <Select value={customerId} onValueChange={setCustomerId} required>
+                    <SelectTrigger><SelectValue placeholder="Выберите клиента" /></SelectTrigger>
+                    <SelectContent>
+                      {customers.map(c => (
+                        <SelectItem key={c.id} value={c.id!}>
+                          {c.name} — {c.phone}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </>
           )}

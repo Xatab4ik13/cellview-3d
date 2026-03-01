@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, MoreHorizontal, Edit, Ban, RefreshCw, Plus, Loader2 } from 'lucide-react';
+import { Search, MoreHorizontal, Edit, Ban, RefreshCw, Plus, Loader2, Trash2 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useRentals, useCreateRental, useUpdateRental, useExtendRental, useReleaseRental } from '@/hooks/useRentals';
+import { useRentals, useCreateRental, useUpdateRental, useExtendRental, useReleaseRental, useDeleteRental } from '@/hooks/useRentals';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { RentalData } from '@/lib/api';
@@ -49,6 +49,7 @@ const AdminRentals = () => {
   const updateMutation = useUpdateRental();
   const extendMutation = useExtendRental();
   const releaseMutation = useReleaseRental();
+  const deleteMutation = useDeleteRental();
 
   const enriched = rentals.map(r => ({ ...r, displayStatus: getRentalDisplayStatus(r) }));
 
@@ -226,13 +227,18 @@ const AdminRentals = () => {
                           <DropdownMenuItem onClick={() => extendMutation.mutate({ id: rental.id, months: 1 })}>
                             <RefreshCw className="h-4 w-4 mr-2" />Продлить на 1 мес
                           </DropdownMenuItem>
-                          {rental.displayStatus !== 'expired' && (
+                          {rental.displayStatus !== 'expired' && rental.displayStatus !== 'cancelled' && (
                             <DropdownMenuItem className="text-destructive" onClick={() => {
                               if (confirm(`Завершить аренду для ${rental.customerName}?`)) releaseMutation.mutate(rental.id);
                             }}>
                               <Ban className="h-4 w-4 mr-2" />Завершить
                             </DropdownMenuItem>
                           )}
+                          <DropdownMenuItem className="text-destructive" onClick={() => {
+                            if (confirm(`Вы точно хотите удалить аренду для ${rental.customerName}? Это действие необратимо.`)) deleteMutation.mutate(rental.id);
+                          }}>
+                            <Trash2 className="h-4 w-4 mr-2" />Удалить
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
