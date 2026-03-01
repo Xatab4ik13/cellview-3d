@@ -50,6 +50,8 @@ export default function RentalFormDialog({ open, onClose, onSubmitCreate, onSubm
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newEmail, setNewEmail] = useState('');
+  const [newPassportSeries, setNewPassportSeries] = useState('');
+  const [newPassportNumber, setNewPassportNumber] = useState('');
 
   const availableCells = cells.filter(c => c.status === 'available' || c.status === 'reserved');
 
@@ -77,6 +79,8 @@ export default function RentalFormDialog({ open, onClose, onSubmitCreate, onSubm
     setNewName('');
     setNewPhone('');
     setNewEmail('');
+    setNewPassportSeries('');
+    setNewPassportNumber('');
   }, [editRental, open]);
 
   // Auto-select price when cell is picked (create mode)
@@ -94,6 +98,8 @@ export default function RentalFormDialog({ open, onClose, onSubmitCreate, onSubm
         name: newName.trim(),
         phone: newPhone.trim(),
         email: newEmail.trim() || undefined,
+        passportSeries: newPassportSeries.trim() || undefined,
+        passportNumber: newPassportNumber.trim() || undefined,
         type: 'individual',
       });
       setCustomerId(result.id);
@@ -101,6 +107,8 @@ export default function RentalFormDialog({ open, onClose, onSubmitCreate, onSubm
       setNewName('');
       setNewPhone('');
       setNewEmail('');
+      setNewPassportSeries('');
+      setNewPassportNumber('');
     } catch {}
   };
 
@@ -183,6 +191,10 @@ export default function RentalFormDialog({ open, onClose, onSubmitCreate, onSubm
                     <Input placeholder="ФИО *" value={newName} onChange={e => setNewName(e.target.value)} />
                     <Input placeholder="Телефон *" value={newPhone} onChange={e => setNewPhone(e.target.value)} />
                     <Input placeholder="Email (необязательно)" value={newEmail} onChange={e => setNewEmail(e.target.value)} />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input placeholder="Серия паспорта" value={newPassportSeries} onChange={e => setNewPassportSeries(e.target.value)} />
+                      <Input placeholder="Номер паспорта" value={newPassportNumber} onChange={e => setNewPassportNumber(e.target.value)} />
+                    </div>
                     <Button
                       type="button"
                       size="sm"
