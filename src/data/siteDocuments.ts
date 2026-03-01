@@ -30,15 +30,6 @@ export const defaultDocuments: SiteDocument[] = [
     fileUrl: '/docs/standard-conditions.docx',
   },
   {
-    id: 'doc-2',
-    title: 'Акт приёма-передачи',
-    description: 'Акт приёма-передачи ячейки при заключении и расторжении договора',
-    icon: 'ClipboardList',
-    type: 'PDF',
-    isPublished: true,
-    updatedAt: '2025-01-15',
-  },
-  {
     id: 'doc-3',
     title: 'Правила пользования складом',
     description: 'Правила поведения, режим работы и ограничения по хранению',

@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
-type DocType = 'contract' | 'act' | 'invoice' | 'receipt';
+type DocType = 'contract' | 'invoice' | 'receipt';
 type DocStatus = 'draft' | 'active' | 'signed' | 'expired';
 
 interface Document {
@@ -23,17 +23,16 @@ interface Document {
 
 const docTypeLabels: Record<DocType, string> = {
   contract: 'Договор',
-  act: 'Акт',
   invoice: 'Счёт',
   receipt: 'Квитанция',
 };
 
 const docTypeIcons: Record<DocType, string> = {
   contract: '📄',
-  act: '📋',
   invoice: '🧾',
   receipt: '🧾',
 };
+
 
 const statusConfig: Record<DocStatus, { label: string; color: string; icon: React.ElementType }> = {
   draft: { label: 'Черновик', color: 'var(--status-pending)', icon: Clock },
@@ -45,11 +44,11 @@ const statusConfig: Record<DocStatus, { label: string; color: string; icon: Reac
 const mockDocuments: Document[] = [
   { id: 'D-001', type: 'contract', title: 'Договор аренды №78-001', client: 'Иванов А.С.', cell: 'A-12', date: '2024-01-15', status: 'active', amount: 4500 },
   { id: 'D-002', type: 'contract', title: 'Договор аренды №78-002', client: 'Петрова М.В.', cell: 'B-05', date: '2024-02-01', status: 'active', amount: 6200 },
-  { id: 'D-003', type: 'act', title: 'Акт приёма-передачи №12', client: 'Иванов А.С.', cell: 'A-12', date: '2024-01-15', status: 'signed' },
+  
   { id: 'D-004', type: 'invoice', title: 'Счёт №2024-031', client: 'Сидоров К.Н.', cell: 'C-18', date: '2024-03-01', status: 'draft', amount: 3800 },
   { id: 'D-005', type: 'contract', title: 'Договор аренды №78-003', client: 'ООО "Техника"', cell: 'D-01', date: '2023-06-10', status: 'expired', amount: 12000 },
   { id: 'D-006', type: 'receipt', title: 'Квитанция об оплате №455', client: 'Петрова М.В.', cell: 'B-05', date: '2024-03-05', status: 'signed', amount: 6200 },
-  { id: 'D-007', type: 'act', title: 'Акт возврата №8', client: 'ООО "Техника"', cell: 'D-01', date: '2024-02-28', status: 'signed' },
+  
   { id: 'D-008', type: 'invoice', title: 'Счёт №2024-045', client: 'Козлов Д.И.', cell: 'A-03', date: '2024-03-10', status: 'active', amount: 5100 },
 ];
 
@@ -67,7 +66,6 @@ const AdminDocuments = () => {
   const counts = {
     all: mockDocuments.length,
     contract: mockDocuments.filter(d => d.type === 'contract').length,
-    act: mockDocuments.filter(d => d.type === 'act').length,
     invoice: mockDocuments.filter(d => d.type === 'invoice').length,
     receipt: mockDocuments.filter(d => d.type === 'receipt').length,
   };
@@ -117,7 +115,7 @@ const AdminDocuments = () => {
           <TabsList className="h-11">
             <TabsTrigger value="all" className="text-sm px-4">Все ({counts.all})</TabsTrigger>
             <TabsTrigger value="contract" className="text-sm px-4">Договоры ({counts.contract})</TabsTrigger>
-            <TabsTrigger value="act" className="text-sm px-4">Акты ({counts.act})</TabsTrigger>
+            
             <TabsTrigger value="invoice" className="text-sm px-4">Счета ({counts.invoice})</TabsTrigger>
             <TabsTrigger value="receipt" className="text-sm px-4">Квитанции ({counts.receipt})</TabsTrigger>
           </TabsList>
