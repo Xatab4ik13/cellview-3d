@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CrmCard from '@/components/crm/CrmCard';
 import { Button } from '@/components/ui/button';
@@ -29,11 +29,12 @@ import {
 import {
   Search, MoreHorizontal, Eye, Edit, Phone, Mail, Building, User, Plus, X,
   ArrowLeft, Key, CreditCard, MessageSquare, Tag, Calendar, MapPin, Clock,
-  Send, UserPlus, Trash2, Building2, UserRound,
+  Send, UserPlus, Trash2, Building2, UserRound, FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer } from '@/hooks/useCustomers';
-import { CustomerData } from '@/lib/api';
+import { useRentals } from '@/hooks/useRentals';
+import { CustomerData, RentalData } from '@/lib/api';
 
 // ========== Data ==========
 
@@ -45,19 +46,19 @@ interface Customer {
   email: string;
   telegram?: string;
   address?: string;
+  passportSeries?: string;
+  passportNumber?: string;
+  companyName?: string;
+  inn?: string;
+  ogrn?: string;
+  contactPerson?: string;
   rentals: number;
   totalSpent: string;
   totalSpentNum: number;
   registeredAt: string;
   status: 'active' | 'inactive' | 'vip' | 'debtor';
   tags: string[];
-  telegramNotifications?: {
-    enabled: boolean;
-    types: ('payment' | 'rental' | 'documents')[];
-  };
   notes: Note[];
-  rentalHistory: RentalRecord[];
-  paymentHistory: PaymentRecord[];
 }
 
 interface Note {
@@ -70,99 +71,13 @@ interface Note {
 interface RentalRecord {
   id: string;
   cell: string;
-  size: string;
   startDate: string;
   endDate: string;
   amount: string;
-  status: 'active' | 'completed' | 'overdue';
+  status: 'active' | 'expired' | 'cancelled';
 }
 
-interface PaymentRecord {
-  id: string;
-  date: string;
-  amount: string;
-  method: string;
-  status: 'paid' | 'pending' | 'overdue';
-  description: string;
-}
-
-const initialCustomers: Customer[] = [
-  {
-    id: 'C-001', name: 'ООО "ТехноСервис"', type: 'company',
-    phone: '+7 (999) 123-45-67', email: 'info@technoservice.ru',
-    telegram: '@technoservice',
-    address: 'г. Санкт-Петербург, ул. Ленина 42',
-    rentals: 2, totalSpent: '₽ 156 000', totalSpentNum: 156000,
-    registeredAt: '15.01.2024', status: 'vip',
-    tags: ['VIP', 'Юр. лицо', 'Долгосрочная аренда'],
-    telegramNotifications: { enabled: true, types: ['payment', 'rental', 'documents'] },
-    notes: [
-      { id: 'n1', text: 'Планируют расширение — интересуются ещё 2 ячейками на 3 этаже', author: 'Менеджер', date: '20.02.2026' },
-      { id: 'n2', text: 'Оплата всегда вовремя, лояльный клиент', author: 'Бухгалтер', date: '15.01.2026' },
-    ],
-    rentalHistory: [
-      { id: 'r1', cell: 'A-12', size: '10 м²', startDate: '15.01.2024', endDate: '15.01.2025', amount: '₽ 15 000/мес', status: 'completed' },
-      { id: 'r2', cell: 'A-14', size: '12 м²', startDate: '01.02.2025', endDate: '01.02.2026', amount: '₽ 18 000/мес', status: 'active' },
-    ],
-    paymentHistory: [
-      { id: 'p1', date: '01.02.2026', amount: '₽ 18 000', method: 'Безналичный', status: 'paid', description: 'Аренда A-14, февраль' },
-      { id: 'p2', date: '01.01.2026', amount: '₽ 18 000', method: 'Безналичный', status: 'paid', description: 'Аренда A-14, январь' },
-      { id: 'p3', date: '01.12.2025', amount: '₽ 18 000', method: 'Безналичный', status: 'paid', description: 'Аренда A-14, декабрь' },
-    ],
-  },
-  {
-    id: 'C-002', name: 'Иванов Петр Сергеевич', type: 'individual',
-    phone: '+7 (999) 234-56-78', email: 'petrov@gmail.com',
-    telegram: '@petrov_ps',
-    rentals: 1, totalSpent: '₽ 42 000', totalSpentNum: 42000,
-    registeredAt: '01.02.2024', status: 'active',
-    tags: ['Физ. лицо'],
-    telegramNotifications: { enabled: true, types: ['payment', 'rental'] },
-    notes: [],
-    rentalHistory: [
-      { id: 'r3', cell: 'B-05', size: '3 м²', startDate: '01.02.2024', endDate: '01.08.2026', amount: '₽ 4 500/мес', status: 'active' },
-    ],
-    paymentHistory: [
-      { id: 'p4', date: '01.02.2026', amount: '₽ 4 500', method: 'Карта', status: 'paid', description: 'Аренда B-05, февраль' },
-      { id: 'p5', date: '01.01.2026', amount: '₽ 4 500', method: 'Карта', status: 'paid', description: 'Аренда B-05, январь' },
-    ],
-  },
-  {
-    id: 'C-003', name: 'ИП Смирнова А.В.', type: 'company',
-    phone: '+7 (999) 345-67-89', email: 'smirnova@mail.ru',
-    rentals: 1, totalSpent: '₽ 72 000', totalSpentNum: 72000,
-    registeredAt: '10.12.2023', status: 'active',
-    tags: ['ИП', 'Сезонная'],
-    notes: [
-      { id: 'n3', text: 'Хранит сезонный товар, активность с марта по октябрь', author: 'Менеджер', date: '10.03.2025' },
-    ],
-    rentalHistory: [
-      { id: 'r4', cell: 'C-08', size: '6 м²', startDate: '01.03.2025', endDate: '01.10.2025', amount: '₽ 9 000/мес', status: 'completed' },
-      { id: 'r5', cell: 'C-10', size: '8 м²', startDate: '01.03.2026', endDate: '01.10.2026', amount: '₽ 12 000/мес', status: 'active' },
-    ],
-    paymentHistory: [
-      { id: 'p6', date: '01.03.2026', amount: '₽ 12 000', method: 'Безналичный', status: 'pending', description: 'Аренда C-10, март' },
-    ],
-  },
-  {
-    id: 'C-004', name: 'Козлов Андрей', type: 'individual',
-    phone: '+7 (999) 456-78-90', email: '',
-    rentals: 0, totalSpent: '₽ 18 000', totalSpentNum: 18000,
-    registeredAt: '20.11.2023', status: 'debtor',
-    tags: ['Должник', 'Физ. лицо'],
-    notes: [
-      { id: 'n4', text: 'Задолженность 2 месяца, не выходит на связь', author: 'Менеджер', date: '15.02.2026' },
-    ],
-    rentalHistory: [
-      { id: 'r6', cell: 'D-02', size: '2 м²', startDate: '20.11.2023', endDate: '20.05.2024', amount: '₽ 3 000/мес', status: 'overdue' },
-    ],
-    paymentHistory: [
-      { id: 'p7', date: '20.03.2024', amount: '₽ 3 000', method: 'Наличные', status: 'overdue', description: 'Аренда D-02, март — не оплачено' },
-      { id: 'p8', date: '20.02.2024', amount: '₽ 3 000', method: 'Наличные', status: 'overdue', description: 'Аренда D-02, февраль — не оплачено' },
-    ],
-  },
-];
-
+// No hardcoded data — all from API
 // ========== Helpers ==========
 
 const getInitials = (name: string) =>
@@ -177,15 +92,10 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 
 const rentalStatusConfig: Record<string, { label: string; className: string }> = {
   active: { label: 'Активна', className: 'bg-[hsl(var(--status-active))]/10 text-[hsl(var(--status-active))]' },
-  completed: { label: 'Завершена', className: 'bg-muted text-muted-foreground' },
-  overdue: { label: 'Просрочена', className: 'bg-[hsl(var(--status-overdue))]/10 text-[hsl(var(--status-overdue))]' },
+  expired: { label: 'Завершена', className: 'bg-muted text-muted-foreground' },
+  cancelled: { label: 'Отменена', className: 'bg-[hsl(var(--status-overdue))]/10 text-[hsl(var(--status-overdue))]' },
 };
 
-const paymentStatusConfig: Record<string, { label: string; className: string }> = {
-  paid: { label: 'Оплачено', className: 'bg-[hsl(var(--status-active))]/10 text-[hsl(var(--status-active))]' },
-  pending: { label: 'Ожидание', className: 'bg-[hsl(var(--status-pending))]/10 text-[hsl(var(--status-pending))]' },
-  overdue: { label: 'Просрочено', className: 'bg-[hsl(var(--status-overdue))]/10 text-[hsl(var(--status-overdue))]' },
-};
 
 const formatToday = () => {
   const d = new Date();
@@ -196,17 +106,21 @@ const formatToday = () => {
 
 const CustomerDetail = ({
   customer,
+  customerRentals,
   onClose,
   onUpdate,
   onEdit,
 }: {
   customer: Customer;
+  customerRentals: RentalData[];
   onClose: () => void;
   onUpdate: (updated: Customer) => void;
   onEdit: () => void;
 }) => {
   const [newNote, setNewNote] = useState('');
   const s = statusConfig[customer.status];
+
+  const totalRevenue = customerRentals.reduce((sum, r) => sum + (r.totalAmount || 0), 0);
 
   const handleAddNote = () => {
     if (!newNote.trim()) return;
@@ -235,6 +149,11 @@ const CustomerDetail = ({
     if (customer.email) {
       window.open(`mailto:${customer.email}`, '_blank');
     }
+  };
+
+  const formatDate = (d: string) => {
+    if (!d) return '';
+    return new Date(d).toLocaleDateString('ru-RU');
   };
 
   return (
@@ -274,30 +193,7 @@ const CustomerDetail = ({
                 <MessageSquare className="h-4 w-4" /> {customer.telegram}
               </a>
             )}
-            {customer.address && (
-              <span className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4" /> {customer.address}
-              </span>
-            )}
           </div>
-          {/* Telegram notifications indicator */}
-          {customer.telegramNotifications?.enabled && (
-            <div className="flex items-center gap-2 mt-2 text-xs">
-              <Badge variant="outline" className="gap-1 text-xs" style={{
-                borderColor: 'hsl(var(--status-active) / 0.3)',
-                color: 'hsl(var(--status-active))',
-                backgroundColor: 'hsl(var(--status-active) / 0.1)',
-              }}>
-                <MessageSquare className="h-3 w-3" />
-                TG-уведомления
-              </Badge>
-              {customer.telegramNotifications.types.map(t => (
-                <span key={t} className="text-muted-foreground">
-                  {t === 'payment' ? '💳 Оплата' : t === 'rental' ? '📦 Аренда' : '📄 Документы'}
-                </span>
-              ))}
-            </div>
-          )}
           <div className="flex gap-2 mt-3 flex-wrap">
             {customer.tags.map((tag) => (
               <Badge key={tag} variant="outline" className="text-xs">
@@ -310,6 +206,48 @@ const CustomerDetail = ({
           <Edit className="h-4 w-4" /> Редактировать
         </Button>
       </div>
+
+      {/* Passport / Company info */}
+      {(customer.passportSeries || customer.passportNumber || customer.inn || customer.ogrn || customer.contactPerson) && (
+        <CrmCard hover={false} className="!p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">{customer.type === 'company' ? 'Реквизиты' : 'Документы'}</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+            {customer.passportSeries && (
+              <div>
+                <span className="text-muted-foreground">Серия паспорта:</span>
+                <p className="font-medium">{customer.passportSeries}</p>
+              </div>
+            )}
+            {customer.passportNumber && (
+              <div>
+                <span className="text-muted-foreground">Номер паспорта:</span>
+                <p className="font-medium">{customer.passportNumber}</p>
+              </div>
+            )}
+            {customer.inn && (
+              <div>
+                <span className="text-muted-foreground">ИНН:</span>
+                <p className="font-medium">{customer.inn}</p>
+              </div>
+            )}
+            {customer.ogrn && (
+              <div>
+                <span className="text-muted-foreground">ОГРН:</span>
+                <p className="font-medium">{customer.ogrn}</p>
+              </div>
+            )}
+            {customer.contactPerson && (
+              <div>
+                <span className="text-muted-foreground">Контактное лицо:</span>
+                <p className="font-medium">{customer.contactPerson}</p>
+              </div>
+            )}
+          </div>
+        </CrmCard>
+      )}
 
       {/* Quick Actions */}
       <div className="flex gap-2 flex-wrap">
@@ -327,11 +265,11 @@ const CustomerDetail = ({
       <div className="grid grid-cols-3 gap-4">
         <CrmCard hover={false} className="!p-4 text-center">
           <p className="text-sm text-muted-foreground">Аренд</p>
-          <p className="text-2xl font-bold mt-1">{customer.rentals}</p>
+          <p className="text-2xl font-bold mt-1">{customerRentals.length}</p>
         </CrmCard>
         <CrmCard hover={false} className="!p-4 text-center">
           <p className="text-sm text-muted-foreground">Оборот</p>
-          <p className="text-2xl font-bold mt-1">{customer.totalSpent}</p>
+          <p className="text-2xl font-bold mt-1">₽ {totalRevenue.toLocaleString('ru-RU')}</p>
         </CrmCard>
         <CrmCard hover={false} className="!p-4 text-center">
           <p className="text-sm text-muted-foreground">С нами с</p>
@@ -341,12 +279,9 @@ const CustomerDetail = ({
 
       {/* Tabs */}
       <Tabs defaultValue="rentals" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="rentals" className="gap-2">
             <Key className="h-4 w-4" /> Аренды
-          </TabsTrigger>
-          <TabsTrigger value="payments" className="gap-2">
-            <CreditCard className="h-4 w-4" /> Платежи
           </TabsTrigger>
           <TabsTrigger value="notes" className="gap-2">
             <MessageSquare className="h-4 w-4" /> Заметки ({customer.notes.length})
@@ -355,31 +290,31 @@ const CustomerDetail = ({
 
         <TabsContent value="rentals" className="mt-4">
           <CrmCard hover={false}>
-            {customer.rentalHistory.length > 0 ? (
+            {customerRentals.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Ячейка</TableHead>
-                    <TableHead>Размер</TableHead>
                     <TableHead>Период</TableHead>
-                    <TableHead>Стоимость</TableHead>
+                    <TableHead>Сумма/мес</TableHead>
+                    <TableHead>Итого</TableHead>
                     <TableHead>Статус</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {customer.rentalHistory.map((r) => {
-                    const rs = rentalStatusConfig[r.status];
+                  {customerRentals.map((r) => {
+                    const rs = rentalStatusConfig[r.status] || { label: r.status, className: 'bg-muted text-muted-foreground' };
                     return (
                       <TableRow key={r.id}>
-                        <TableCell className="font-medium">{r.cell}</TableCell>
-                        <TableCell>{r.size}</TableCell>
+                        <TableCell className="font-medium">№{r.cellNumber}</TableCell>
                         <TableCell className="text-sm">
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                            {r.startDate} — {r.endDate}
+                            {formatDate(r.startDate)} — {formatDate(r.endDate)}
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium">{r.amount}</TableCell>
+                        <TableCell className="font-medium">{r.pricePerMonth?.toLocaleString('ru-RU')} ₽</TableCell>
+                        <TableCell className="font-medium">{r.totalAmount?.toLocaleString('ru-RU')} ₽</TableCell>
                         <TableCell>
                           <Badge className={rs.className}>{rs.label}</Badge>
                         </TableCell>
@@ -394,44 +329,7 @@ const CustomerDetail = ({
           </CrmCard>
         </TabsContent>
 
-        <TabsContent value="payments" className="mt-4">
-          <CrmCard hover={false}>
-            {customer.paymentHistory.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Дата</TableHead>
-                    <TableHead>Описание</TableHead>
-                    <TableHead>Способ</TableHead>
-                    <TableHead>Сумма</TableHead>
-                    <TableHead>Статус</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {customer.paymentHistory.map((p) => {
-                    const ps = paymentStatusConfig[p.status];
-                    return (
-                      <TableRow key={p.id}>
-                        <TableCell className="text-sm">{p.date}</TableCell>
-                        <TableCell className="text-sm">{p.description}</TableCell>
-                        <TableCell className="text-sm">{p.method}</TableCell>
-                        <TableCell className="font-medium">{p.amount}</TableCell>
-                        <TableCell>
-                          <Badge className={ps.className}>{ps.label}</Badge>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            ) : (
-              <p className="text-center text-muted-foreground py-8">Нет истории платежей</p>
-            )}
-          </CrmCard>
-        </TabsContent>
-
         <TabsContent value="notes" className="mt-4 space-y-4">
-          {/* Add note */}
           <CrmCard hover={false}>
             <div className="flex gap-3">
               <Textarea
@@ -455,7 +353,6 @@ const CustomerDetail = ({
             <p className="text-xs text-muted-foreground mt-2">Ctrl+Enter для отправки</p>
           </CrmCard>
 
-          {/* Notes list */}
           {customer.notes.map((note) => (
             <CrmCard key={note.id} hover={false}>
               <div className="flex items-start justify-between gap-3">
@@ -496,12 +393,21 @@ interface CustomerFormData {
   type: 'company' | 'individual';
   phone: string;
   email: string;
+  telegram: string;
+  passportSeries: string;
+  passportNumber: string;
+  companyName: string;
+  inn: string;
+  ogrn: string;
+  contactPerson: string;
   address: string;
   status: 'active' | 'inactive' | 'vip' | 'debtor';
 }
 
 const emptyForm: CustomerFormData = {
-  name: '', type: 'individual', phone: '', email: '', address: '', status: 'active',
+  name: '', type: 'individual', phone: '', email: '', telegram: '',
+  passportSeries: '', passportNumber: '', companyName: '', inn: '', ogrn: '',
+  contactPerson: '', address: '', status: 'active',
 };
 
 // ========== Main Component ==========
@@ -513,26 +419,35 @@ const AdminCustomers = () => {
   const updateMutation = useUpdateCustomer();
   const deleteMutation = useDeleteCustomer();
 
-  // Map API data to local Customer interface for UI compatibility
-  const customers: Customer[] = apiCustomers.map((c: CustomerData) => ({
-    id: c.id || '',
-    name: c.name,
-    type: c.type,
-    phone: c.phone,
-    email: c.email || '',
-    telegram: c.telegram,
-    address: undefined,
-    rentals: 0,
-    totalSpent: '₽ 0',
-    totalSpentNum: 0,
-    registeredAt: c.createdAt ? new Date(c.createdAt).toLocaleDateString('ru-RU') : '',
-    status: 'active' as const,
-    tags: [c.type === 'company' ? 'Юр. лицо' : 'Физ. лицо'],
-    telegramNotifications: undefined,
-    notes: [],
-    rentalHistory: [],
-    paymentHistory: [],
-  }));
+  const { data: allRentals = [] } = useRentals();
+
+  // Map API data to local Customer interface
+  const customers: Customer[] = apiCustomers.map((c: CustomerData) => {
+    const cRentals = allRentals.filter(r => r.customerId === c.id);
+    const totalSpentNum = cRentals.reduce((sum, r) => sum + (r.totalAmount || 0), 0);
+    return {
+      id: c.id || '',
+      name: c.name,
+      type: c.type,
+      phone: c.phone,
+      email: c.email || '',
+      telegram: c.telegram,
+      passportSeries: c.passportSeries,
+      passportNumber: c.passportNumber,
+      companyName: c.companyName,
+      inn: c.inn,
+      ogrn: c.ogrn,
+      contactPerson: c.contactPerson,
+      address: undefined,
+      rentals: cRentals.length,
+      totalSpent: `₽ ${totalSpentNum.toLocaleString('ru-RU')}`,
+      totalSpentNum,
+      registeredAt: c.createdAt ? new Date(c.createdAt).toLocaleDateString('ru-RU') : '',
+      status: 'active' as const,
+      tags: [c.type === 'company' ? 'Юр. лицо' : 'Физ. лицо'],
+      notes: [],
+    };
+  });
 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -576,6 +491,13 @@ const AdminCustomers = () => {
       type: customer.type,
       phone: customer.phone,
       email: customer.email,
+      telegram: customer.telegram || '',
+      passportSeries: customer.passportSeries || '',
+      passportNumber: customer.passportNumber || '',
+      companyName: customer.companyName || '',
+      inn: customer.inn || '',
+      ogrn: customer.ogrn || '',
+      contactPerson: customer.contactPerson || '',
       address: customer.address || '',
       status: customer.status,
     });
@@ -596,6 +518,13 @@ const AdminCustomers = () => {
           type: formData.type,
           phone: formData.phone.trim(),
           email: formData.email.trim() || undefined,
+          telegram: formData.telegram.trim() || undefined,
+          passportSeries: formData.passportSeries.trim() || undefined,
+          passportNumber: formData.passportNumber.trim() || undefined,
+          companyName: formData.companyName.trim() || undefined,
+          inn: formData.inn.trim() || undefined,
+          ogrn: formData.ogrn.trim() || undefined,
+          contactPerson: formData.contactPerson.trim() || undefined,
         }
       }, {
         onSuccess: () => {
@@ -609,6 +538,13 @@ const AdminCustomers = () => {
         name: formData.name.trim(),
         phone: formData.phone.trim(),
         email: formData.email.trim() || undefined,
+        telegram: formData.telegram.trim() || undefined,
+        passportSeries: formData.passportSeries.trim() || undefined,
+        passportNumber: formData.passportNumber.trim() || undefined,
+        companyName: formData.companyName.trim() || undefined,
+        inn: formData.inn.trim() || undefined,
+        ogrn: formData.ogrn.trim() || undefined,
+        contactPerson: formData.contactPerson.trim() || undefined,
       }, {
         onSuccess: () => setIsFormOpen(false)
       });
@@ -642,6 +578,7 @@ const AdminCustomers = () => {
           <CustomerDetail
             key="detail"
             customer={selectedCustomer}
+            customerRentals={allRentals.filter(r => r.customerId === selectedCustomer.id)}
             onClose={() => setSelectedCustomer(null)}
             onUpdate={handleUpdateCustomer}
             onEdit={() => openEditDialog(selectedCustomer)}
@@ -761,9 +698,6 @@ const AdminCustomers = () => {
                               <div className="flex items-center gap-1.5">
                                 <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
                                 {customer.telegram}
-                                {customer.telegramNotifications?.enabled && (
-                                  <span className="text-xs" style={{ color: 'hsl(var(--status-active))' }}>✓ TG</span>
-                                )}
                               </div>
                             )}
                           </div>
@@ -870,27 +804,62 @@ const AdminCustomers = () => {
               </div>
             </div>
 
-            <div className="grid gap-2">
-              <Label>Адрес</Label>
-              <Input placeholder="г. Город, ул. Улица, д. 1" value={formData.address}
-                onChange={(e) => setFormData(p => ({ ...p, address: e.target.value }))}
-                className="h-11" />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Telegram</Label>
+                <Input placeholder="@username" value={formData.telegram}
+                  onChange={(e) => setFormData(p => ({ ...p, telegram: e.target.value }))}
+                  className="h-11" />
+              </div>
+              <div className="grid gap-2">
+                <Label>Адрес</Label>
+                <Input placeholder="г. Город, ул. Улица" value={formData.address}
+                  onChange={(e) => setFormData(p => ({ ...p, address: e.target.value }))}
+                  className="h-11" />
+              </div>
             </div>
 
-            <div className="grid gap-2">
-              <Label>Статус</Label>
-              <Select value={formData.status} onValueChange={(v) => setFormData(p => ({ ...p, status: v as any }))}>
-                <SelectTrigger className="h-11">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Активен</SelectItem>
-                  <SelectItem value="vip">VIP</SelectItem>
-                  <SelectItem value="inactive">Неактивен</SelectItem>
-                  <SelectItem value="debtor">Должник</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {formData.type === 'individual' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Серия паспорта</Label>
+                  <Input placeholder="0000" value={formData.passportSeries}
+                    onChange={(e) => setFormData(p => ({ ...p, passportSeries: e.target.value }))}
+                    className="h-11" />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Номер паспорта</Label>
+                  <Input placeholder="000000" value={formData.passportNumber}
+                    onChange={(e) => setFormData(p => ({ ...p, passportNumber: e.target.value }))}
+                    className="h-11" />
+                </div>
+              </div>
+            )}
+
+            {formData.type === 'company' && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label>ИНН</Label>
+                    <Input placeholder="1234567890" value={formData.inn}
+                      onChange={(e) => setFormData(p => ({ ...p, inn: e.target.value }))}
+                      className="h-11" />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>ОГРН</Label>
+                    <Input placeholder="1234567890123" value={formData.ogrn}
+                      onChange={(e) => setFormData(p => ({ ...p, ogrn: e.target.value }))}
+                      className="h-11" />
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Контактное лицо</Label>
+                  <Input placeholder="ФИО контактного лица" value={formData.contactPerson}
+                    onChange={(e) => setFormData(p => ({ ...p, contactPerson: e.target.value }))}
+                    className="h-11" />
+                </div>
+              </>
+            )}
           </div>
 
           <DialogFooter>
