@@ -293,6 +293,38 @@ export async function checkPaymentStatus(paymentId: string): Promise<{
   return fetchApi(`/api/payments/${paymentId}/status`);
 }
 
+export interface PaymentData {
+  id: string;
+  rentalId?: string;
+  customerId: string;
+  cellId?: string;
+  amount: number;
+  currency: number;
+  description?: string;
+  vtbOrderId?: string;
+  status: 'created' | 'pending' | 'paid' | 'failed' | 'refunded' | 'expired';
+  paymentMethod?: string;
+  paidAt?: string;
+  createdAt: string;
+  customerName?: string;
+  customerPhone?: string;
+}
+
+export async function fetchPayments(filters?: { status?: string; customer_id?: string }): Promise<PaymentData[]> {
+  const params = new URLSearchParams();
+  if (filters?.status) params.set('status', filters.status);
+  if (filters?.customer_id) params.set('customer_id', filters.customer_id);
+  const qs = params.toString();
+  return fetchApi<PaymentData[]>(`/api/payments${qs ? `?${qs}` : ''}`);
+}
+
+export async function refundPayment(id: string, amount?: number): Promise<void> {
+  await fetchApi(`/api/payments/${id}/refund`, {
+    method: 'POST',
+    body: JSON.stringify(amount ? { amount } : {}),
+  });
+}
+
 // ============ Health ============
 
 export async function checkHealth(): Promise<{ status: string; services: Record<string, string> }> {
