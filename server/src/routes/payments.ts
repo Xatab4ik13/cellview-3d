@@ -38,13 +38,29 @@ async function vtbRequest(method: string, params: Record<string, string>): Promi
     ...params,
   });
 
-  const response = await fetch(`${VTB_GATEWAY}/${method}`, {
+  const url = `${VTB_GATEWAY}/${method}`;
+  console.log(`[VTB] Request: ${method}, URL: ${url}`);
+
+  const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString(),
   });
 
-  return (await response.json()) as VtbResponse;
+  const contentType = response.headers.get('content-type') || '';
+  const text = await response.text();
+
+  if (!contentType.includes('application/json')) {
+    console.error(`[VTB] Non-JSON response (${response.status}): ${text.substring(0, 300)}`);
+    throw new Error(`Платёжный шлюз вернул некорректный ответ (HTTP ${response.status}). Проверьте VTB_GATEWAY_URL, VTB_CLIENT_ID и VTB_CLIENT_SECRET.`);
+  }
+
+  try {
+    return JSON.parse(text) as VtbResponse;
+  } catch {
+    console.error(`[VTB] JSON parse failed: ${text.substring(0, 300)}`);
+    throw new Error('Не удалось разобрать ответ платёжного шлюза');
+  }
 }
 
 // POST /api/payments/create — register order in VTB and return payment URL
