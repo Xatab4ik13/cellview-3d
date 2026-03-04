@@ -1,16 +1,12 @@
 -- ============================================
 -- Seed: 42 ячейки хранения Kladovka78
 -- Данные из src/data/storageCells.ts
+-- CONDITIONAL: выполняется только если таблица cells пуста
 -- ============================================
 
 USE kladovka78;
 
--- Seed only if cells table is empty (don't overwrite production data)
--- We use a procedure to allow conditional logic in plain SQL
-DELIMITER $$
-CREATE PROCEDURE IF NOT EXISTS _seed_cells()
-BEGIN
-  IF (SELECT COUNT(*) FROM cells) = 0 THEN
+-- ##CONDITIONAL_IF_EMPTY:cells##
 
 -- Вставка ячеек
 INSERT INTO cells (id, number, width, height, depth, area, volume, floor, tier, price_per_month, status, has_socket, has_shelves) VALUES
@@ -57,8 +53,7 @@ INSERT INTO cells (id, number, width, height, depth, area, volume, floor, tier, 
 ('cell-41', 41, 1.4,  1.35, 1.0, 1.4,   1.89, 1, 2, 1900, 'available', FALSE, FALSE),
 ('cell-42', 42, 1.4,  1.1,  1.0, 1.4,   1.54, 1, 1, 1700, 'available', FALSE, FALSE);
 
--- Фотографии ячеек (URL-ы будут обновлены после загрузки на сервер)
--- Пока используем заглушки — пути для будущей загрузки
+-- Фотографии ячеек
 INSERT INTO cell_photos (cell_id, url, sort_order) VALUES
 ('cell-1',  '/uploads/cells/cell-1-photo-1.jpg',  0),
 ('cell-1',  '/uploads/cells/cell-1-photo-2.jpg',  1),
@@ -142,10 +137,3 @@ INSERT INTO cell_photos (cell_id, url, sort_order) VALUES
 ('cell-41', '/uploads/cells/cell-41-photo-2.jpg', 1),
 ('cell-42', '/uploads/cells/cell-42-photo-1.jpg', 0),
 ('cell-42', '/uploads/cells/cell-42-photo-2.jpg', 1);
-
-  END IF;
-END$$
-DELIMITER ;
-
-CALL _seed_cells();
-DROP PROCEDURE IF EXISTS _seed_cells;
