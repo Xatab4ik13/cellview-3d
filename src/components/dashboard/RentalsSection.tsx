@@ -263,16 +263,22 @@ const RentalsSection = ({ pendingBooking, onClearBooking, onGoToProfile }: Renta
               <Button
                 className="flex-1 h-14 text-base font-bold gap-2"
                 size="lg"
-                disabled={isExpired || !profileComplete || checkingProfile}
+                disabled={isExpired || !profileComplete || checkingProfile || paying}
                 onClick={handlePay}
               >
-                <CreditCard className="w-5 h-5" />
-                {isExpired
-                  ? 'Бронь истекла'
-                  : !profileComplete
-                    ? 'Заполните профиль для оплаты'
-                    : `Оплатить ${pendingBooking.totalPrice?.toLocaleString('ru-RU')} ₽`
-                }
+                {paying ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /> Переход к оплате...</>
+                ) : (
+                  <>
+                    <CreditCard className="w-5 h-5" />
+                    {isExpired
+                      ? 'Бронь истекла'
+                      : !profileComplete
+                        ? 'Заполните профиль для оплаты'
+                        : `Оплатить ${pendingBooking.totalPrice?.toLocaleString('ru-RU')} ₽`
+                    }
+                  </>
+                )}
               </Button>
               <Button
                 variant="outline"
