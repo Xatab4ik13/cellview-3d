@@ -142,3 +142,10 @@ INSERT INTO cell_photos (cell_id, url, sort_order) VALUES
 ('cell-41', '/uploads/cells/cell-41-photo-2.jpg', 1),
 ('cell-42', '/uploads/cells/cell-42-photo-1.jpg', 0),
 ('cell-42', '/uploads/cells/cell-42-photo-2.jpg', 1);
+
+  END IF;
+END$$
+DELIMITER ;
+
+CALL _seed_cells();
+DROP PROCEDURE IF EXISTS _seed_cells;
