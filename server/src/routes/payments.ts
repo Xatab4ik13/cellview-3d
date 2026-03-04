@@ -10,8 +10,28 @@ const VTB_CLIENT_ID = process.env.VTB_CLIENT_ID;
 const VTB_CLIENT_SECRET = process.env.VTB_CLIENT_SECRET;
 const SITE_URL = process.env.CORS_ORIGIN?.split(',')[0] || 'https://kladovka78.ru';
 
+type VtbCardAuthInfo = {
+  pan?: string;
+  cardholderName?: string;
+};
+
+type VtbPaymentAmountInfo = {
+  paymentState?: string;
+};
+
+type VtbResponse = {
+  errorCode?: string;
+  errorMessage?: string;
+  orderId?: string;
+  formUrl?: string;
+  orderStatus?: number | string;
+  cardAuthInfo?: VtbCardAuthInfo;
+  paymentAmountInfo?: VtbPaymentAmountInfo;
+  [key: string]: unknown;
+};
+
 // Helper: call VTB gateway
-async function vtbRequest(method: string, params: Record<string, string>) {
+async function vtbRequest(method: string, params: Record<string, string>): Promise<VtbResponse> {
   const body = new URLSearchParams({
     userName: VTB_CLIENT_ID || '',
     password: VTB_CLIENT_SECRET || '',
@@ -24,7 +44,7 @@ async function vtbRequest(method: string, params: Record<string, string>) {
     body: body.toString(),
   });
 
-  return response.json();
+  return (await response.json()) as VtbResponse;
 }
 
 // POST /api/payments/create — register order in VTB and return payment URL
