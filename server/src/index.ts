@@ -10,6 +10,7 @@ import { customersRouter } from './routes/customers';
 import { rentalsRouter } from './routes/rentals';
 import { photosRouter } from './routes/photos';
 import { authRouter } from './routes/auth';
+import { paymentsRouter } from './routes/payments';
 
 dotenv.config();
 
@@ -39,6 +40,7 @@ app.use('/api/cells', photosRouter);
 app.use('/api/customers', customersRouter);
 app.use('/api/rentals', rentalsRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/payments', paymentsRouter);
 // Error handling
 app.use(errorHandler);
 
