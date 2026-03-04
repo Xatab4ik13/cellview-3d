@@ -15,6 +15,7 @@ const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(RESERVATION_SECONDS);
+  const [isPaying, setIsPaying] = useState(false);
 
   const bookingData = location.state as {
     cellId?: number;
@@ -50,7 +51,7 @@ const Checkout = () => {
   const isExpired = timeLeft <= 0;
   const isUrgent = timeLeft < 600; // less than 10 min
 
-  const [isPaying, setIsPaying] = useState(false);
+
 
   const handlePay = async () => {
     if (!bookingData || isPaying) return;
@@ -63,8 +64,8 @@ const Checkout = () => {
         return;
       }
 
-      const { default: api } = await import('@/lib/api');
-      const result = await api.createPayment({
+      const { createPayment } = await import('@/lib/api');
+      const result = await createPayment({
         customerId,
         cellId: String(bookingData.cellId),
         amount: bookingData.totalPrice || 0,
