@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Key, Calendar, MapPin, FileText, Copy, Check, Phone, Loader2, Clock, CreditCard, AlertTriangle, User } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { fetchRentals, fetchCustomer, type RentalData } from '@/lib/api';
+import { fetchRentals, fetchCustomer, createPayment, type RentalData } from '@/lib/api';
 import { RESERVATION_HOURS } from '@/types/storage';
 import type { BookingState } from '@/pages/Dashboard';
 
@@ -107,8 +107,42 @@ const RentalsSection = ({ pendingBooking, onClearBooking, onGoToProfile }: Renta
     return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   };
 
-  const handlePay = () => {
-    alert('Оплата временно недоступна. Платёжная система подключается.');
+  const [paying, setPaying] = useState(false);
+
+  const handlePay = async () => {
+    if (!pendingBooking || !profileComplete) return;
+
+    const stored = localStorage.getItem('kladovka78_customer');
+    if (!stored) return;
+
+    const customer = JSON.parse(stored);
+    setPaying(true);
+
+    try {
+      const result = await createPayment({
+        customerId: customer.id,
+        cellId: String(pendingBooking.cellId),
+        amount: pendingBooking.totalPrice || 0,
+        duration: pendingBooking.duration,
+        cellNumber: pendingBooking.cellNumber,
+        description: `Аренда ячейки №${pendingBooking.cellNumber} на ${pendingBooking.duration} мес.`,
+      });
+
+      if (result.formUrl) {
+        window.location.href = result.formUrl;
+      } else {
+        throw new Error('Не получена ссылка на оплату');
+      }
+    } catch (err: any) {
+      console.error('Payment error:', err);
+      toast({
+        title: 'Ошибка оплаты',
+        description: err?.message || 'Не удалось создать платёж',
+        variant: 'destructive',
+      });
+    } finally {
+      setPaying(false);
+    }
   };
 
   const handleCancelBooking = () => {
@@ -229,16 +263,22 @@ const RentalsSection = ({ pendingBooking, onClearBooking, onGoToProfile }: Renta
               <Button
                 className="flex-1 h-14 text-base font-bold gap-2"
                 size="lg"
-                disabled={isExpired || !profileComplete || checkingProfile}
+                disabled={isExpired || !profileComplete || checkingProfile || paying}
                 onClick={handlePay}
               >
-                <CreditCard className="w-5 h-5" />
-                {isExpired
-                  ? 'Бронь истекла'
-                  : !profileComplete
-                    ? 'Заполните профиль для оплаты'
-                    : `Оплатить ${pendingBooking.totalPrice?.toLocaleString('ru-RU')} ₽`
-                }
+                {paying ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /> Переход к оплате...</>
+                ) : (
+                  <>
+                    <CreditCard className="w-5 h-5" />
+                    {isExpired
+                      ? 'Бронь истекла'
+                      : !profileComplete
+                        ? 'Заполните профиль для оплаты'
+                        : `Оплатить ${pendingBooking.totalPrice?.toLocaleString('ru-RU')} ₽`
+                    }
+                  </>
+                )}
               </Button>
               <Button
                 variant="outline"
