@@ -68,7 +68,7 @@ paymentsRouter.post('/create', async (req: Request, res: Response, next: NextFun
     const failUrl = `${SITE_URL}/payment/fail?paymentId=${id}`;
 
     // Register order in VTB
-    const vtbResponse = await vtbRequest('register.do', {
+    const vtbResponse = (await vtbRequest('register.do', {
       orderNumber: id,
       amount: String(amountKopecks),
       currency: '643',
@@ -76,7 +76,7 @@ paymentsRouter.post('/create', async (req: Request, res: Response, next: NextFun
       failUrl,
       description: orderDescription,
       language: 'ru',
-    });
+    })) as { errorCode?: string; errorMessage?: string; orderId?: string; formUrl?: string };
 
     if (vtbResponse.errorCode && vtbResponse.errorCode !== '0') {
       console.error('VTB register.do error:', vtbResponse);
@@ -138,9 +138,13 @@ paymentsRouter.get('/:id/status', async (req: Request, res: Response, next: Next
     }
 
     // Check VTB
-    const vtbResponse = await vtbRequest('getOrderStatusExtended.do', {
+    const vtbResponse = (await vtbRequest('getOrderStatusExtended.do', {
       orderId: payment.vtb_order_id,
-    });
+    })) as {
+      orderStatus?: number | string;
+      cardAuthInfo?: { pan?: string; cardholderName?: string };
+      paymentAmountInfo?: { paymentState?: string };
+    };
 
     // VTB orderStatus: 0=registered, 1=preauth, 2=paid, 3=reversed, 4=refunded, 5=auth via ACS, 6=declined
     const vtbStatus = vtbResponse.orderStatus;
@@ -243,10 +247,10 @@ paymentsRouter.post('/:id/refund', async (req: Request, res: Response, next: Nex
     const { amount } = req.body;
     const refundAmount = amount ? Math.round(amount * 100) : payment.amount;
 
-    const vtbResponse = await vtbRequest('refund.do', {
+    const vtbResponse = (await vtbRequest('refund.do', {
       orderId: payment.vtb_order_id,
       amount: String(refundAmount),
-    });
+    })) as { errorCode?: string; errorMessage?: string };
 
     if (vtbResponse.errorCode && vtbResponse.errorCode !== '0') {
       throw new AppError(`Ошибка возврата: ${vtbResponse.errorMessage}`, 502);
