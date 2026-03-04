@@ -115,10 +115,11 @@ const ProfileSection = () => {
         title: 'Данные сохранены',
         description: 'Ваш профиль успешно обновлен',
       });
-    } catch {
+    } catch (err: any) {
+      console.error('Profile save error:', err);
       toast({
         title: 'Ошибка',
-        description: 'Не удалось сохранить данные',
+        description: err?.message || 'Не удалось сохранить данные',
         variant: 'destructive',
       });
     } finally {
