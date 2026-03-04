@@ -107,8 +107,42 @@ const RentalsSection = ({ pendingBooking, onClearBooking, onGoToProfile }: Renta
     return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   };
 
-  const handlePay = () => {
-    alert('Оплата временно недоступна. Платёжная система подключается.');
+  const [paying, setPaying] = useState(false);
+
+  const handlePay = async () => {
+    if (!pendingBooking || !profileComplete) return;
+
+    const stored = localStorage.getItem('kladovka78_customer');
+    if (!stored) return;
+
+    const customer = JSON.parse(stored);
+    setPaying(true);
+
+    try {
+      const result = await createPayment({
+        customerId: customer.id,
+        cellId: String(pendingBooking.cellId),
+        amount: pendingBooking.totalPrice || 0,
+        duration: pendingBooking.duration,
+        cellNumber: pendingBooking.cellNumber,
+        description: `Аренда ячейки №${pendingBooking.cellNumber} на ${pendingBooking.duration} мес.`,
+      });
+
+      if (result.formUrl) {
+        window.location.href = result.formUrl;
+      } else {
+        throw new Error('Не получена ссылка на оплату');
+      }
+    } catch (err: any) {
+      console.error('Payment error:', err);
+      toast({
+        title: 'Ошибка оплаты',
+        description: err?.message || 'Не удалось создать платёж',
+        variant: 'destructive',
+      });
+    } finally {
+      setPaying(false);
+    }
   };
 
   const handleCancelBooking = () => {
