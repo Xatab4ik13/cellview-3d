@@ -44,8 +44,9 @@ async function runMigrations() {
         await pool.query(statement);
       } catch (error: any) {
         // Ignore "already exists" errors for idempotency
-        if (error.code === 'ER_TABLE_EXISTS_ERROR' || error.code === 'ER_DB_CREATE_EXISTS') {
-          console.log(`    ⏭️  Skipped (already exists)`);
+        const ignorable = ['ER_TABLE_EXISTS_ERROR', 'ER_DB_CREATE_EXISTS', 'ER_DUP_KEYNAME', 'ER_DUP_FIELDNAME', 'ER_CANT_DROP_FIELD_OR_KEY'];
+        if (ignorable.includes(error.code)) {
+          console.log(`    ⏭️  Skipped (${error.code})`);
         } else {
           console.error(`    ❌ Error: ${error.message}`);
           throw error;
