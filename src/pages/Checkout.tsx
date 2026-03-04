@@ -15,6 +15,7 @@ const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(RESERVATION_SECONDS);
+  const [isPaying, setIsPaying] = useState(false);
 
   const bookingData = location.state as {
     cellId?: number;
@@ -50,9 +51,34 @@ const Checkout = () => {
   const isExpired = timeLeft <= 0;
   const isUrgent = timeLeft < 600; // less than 10 min
 
-  const handlePay = () => {
-    // Заглушка — здесь будет редирект на ЮKassa/Тинькофф
-    alert('Оплата временно недоступна. Платёжная система подключается.');
+
+
+  const handlePay = async () => {
+    if (!bookingData || isPaying) return;
+    setIsPaying(true);
+    try {
+      // Get customer ID from localStorage (set during auth)
+      const customerId = localStorage.getItem('customerId');
+      if (!customerId) {
+        navigate('/auth', { state: { returnTo: '/checkout', bookingData } });
+        return;
+      }
+
+      const { createPayment } = await import('@/lib/api');
+      const result = await createPayment({
+        customerId,
+        cellId: String(bookingData.cellId),
+        amount: bookingData.totalPrice || 0,
+        duration: bookingData.duration,
+        cellNumber: bookingData.cellNumber,
+      });
+
+      // Redirect to VTB payment page
+      window.location.href = result.formUrl;
+    } catch (error: any) {
+      alert(error.message || 'Ошибка при создании платежа');
+      setIsPaying(false);
+    }
   };
 
   return (

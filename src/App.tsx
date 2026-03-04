@@ -20,6 +20,8 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Docs = lazy(() => import("./pages/Docs"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Consent = lazy(() => import("./pages/Consent"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const PaymentFail = lazy(() => import("./pages/PaymentFail"));
 
 // Admin pages — lazy
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
@@ -61,6 +63,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/payment/success" element={<PaymentSuccess />} />
+            <Route path="/payment/fail" element={<PaymentFail />} />
             
             {/* Admin routes */}
             <Route path="/admin/login" element={<AdminLogin />} />

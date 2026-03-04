@@ -267,6 +267,32 @@ export async function fetchAuthMe(customerId: string): Promise<AuthCustomer> {
   });
 }
 
+// ============ Платежи ============
+
+export async function createPayment(data: {
+  rentalId?: string;
+  customerId: string;
+  cellId?: string;
+  amount: number;
+  duration?: number;
+  cellNumber?: number;
+  description?: string;
+}): Promise<{ paymentId: string; formUrl: string; vtbOrderId: string }> {
+  return fetchApi('/api/payments/create', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function checkPaymentStatus(paymentId: string): Promise<{
+  paymentId: string;
+  status: string;
+  amount?: number;
+  paidAt?: string;
+}> {
+  return fetchApi(`/api/payments/${paymentId}/status`);
+}
+
 // ============ Health ============
 
 export async function checkHealth(): Promise<{ status: string; services: Record<string, string> }> {
