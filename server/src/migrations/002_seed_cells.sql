@@ -5,11 +5,12 @@
 
 USE kladovka78;
 
--- Очистка перед вставкой (идемпотентность)
-SET FOREIGN_KEY_CHECKS = 0;
-DELETE FROM cell_photos;
-DELETE FROM cells;
-SET FOREIGN_KEY_CHECKS = 1;
+-- Seed only if cells table is empty (don't overwrite production data)
+-- We use a procedure to allow conditional logic in plain SQL
+DELIMITER $$
+CREATE PROCEDURE IF NOT EXISTS _seed_cells()
+BEGIN
+  IF (SELECT COUNT(*) FROM cells) = 0 THEN
 
 -- Вставка ячеек
 INSERT INTO cells (id, number, width, height, depth, area, volume, floor, tier, price_per_month, status, has_socket, has_shelves) VALUES
