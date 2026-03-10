@@ -409,7 +409,7 @@ contractsRouter.get('/:rentalId/download', async (req: Request, res: Response, n
   try {
     // Generate on the fly
     const fakeReq = { body: { rentalId: req.params.rentalId }, headers: req.headers, protocol: req.protocol, get: req.get.bind(req) } as any;
-    const contractsDir = path.join(__dirname, '..', '..', 'uploads', 'contracts');
+    const contractsDir = path.join(__dirname, '..', '..', '..', 'uploads', 'contracts');
 
     // Check if already exists
     const existingFiles = fs.existsSync(contractsDir) ? fs.readdirSync(contractsDir) : [];
