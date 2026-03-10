@@ -5,9 +5,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const paymentsRouter = Router();
 
-const VTB_GATEWAY = process.env.VTB_GATEWAY_URL || 'https://pay.vtb.ru/payment/rest';
-const VTB_CLIENT_ID = process.env.VTB_CLIENT_ID;
-const VTB_CLIENT_SECRET = process.env.VTB_CLIENT_SECRET;
+const VTB_GATEWAY = process.env.VTB_GATEWAY_URL || 'https://platezh.vtb24.ru/payment/rest';
+const VTB_USERNAME = process.env.VTB_USERNAME || process.env.VTB_CLIENT_ID;
+const VTB_PASSWORD = process.env.VTB_PASSWORD || process.env.VTB_CLIENT_SECRET;
 const SITE_URL = process.env.CORS_ORIGIN?.split(',')[0] || 'https://kladovka78.ru';
 
 type VtbCardAuthInfo = {
@@ -33,8 +33,8 @@ type VtbResponse = {
 // Helper: call VTB gateway
 async function vtbRequest(method: string, params: Record<string, string>): Promise<VtbResponse> {
   const body = new URLSearchParams({
-    userName: VTB_CLIENT_ID || '',
-    password: VTB_CLIENT_SECRET || '',
+    userName: VTB_USERNAME || '',
+    password: VTB_PASSWORD || '',
     ...params,
   });
 
@@ -72,8 +72,8 @@ paymentsRouter.post('/create', async (req: Request, res: Response, next: NextFun
       throw new AppError('Обязательные поля: customerId, amount', 400);
     }
 
-    if (!VTB_CLIENT_ID || !VTB_CLIENT_SECRET) {
-      throw new AppError('Платёжная система не настроена', 500);
+    if (!VTB_USERNAME || !VTB_PASSWORD) {
+      throw new AppError('Платёжная система не настроена. Проверьте VTB_USERNAME и VTB_PASSWORD.', 500);
     }
 
     const id = uuidv4();
