@@ -5,9 +5,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const paymentsRouter = Router();
 
-const VTB_GATEWAY = process.env.VTB_GATEWAY_URL || 'https://pay.vtb.ru/payment/rest';
-const VTB_CLIENT_ID = process.env.VTB_CLIENT_ID;
-const VTB_CLIENT_SECRET = process.env.VTB_CLIENT_SECRET;
+const VTB_GATEWAY = process.env.VTB_GATEWAY_URL || 'https://platezh.vtb24.ru/payment/rest';
+const VTB_USERNAME = process.env.VTB_USERNAME || process.env.VTB_CLIENT_ID;
+const VTB_PASSWORD = process.env.VTB_PASSWORD || process.env.VTB_CLIENT_SECRET;
 const SITE_URL = process.env.CORS_ORIGIN?.split(',')[0] || 'https://kladovka78.ru';
 
 type VtbCardAuthInfo = {
