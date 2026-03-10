@@ -122,16 +122,8 @@ const Dashboard = () => {
               <SurveillanceSection />
             </TabsContent>
             
-            <TabsContent value="subscription" className="mt-6">
-              <SubscriptionSection />
-            </TabsContent>
-            
             <TabsContent value="payments" className="mt-6">
               <PaymentsSection />
-            </TabsContent>
-            
-            <TabsContent value="notifications" className="mt-6">
-              <NotificationsSection />
             </TabsContent>
             
             <TabsContent value="info" className="mt-6">
