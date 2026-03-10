@@ -386,13 +386,12 @@ const RentalsSection = ({ pendingBooking, onClearBooking, onGoToProfile }: Renta
                 <Button
                   variant="outline"
                   className="gap-2 font-semibold border-primary/30 hover:border-primary hover:bg-primary/5"
-                  onClick={() => {
-                    const url = getContractDownloadUrl(rental.id);
-                    window.open(url, '_blank');
-                  }}
+                  asChild
                 >
-                  <FileText className="w-4 h-4" />
-                  Скачать договор
+                  <a href="/docs/standard-conditions.docx" download>
+                    <FileText className="w-4 h-4" />
+                    Скачать договор
+                  </a>
                 </Button>
                 <Button className="gap-2 font-semibold bg-primary hover:bg-primary/90">
                   <Calendar className="w-4 h-4" />
