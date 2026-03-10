@@ -238,7 +238,7 @@ const RentalsSection = ({ pendingBooking, onClearBooking, onGoToProfile }: Renta
                 <div>
                   <p className="font-semibold text-sm">Заполните данные профиля</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Для оплаты необходимо указать ФИО и паспортные данные. После оплаты бот пришлёт вам договор.
+                    Для оплаты необходимо указать ФИО, паспортные данные, адрес прописки и email. После оплаты бот пришлёт вам договор.
                   </p>
                   <Button 
                     variant="outline" 
