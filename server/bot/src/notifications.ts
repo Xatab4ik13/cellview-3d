@@ -2,7 +2,6 @@ import { db } from './database';
 
 /**
  * Utility to send notification to a customer via Telegram bot
- * Can be called from the main API or cron jobs
  */
 export async function sendNotification(
   telegramId: string,
@@ -29,7 +28,7 @@ export async function sendNotification(
 }
 
 /**
- * Notify customer about rental expiring soon
+ * Notify customers about rental expiring soon (7 days, 3 days, 1 day)
  */
 export async function notifyExpiringRentals(botToken: string): Promise<void> {
   try {
@@ -47,16 +46,57 @@ export async function notifyExpiringRentals(botToken: string): Promise<void> {
       const daysLeft = Math.ceil(
         (new Date(r.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
       );
+
+      // Only send on specific days: 7, 3, 1
+      if (daysLeft !== 7 && daysLeft !== 3 && daysLeft !== 1) continue;
+
+      const urgency = daysLeft === 1 ? '🔴' : daysLeft === 3 ? '🟠' : '⚠️';
       const message =
-        `⚠️ *Аренда заканчивается!*\n\n` +
+        `${urgency} *Аренда заканчивается!*\n\n` +
         `Ячейка №${r.cell_number}\n` +
         `Осталось: ${daysLeft} дн.\n\n` +
-        `Продлите аренду в личном кабинете.`;
+        `Оплатите продление в личном кабинете, чтобы сохранить ячейку.\n` +
+        `👉 https://kladovka78.ru/dashboard`;
 
       await sendNotification(r.telegram_id, message, botToken);
     }
   } catch (err) {
     console.error('Error notifying expiring rentals:', err);
+  }
+}
+
+/**
+ * Notify customers about overdue rentals (past end_date)
+ */
+export async function notifyOverdueRentals(botToken: string): Promise<void> {
+  try {
+    const [rentals] = await db.query(`
+      SELECT r.*, c.number as cell_number, cu.telegram_id, cu.name as customer_name
+      FROM rentals r
+      JOIN cells c ON r.cell_id = c.id
+      JOIN customers cu ON r.customer_id = cu.id
+      WHERE r.status = 'active'
+        AND cu.telegram_id IS NOT NULL
+        AND r.end_date < CURDATE()
+    `);
+
+    for (const r of rentals as any[]) {
+      const daysOverdue = Math.ceil(
+        (Date.now() - new Date(r.end_date).getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      const message =
+        `🚨 *Аренда просрочена!*\n\n` +
+        `Ячейка №${r.cell_number}\n` +
+        `Просрочка: ${daysOverdue} дн.\n\n` +
+        `⚠️ Согласно условиям договора, мы имеем право расторгнуть договор в одностороннем порядке.\n\n` +
+        `Пожалуйста, оплатите продление как можно скорее:\n` +
+        `👉 https://kladovka78.ru/dashboard`;
+
+      await sendNotification(r.telegram_id, message, botToken);
+    }
+  } catch (err) {
+    console.error('Error notifying overdue rentals:', err);
   }
 }
 
