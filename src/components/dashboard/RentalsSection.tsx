@@ -383,7 +383,14 @@ const RentalsSection = ({ pendingBooking, onClearBooking, onGoToProfile }: Renta
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <Button variant="outline" className="gap-2 font-semibold border-primary/30 hover:border-primary hover:bg-primary/5">
+                <Button
+                  variant="outline"
+                  className="gap-2 font-semibold border-primary/30 hover:border-primary hover:bg-primary/5"
+                  onClick={() => {
+                    const url = getContractDownloadUrl(rental.id);
+                    window.open(url, '_blank');
+                  }}
+                >
                   <FileText className="w-4 h-4" />
                   Скачать договор
                 </Button>
