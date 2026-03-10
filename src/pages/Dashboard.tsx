@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Key, CreditCard, Bell, FileText, LogOut, Video } from 'lucide-react';
+import { User, Key, CreditCard, FileText, LogOut, Video } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProfileSection from '@/components/dashboard/ProfileSection';
 import RentalsSection from '@/components/dashboard/RentalsSection';
-import SubscriptionSection from '@/components/dashboard/SubscriptionSection';
 import PaymentsSection from '@/components/dashboard/PaymentsSection';
-import NotificationsSection from '@/components/dashboard/NotificationsSection';
 import InfoSection from '@/components/dashboard/InfoSection';
 import SurveillanceSection from '@/components/dashboard/SurveillanceSection';
 import { Button } from '@/components/ui/button';
