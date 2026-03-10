@@ -436,7 +436,7 @@ contractsRouter.get('/:rentalId/download', async (req: Request, res: Response, n
     }
 
     const r = rows[0];
-    const contractNumber = generateContractNumber(req.params.rentalId);
+    const contractNumber = generateContractNumber(req.params.rentalId as string);
 
     const contractData: ContractData = {
       contractNumber,
