@@ -72,8 +72,8 @@ paymentsRouter.post('/create', async (req: Request, res: Response, next: NextFun
       throw new AppError('Обязательные поля: customerId, amount', 400);
     }
 
-    if (!VTB_CLIENT_ID || !VTB_CLIENT_SECRET) {
-      throw new AppError('Платёжная система не настроена', 500);
+    if (!VTB_USERNAME || !VTB_PASSWORD) {
+      throw new AppError('Платёжная система не настроена. Проверьте VTB_USERNAME и VTB_PASSWORD.', 500);
     }
 
     const id = uuidv4();
