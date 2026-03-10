@@ -1002,7 +1002,9 @@ const AdminCells = () => {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Отмена</Button>
-              <Button onClick={handleAddCell} disabled={volume === 0}>Добавить</Button>
+              <Button onClick={handleAddCell} disabled={!formData.width || !formData.depth || !formData.height || createMutation.isPending}>
+                {createMutation.isPending ? 'Создание...' : 'Добавить'}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
