@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Key, Calendar, MapPin, FileText, Copy, Check, Phone, Loader2, Clock, CreditCard, AlertTriangle, User } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { fetchRentals, fetchCustomer, createPayment, type RentalData } from '@/lib/api';
+import { fetchRentals, fetchCustomer, createPayment, getContractDownloadUrl, type RentalData } from '@/lib/api';
 import { RESERVATION_HOURS } from '@/types/storage';
 import type { BookingState } from '@/pages/Dashboard';
 
