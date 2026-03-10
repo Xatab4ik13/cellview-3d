@@ -6,9 +6,21 @@ import { v4 as uuidv4 } from 'uuid';
 export const paymentsRouter = Router();
 
 const VTB_GATEWAY = process.env.VTB_GATEWAY_URL || 'https://platezh.vtb24.ru/payment/rest';
-const VTB_USERNAME = process.env.VTB_USERNAME || process.env.VTB_CLIENT_ID;
-const VTB_PASSWORD = process.env.VTB_PASSWORD || process.env.VTB_CLIENT_SECRET;
+const VTB_USERNAME = process.env.VTB_USERNAME;
+const VTB_PASSWORD = process.env.VTB_PASSWORD;
+const VTB_TOKEN = process.env.VTB_TOKEN || process.env.VTB_CLIENT_ID; // OAuth token
 const SITE_URL = process.env.CORS_ORIGIN?.split(',')[0] || 'https://kladovka78.ru';
+
+// Determine auth mode: token or userName/password
+function getAuthParams(): Record<string, string> {
+  if (VTB_USERNAME && VTB_PASSWORD) {
+    return { userName: VTB_USERNAME, password: VTB_PASSWORD };
+  }
+  if (VTB_TOKEN) {
+    return { token: VTB_TOKEN };
+  }
+  return {};
+}
 
 type VtbCardAuthInfo = {
   pan?: string;
