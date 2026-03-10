@@ -377,7 +377,7 @@ contractsRouter.post('/generate', async (req: Request, res: Response, next: Next
     const pdfBuffer = await buildContractPdf(contractData);
 
     // Save to filesystem
-    const contractsDir = path.join(__dirname, '..', '..', 'uploads', 'contracts');
+    const contractsDir = path.resolve('/var/www/kladovka78/uploads/contracts');
     if (!fs.existsSync(contractsDir)) {
       fs.mkdirSync(contractsDir, { recursive: true });
     }
