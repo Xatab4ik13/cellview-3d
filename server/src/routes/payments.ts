@@ -33,8 +33,8 @@ type VtbResponse = {
 // Helper: call VTB gateway
 async function vtbRequest(method: string, params: Record<string, string>): Promise<VtbResponse> {
   const body = new URLSearchParams({
-    userName: VTB_CLIENT_ID || '',
-    password: VTB_CLIENT_SECRET || '',
+    userName: VTB_USERNAME || '',
+    password: VTB_PASSWORD || '',
     ...params,
   });
 
