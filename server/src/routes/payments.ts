@@ -44,9 +44,9 @@ type VtbResponse = {
 
 // Helper: call VTB gateway
 async function vtbRequest(method: string, params: Record<string, string>): Promise<VtbResponse> {
+  const authParams = getAuthParams();
   const body = new URLSearchParams({
-    userName: VTB_USERNAME || '',
-    password: VTB_PASSWORD || '',
+    ...authParams,
     ...params,
   });
 
