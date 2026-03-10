@@ -32,8 +32,6 @@ const AdminRentals = lazy(() => import("./pages/admin/AdminRentals"));
 const AdminCustomers = lazy(() => import("./pages/admin/AdminCustomers"));
 const AdminPayments = lazy(() => import("./pages/admin/AdminPayments"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
-const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
-const AdminCameras = lazy(() => import("./pages/admin/AdminCameras"));
 const AdminSite = lazy(() => import("./pages/admin/AdminSite"));
 
 const queryClient = new QueryClient();
