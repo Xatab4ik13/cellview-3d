@@ -21,7 +21,7 @@ import {
   Box,
   Key,
   CreditCard,
-  BarChart3,
+  
   Settings,
   Globe,
   LogOut,
@@ -62,7 +62,6 @@ const navGroups: NavGroup[] = [
     label: 'Финансы',
     items: [
       { title: 'Платежи', url: '/admin/payments', icon: CreditCard },
-      { title: 'Аналитика', url: '/admin/analytics', icon: BarChart3 },
     ],
   },
   {

@@ -14,7 +14,7 @@ const routeTitles: Record<string, string> = {
   '/admin/cells': 'Ячейки',
   '/admin/rentals': 'Аренды',
   '/admin/payments': 'Платежи',
-  '/admin/analytics': 'Аналитика',
+  
   '/admin/settings': 'Настройки',
   '/admin/site': 'Управление сайтом',
   '/admin/cameras': 'Видеонаблюдение',
