@@ -1,8 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Save, Lock, Bell, CreditCard, Percent } from 'lucide-react';
+import { Save, Lock, Percent } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -26,23 +25,13 @@ const CardBlock = ({ title, icon: Icon, description, children }: { title: string
   </motion.div>
 );
 
-const SettingRow = ({ title, desc, defaultChecked = true }: { title: string; desc: string; defaultChecked?: boolean }) => (
-  <div className="flex items-center justify-between py-3 border-b border-border last:border-0">
-    <div>
-      <p className="font-medium text-sm">{title}</p>
-      <p className="text-xs text-muted-foreground">{desc}</p>
-    </div>
-    <Switch defaultChecked={defaultChecked} />
-  </div>
-);
-
 const AdminSettings = () => {
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Настройки</h2>
-          <p className="text-base text-muted-foreground mt-1">Управление параметрами системы</p>
+          <p className="text-base text-muted-foreground mt-1">Ценообразование и безопасность</p>
         </div>
         <Button onClick={() => toast.success('Настройки сохранены')} className="gap-2 h-11 text-base">
           <Save className="w-5 h-5" />
@@ -78,22 +67,8 @@ const AdminSettings = () => {
         </div>
       </CardBlock>
 
-      {/* Payments */}
-      <CardBlock title="Платежи" icon={CreditCard} description="Настройка платёжных систем">
-        <SettingRow title="ЮKassa" desc="Приём онлайн-платежей" />
-        <SettingRow title="СБП" desc="Система быстрых платежей" />
-        <SettingRow title="Оплата по счёту" desc="Для юридических лиц" />
-      </CardBlock>
-
-      {/* Notifications */}
-      <CardBlock title="Уведомления" icon={Bell} description="Настройка оповещений">
-        <SettingRow title="Новые заявки" desc="Email и Telegram" />
-        <SettingRow title="Окончание аренды" desc="За 7, 3 и 1 день до окончания" />
-        <SettingRow title="Просроченные платежи" desc="При неоплате в срок" />
-      </CardBlock>
-
       {/* Security */}
-      <CardBlock title="Безопасность" icon={Lock} description="Управление доступом">
+      <CardBlock title="Безопасность" icon={Lock} description="Управление доступом к CRM">
         <div className="grid gap-4 max-w-md">
           <div className="space-y-2">
             <Label className="text-sm">Текущий пароль</Label>

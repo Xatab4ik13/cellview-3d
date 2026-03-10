@@ -32,8 +32,6 @@ const AdminRentals = lazy(() => import("./pages/admin/AdminRentals"));
 const AdminCustomers = lazy(() => import("./pages/admin/AdminCustomers"));
 const AdminPayments = lazy(() => import("./pages/admin/AdminPayments"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
-const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
-const AdminCameras = lazy(() => import("./pages/admin/AdminCameras"));
 const AdminSite = lazy(() => import("./pages/admin/AdminSite"));
 
 const queryClient = new QueryClient();
@@ -75,8 +73,6 @@ const App = () => (
               <Route path="customers" element={<AdminCustomers />} />
               <Route path="payments" element={<AdminPayments />} />
               <Route path="settings" element={<AdminSettings />} />
-              <Route path="analytics" element={<AdminAnalytics />} />
-              <Route path="cameras" element={<AdminCameras />} />
               <Route path="site" element={<AdminSite />} />
             </Route>
             

@@ -678,24 +678,37 @@ const AdminCells = () => {
   };
 
   const handleAddCell = async () => {
+    const cellNumber = parseInt(formData.number) || nextNumber;
     const w = parseFloat(formData.width);
     const d = parseFloat(formData.depth);
     const h = parseFloat(formData.height);
+
+    if (!w || !d || !h) {
+      toast.error('Укажите все размеры ячейки');
+      return;
+    }
+
+    // Check if number already exists
+    if (cells.some(c => c.number === cellNumber)) {
+      toast.error(`Ячейка №${cellNumber} уже существует`);
+      return;
+    }
+
     const area = parseFloat((w * d).toFixed(2));
-    const volume = parseFloat((w * d * h).toFixed(2));
-    const cellId = `cell-${formData.number}`;
+    const vol = parseFloat((w * d * h).toFixed(2));
+    const cellId = `cell-${cellNumber}`;
     
     const cellData = {
       id: cellId,
-      number: parseInt(formData.number),
+      number: cellNumber,
       width: w,
       depth: d,
       height: h,
       area,
-      volume,
-      floor: parseInt(formData.floor),
-      tier: parseInt(formData.tier),
-      pricePerMonth: calculatePrice(volume),
+      volume: vol,
+      floor: parseInt(formData.floor) || 1,
+      tier: parseInt(formData.tier) || 1,
+      pricePerMonth: calculatePrice(vol),
       hasSocket: formData.hasSocket,
       hasShelves: formData.hasShelves,
       status: 'available' as CellStatus,
@@ -709,7 +722,7 @@ const AdminCells = () => {
         if (photos.length > 0) {
           try {
             await uploadCellPhotos(cellId, photos);
-            toast.success(`Ячейка создана, загружено ${photos.length} фото`);
+            toast.success(`Ячейка №${cellNumber} создана, загружено ${photos.length} фото`);
           } catch (err) {
             toast.warning('Ячейка создана, но фото не загружены');
           }
@@ -989,7 +1002,9 @@ const AdminCells = () => {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Отмена</Button>
-              <Button onClick={handleAddCell} disabled={volume === 0}>Добавить</Button>
+              <Button onClick={handleAddCell} disabled={!formData.width || !formData.depth || !formData.height || createMutation.isPending}>
+                {createMutation.isPending ? 'Создание...' : 'Добавить'}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
