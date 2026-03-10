@@ -54,9 +54,7 @@ const Dashboard = () => {
     { id: 'profile', label: 'Профиль', icon: User },
     { id: 'rentals', label: 'Моя аренда', icon: Key },
     { id: 'surveillance', label: 'Камеры', icon: Video },
-    { id: 'subscription', label: 'Подписка', icon: CreditCard },
     { id: 'payments', label: 'Платежи', icon: CreditCard },
-    { id: 'notifications', label: 'Уведомления', icon: Bell },
     { id: 'info', label: 'Информация', icon: FileText },
   ];
 
