@@ -62,7 +62,6 @@ const navGroups: NavGroup[] = [
     label: 'Финансы',
     items: [
       { title: 'Платежи', url: '/admin/payments', icon: CreditCard },
-      { title: 'Аналитика', url: '/admin/analytics', icon: BarChart3 },
     ],
   },
   {
