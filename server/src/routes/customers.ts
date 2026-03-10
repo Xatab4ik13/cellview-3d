@@ -5,19 +5,29 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const customersRouter = Router();
 
+const CUSTOMER_SELECT = `
+  id, type, name, phone, email, telegram,
+  passport_series AS passportSeries, passport_number AS passportNumber,
+  passport_issued AS passportIssued, passport_date AS passportDate,
+  passport_code AS passportCode,
+  birth_date AS birthDate, birth_place AS birthPlace,
+  registration_address AS registrationAddress,
+  company_name AS companyName, inn, ogrn, kpp,
+  bank_name AS bankName, bik,
+  checking_account AS checkingAccount, corr_account AS corrAccount,
+  legal_address AS legalAddress,
+  contact_person AS contactPerson,
+  contact_person_email AS contactPersonEmail,
+  contact_person_phone AS contactPersonPhone,
+  notes, created_at AS createdAt
+`;
+
 // GET /api/customers — список клиентов
 customersRouter.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { search, type } = req.query;
 
-    let query = `
-      SELECT id, type, name, phone, email, telegram,
-        passport_series AS passportSeries, passport_number AS passportNumber,
-        company_name AS companyName, inn, ogrn, contact_person AS contactPerson,
-        notes, created_at AS createdAt
-      FROM customers
-      WHERE 1=1
-    `;
+    let query = `SELECT ${CUSTOMER_SELECT} FROM customers WHERE 1=1`;
     const params: any[] = [];
 
     if (search) {
@@ -43,11 +53,7 @@ customersRouter.get('/', async (req: Request, res: Response, next: NextFunction)
 customersRouter.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const [rows] = await pool.query(
-      `SELECT id, type, name, phone, email, telegram,
-        passport_series AS passportSeries, passport_number AS passportNumber,
-        company_name AS companyName, inn, ogrn, contact_person AS contactPerson,
-        notes, created_at AS createdAt
-      FROM customers WHERE id = ?`,
+      `SELECT ${CUSTOMER_SELECT} FROM customers WHERE id = ?`,
       [req.params.id]
     );
     const data = rows as any[];
@@ -61,18 +67,34 @@ customersRouter.get('/:id', async (req: Request, res: Response, next: NextFuncti
 // POST /api/customers
 customersRouter.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { type, name, phone, email, telegram, passportSeries, passportNumber, companyName, inn, ogrn, contactPerson, notes } = req.body;
+    const b = req.body;
 
-    if (!name || !phone) {
+    if (!b.name || !b.phone) {
       throw new AppError('Обязательные поля: name, phone', 400);
     }
 
-    const id = req.body.id || uuidv4();
+    const id = b.id || uuidv4();
 
     await pool.query(
-      `INSERT INTO customers (id, type, name, phone, email, telegram, passport_series, passport_number, company_name, inn, ogrn, contact_person, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, type || 'individual', name, phone, email || null, telegram || null, passportSeries || null, passportNumber || null, companyName || null, inn || null, ogrn || null, contactPerson || null, notes || null]
+      `INSERT INTO customers (id, type, name, phone, email, telegram,
+        passport_series, passport_number, passport_issued, passport_date, passport_code,
+        birth_date, birth_place, registration_address,
+        company_name, inn, ogrn, kpp,
+        bank_name, bik, checking_account, corr_account, legal_address,
+        contact_person, contact_person_email, contact_person_phone, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id, b.type || 'individual', b.name, b.phone,
+        b.email || null, b.telegram || null,
+        b.passportSeries || null, b.passportNumber || null,
+        b.passportIssued || null, b.passportDate || null, b.passportCode || null,
+        b.birthDate || null, b.birthPlace || null, b.registrationAddress || null,
+        b.companyName || null, b.inn || null, b.ogrn || null, b.kpp || null,
+        b.bankName || null, b.bik || null, b.checkingAccount || null, b.corrAccount || null,
+        b.legalAddress || null,
+        b.contactPerson || null, b.contactPersonEmail || null, b.contactPersonPhone || null,
+        b.notes || null,
+      ]
     );
 
     res.status(201).json({ success: true, data: { id }, message: 'Клиент создан' });
@@ -84,7 +106,7 @@ customersRouter.post('/', async (req: Request, res: Response, next: NextFunction
 // PUT /api/customers/:id
 customersRouter.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { type, name, phone, email, telegram, passportSeries, passportNumber, companyName, inn, ogrn, contactPerson, notes } = req.body;
+    const b = req.body;
 
     const [result] = await pool.query(
       `UPDATE customers SET
@@ -95,13 +117,39 @@ customersRouter.put('/:id', async (req: Request, res: Response, next: NextFuncti
         telegram = ?,
         passport_series = ?,
         passport_number = ?,
+        passport_issued = ?,
+        passport_date = ?,
+        passport_code = ?,
+        birth_date = ?,
+        birth_place = ?,
+        registration_address = ?,
         company_name = ?,
         inn = ?,
         ogrn = ?,
+        kpp = ?,
+        bank_name = ?,
+        bik = ?,
+        checking_account = ?,
+        corr_account = ?,
+        legal_address = ?,
         contact_person = ?,
+        contact_person_email = ?,
+        contact_person_phone = ?,
         notes = ?
       WHERE id = ?`,
-      [type, name, phone, email ?? null, telegram ?? null, passportSeries ?? null, passportNumber ?? null, companyName ?? null, inn ?? null, ogrn ?? null, contactPerson ?? null, notes ?? null, req.params.id]
+      [
+        b.type, b.name, b.phone,
+        b.email ?? null, b.telegram ?? null,
+        b.passportSeries ?? null, b.passportNumber ?? null,
+        b.passportIssued ?? null, b.passportDate ?? null, b.passportCode ?? null,
+        b.birthDate ?? null, b.birthPlace ?? null, b.registrationAddress ?? null,
+        b.companyName ?? null, b.inn ?? null, b.ogrn ?? null, b.kpp ?? null,
+        b.bankName ?? null, b.bik ?? null, b.checkingAccount ?? null, b.corrAccount ?? null,
+        b.legalAddress ?? null,
+        b.contactPerson ?? null, b.contactPersonEmail ?? null, b.contactPersonPhone ?? null,
+        b.notes ?? null,
+        req.params.id,
+      ]
     );
 
     if ((result as any).affectedRows === 0) throw new AppError('Клиент не найден', 404);
@@ -114,7 +162,6 @@ customersRouter.put('/:id', async (req: Request, res: Response, next: NextFuncti
 // DELETE /api/customers/:id
 customersRouter.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Проверяем нет ли активных аренд
     const [activeRentals] = await pool.query(
       'SELECT id FROM rentals WHERE customer_id = ? AND status = "active"',
       [req.params.id]
