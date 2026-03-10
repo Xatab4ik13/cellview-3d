@@ -21,7 +21,7 @@ import {
   Box,
   Key,
   CreditCard,
-  BarChart3,
+  
   Settings,
   Globe,
   LogOut,
