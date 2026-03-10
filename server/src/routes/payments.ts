@@ -349,7 +349,7 @@ paymentsRouter.get('/', async (req: Request, res: Response, next: NextFunction) 
 
 paymentsRouter.post('/:id/refund', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const payment = await fetchPayment(req.params.id);
+    const payment = await fetchPayment(req.params.id as string);
     if (payment.status !== 'paid') {
       throw new AppError('Можно вернуть только оплаченный платёж', 400);
     }
