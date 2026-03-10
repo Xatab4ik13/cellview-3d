@@ -11,6 +11,7 @@ import { rentalsRouter } from './routes/rentals';
 import { photosRouter } from './routes/photos';
 import { authRouter } from './routes/auth';
 import { paymentsRouter } from './routes/payments';
+import { contractsRouter } from './routes/contracts';
 
 dotenv.config();
 
@@ -46,6 +47,7 @@ app.use('/api/customers', customersRouter);
 app.use('/api/rentals', rentalsRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/payments', paymentsRouter);
+app.use('/api/contracts', contractsRouter);
 // Error handling
 app.use(errorHandler);
 

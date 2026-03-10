@@ -344,3 +344,16 @@ export async function refundPayment(id: string, amount?: number): Promise<void> 
 export async function checkHealth(): Promise<{ status: string; services: Record<string, string> }> {
   return fetchApi('/api/health');
 }
+
+// ============ Договоры ============
+
+export async function generateContract(rentalId: string): Promise<{ contractNumber: string; downloadUrl: string }> {
+  return fetchApi('/api/contracts/generate', {
+    method: 'POST',
+    body: JSON.stringify({ rentalId }),
+  });
+}
+
+export function getContractDownloadUrl(rentalId: string): string {
+  return `${API_BASE}/api/contracts/${rentalId}/download`;
+}

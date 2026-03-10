@@ -1,7 +1,7 @@
 import { db } from './database';
 
 /**
- * Utility to send notification to a customer via Telegram bot
+ * Send text notification via Telegram
  */
 export async function sendNotification(
   telegramId: string,
@@ -28,7 +28,36 @@ export async function sendNotification(
 }
 
 /**
- * Notify customers about rental expiring soon (7 days, 3 days, 1 day)
+ * Send a document (file) via Telegram
+ */
+export async function sendDocument(
+  telegramId: string,
+  fileUrl: string,
+  caption: string,
+  botToken: string
+): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `https://api.telegram.org/bot${botToken}/sendDocument`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: telegramId,
+          document: fileUrl,
+          caption,
+          parse_mode: 'Markdown',
+        }),
+      }
+    );
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Notify customers about rental expiring (7, 3, 1 days)
  */
 export async function notifyExpiringRentals(botToken: string): Promise<void> {
   try {
@@ -47,7 +76,6 @@ export async function notifyExpiringRentals(botToken: string): Promise<void> {
         (new Date(r.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
       );
 
-      // Only send on specific days: 7, 3, 1
       if (daysLeft !== 7 && daysLeft !== 3 && daysLeft !== 1) continue;
 
       const urgency = daysLeft === 1 ? '🔴' : daysLeft === 3 ? '🟠' : '⚠️';
@@ -66,7 +94,7 @@ export async function notifyExpiringRentals(botToken: string): Promise<void> {
 }
 
 /**
- * Notify customers about overdue rentals (past end_date)
+ * Notify customers about overdue rentals
  */
 export async function notifyOverdueRentals(botToken: string): Promise<void> {
   try {
@@ -101,13 +129,14 @@ export async function notifyOverdueRentals(botToken: string): Promise<void> {
 }
 
 /**
- * Notify customer about successful payment
+ * Notify customer about successful payment + send contract
  */
 export async function notifyPaymentSuccess(
   telegramId: string,
   cellNumber: number,
   amount: number,
-  botToken: string
+  botToken: string,
+  contractUrl?: string
 ): Promise<void> {
   const message =
     `✅ *Оплата получена!*\n\n` +
@@ -116,4 +145,14 @@ export async function notifyPaymentSuccess(
     `Спасибо за оплату! 🎉`;
 
   await sendNotification(telegramId, message, botToken);
+
+  // Send contract PDF if available
+  if (contractUrl) {
+    await sendDocument(
+      telegramId,
+      contractUrl,
+      `📄 Ваш договор аренды ячейки №${cellNumber}`,
+      botToken
+    );
+  }
 }

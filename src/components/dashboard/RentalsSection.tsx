@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Key, Calendar, MapPin, FileText, Copy, Check, Phone, Loader2, Clock, CreditCard, AlertTriangle, User } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { fetchRentals, fetchCustomer, createPayment, type RentalData } from '@/lib/api';
+import { fetchRentals, fetchCustomer, createPayment, getContractDownloadUrl, type RentalData } from '@/lib/api';
 import { RESERVATION_HOURS } from '@/types/storage';
 import type { BookingState } from '@/pages/Dashboard';
 
@@ -383,7 +383,14 @@ const RentalsSection = ({ pendingBooking, onClearBooking, onGoToProfile }: Renta
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <Button variant="outline" className="gap-2 font-semibold border-primary/30 hover:border-primary hover:bg-primary/5">
+                <Button
+                  variant="outline"
+                  className="gap-2 font-semibold border-primary/30 hover:border-primary hover:bg-primary/5"
+                  onClick={() => {
+                    const url = getContractDownloadUrl(rental.id);
+                    window.open(url, '_blank');
+                  }}
+                >
                   <FileText className="w-4 h-4" />
                   Скачать договор
                 </Button>
