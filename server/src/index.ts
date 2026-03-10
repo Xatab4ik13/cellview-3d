@@ -11,6 +11,7 @@ import { rentalsRouter } from './routes/rentals';
 import { photosRouter } from './routes/photos';
 import { authRouter } from './routes/auth';
 import { paymentsRouter } from './routes/payments';
+import { contractsRouter } from './routes/contracts';
 
 dotenv.config();
 
