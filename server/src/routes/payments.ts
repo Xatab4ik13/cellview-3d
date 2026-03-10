@@ -266,7 +266,7 @@ paymentsRouter.post('/callback', async (req: Request, res: Response, next: NextF
 
 paymentsRouter.get('/:id/status', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const payment = await fetchPayment(req.params.id);
+    const payment = await fetchPayment(req.params.id as string);
 
     if (['paid', 'refunded', 'failed', 'expired'].includes(payment.status)) {
       return res.json({
