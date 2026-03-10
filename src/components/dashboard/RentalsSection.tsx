@@ -25,18 +25,20 @@ const RentalsSection = ({ pendingBooking, onClearBooking, onGoToProfile }: Renta
   const [profileComplete, setProfileComplete] = useState(false);
   const [checkingProfile, setCheckingProfile] = useState(false);
 
-  // Check if profile has required fields (ФИО + паспорт)
+  // Check if profile has required fields (ФИО + паспорт + прописка + email)
   const checkProfile = useCallback(async () => {
     const stored = localStorage.getItem('kladovka78_customer');
     if (!stored) return;
     setCheckingProfile(true);
     try {
       const customer = JSON.parse(stored);
-      const data = await fetchCustomer(customer.id);
+      const data = await fetchCustomer(customer.id) as any;
       const nameParts = (data.name || '').trim().split(' ').filter(Boolean);
-      const hasName = nameParts.length >= 2; // At least last + first name
-      const hasPassport = !!(data.passportSeries && data.passportNumber);
-      setProfileComplete(hasName && hasPassport);
+      const hasName = nameParts.length >= 2;
+      const hasPassport = !!(data.passportSeries && data.passportNumber && data.passportIssued && data.passportDate);
+      const hasEmail = !!data.email;
+      const hasAddress = !!data.registrationAddress;
+      setProfileComplete(hasName && hasPassport && hasEmail && hasAddress);
     } catch {
       setProfileComplete(false);
     } finally {
