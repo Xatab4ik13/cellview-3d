@@ -425,6 +425,22 @@ const AdminCustomers = () => {
   const customers: Customer[] = apiCustomers.map((c: CustomerData) => {
     const cRentals = allRentals.filter(r => r.customerId === c.id);
     const totalSpentNum = cRentals.reduce((sum, r) => sum + (r.totalAmount || 0), 0);
+    const activeRentals = cRentals.filter(r => {
+      const daysLeft = differenceInDays(parseISO(r.endDate), new Date());
+      return r.status === 'active' && daysLeft >= 0;
+    });
+    const expiredRentals = cRentals.filter(r => {
+      const daysLeft = differenceInDays(parseISO(r.endDate), new Date());
+      return r.status === 'active' && daysLeft < 0;
+    });
+
+    let status: 'active' | 'inactive' | 'vip' | 'debtor' = 'inactive';
+    if (activeRentals.length > 0) {
+      status = 'active';
+    } else if (expiredRentals.length > 0) {
+      status = 'debtor';
+    }
+
     return {
       id: c.id || '',
       name: c.name,
@@ -439,11 +455,11 @@ const AdminCustomers = () => {
       ogrn: c.ogrn,
       contactPerson: c.contactPerson,
       address: undefined,
-      rentals: cRentals.length,
+      rentals: activeRentals.length,
       totalSpent: `₽ ${totalSpentNum.toLocaleString('ru-RU')}`,
       totalSpentNum,
       registeredAt: c.createdAt ? new Date(c.createdAt).toLocaleDateString('ru-RU') : '',
-      status: 'active' as const,
+      status,
       tags: [c.type === 'company' ? 'Юр. лицо' : 'Физ. лицо'],
       notes: [],
     };
