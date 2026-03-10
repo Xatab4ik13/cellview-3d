@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { differenceInDays, parseISO } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import CrmCard from '@/components/crm/CrmCard';
 import { Button } from '@/components/ui/button';
