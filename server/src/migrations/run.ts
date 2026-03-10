@@ -33,11 +33,20 @@ async function runMigrations() {
       }
     }
 
+    // Remove full-line SQL comments and conditional markers before splitting
+    const sanitizedSql = sql
+      .split('\n')
+      .filter(line => {
+        const trimmed = line.trim();
+        return trimmed.length > 0 && !trimmed.startsWith('--') && !trimmed.startsWith('##');
+      })
+      .join('\n');
+
     // Split by semicolon and execute each statement
-    const statements = sql
+    const statements = sanitizedSql
       .split(';')
       .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--') && !s.startsWith('##'));
+      .filter(s => s.length > 0);
 
     for (const statement of statements) {
       try {
