@@ -129,14 +129,14 @@ export async function notifyOverdueRentals(botToken: string): Promise<void> {
 }
 
 /**
- * Notify customer about successful payment + send contract
+ * Notify customer about successful payment + send standard conditions document
  */
 export async function notifyPaymentSuccess(
   telegramId: string,
   cellNumber: number,
   amount: number,
   botToken: string,
-  contractUrl?: string
+  siteUrl: string = 'https://kladovka78.ru'
 ): Promise<void> {
   const message =
     `✅ *Оплата получена!*\n\n` +
@@ -146,13 +146,12 @@ export async function notifyPaymentSuccess(
 
   await sendNotification(telegramId, message, botToken);
 
-  // Send contract PDF if available
-  if (contractUrl) {
-    await sendDocument(
-      telegramId,
-      contractUrl,
-      `📄 Ваш договор аренды ячейки №${cellNumber}`,
-      botToken
-    );
-  }
+  // Send standard conditions document
+  const docUrl = `${siteUrl}/docs/standard-conditions.docx`;
+  await sendDocument(
+    telegramId,
+    docUrl,
+    `📄 Стандартные условия аренды ячейки №${cellNumber}`,
+    botToken
+  );
 }

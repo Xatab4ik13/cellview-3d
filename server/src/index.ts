@@ -47,7 +47,7 @@ app.use('/api/customers', customersRouter);
 app.use('/api/rentals', rentalsRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/payments', paymentsRouter);
-app.use('/api/contracts', contractsRouter);
+
 // Error handling
 app.use(errorHandler);
 
