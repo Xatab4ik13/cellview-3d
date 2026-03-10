@@ -60,7 +60,7 @@ function generateContractNumber(rentalId: string): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const short = rentalId.slice(0, 6).toUpperCase();
-  return `К78-${year}${month}-${short}`;
+  return `K78-${year}${month}-${short}`;
 }
 
 async function buildContractPdf(data: ContractData): Promise<Buffer> {
