@@ -2,22 +2,25 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, MoreHorizontal, Edit, Ban, RefreshCw, Plus, Loader2, Trash2 } from 'lucide-react';
+import { Search, MoreHorizontal, Edit, Ban, RefreshCw, Plus, Loader2, Trash2, Banknote } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRentals, useCreateRental, useUpdateRental, useExtendRental, useReleaseRental, useDeleteRental } from '@/hooks/useRentals';
+import { usePayments, useCreateCashPayment } from '@/hooks/usePayments';
+import { useCells } from '@/hooks/useCells';
 import { format, differenceInDays, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { RentalData } from '@/lib/api';
 import RentalFormDialog from '@/components/admin/RentalFormDialog';
+import RentalDetailModal from '@/components/admin/RentalDetailModal';
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   active: { label: 'Активна', color: 'var(--status-active)' },
   expiring: { label: 'Заканчивается', color: 'var(--status-pending)' },
-  expired: { label: 'Истекла', color: 'var(--status-overdue)' },
+  expired: { label: 'Просрочена', color: 'var(--status-overdue)' },
   cancelled: { label: 'Отменена', color: 'var(--status-overdue)' },
 };
 
@@ -43,9 +46,13 @@ const AdminRentals = () => {
   const [tab, setTab] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRental, setEditingRental] = useState<RentalData | null>(null);
+  const [detailRental, setDetailRental] = useState<RentalData | null>(null);
 
   const { data: rentals = [], isLoading, error } = useRentals();
+  const { data: payments = [] } = usePayments();
+  const { data: cells = [] } = useCells();
   const createMutation = useCreateRental();
+  const cashPaymentMutation = useCreateCashPayment();
   const updateMutation = useUpdateRental();
   const extendMutation = useExtendRental();
   const releaseMutation = useReleaseRental();
@@ -70,7 +77,18 @@ const AdminRentals = () => {
   };
 
   const handleCreate = (data: any) => {
-    createMutation.mutate(data, { onSuccess: () => setDialogOpen(false) });
+    // Use cash payment endpoint — creates payment + rental + updates cell in one go
+    const cell = cells.find(c => c.id === data.cellId);
+    cashPaymentMutation.mutate({
+      customerId: data.customerId,
+      cellId: data.cellId,
+      amount: data.totalAmount || data.pricePerMonth * data.months,
+      duration: data.months,
+      cellNumber: cell?.number,
+      description: data.notes || undefined,
+    }, {
+      onSuccess: () => setDialogOpen(false),
+    });
   };
 
   const handleEdit = (id: string, data: any) => {
@@ -114,7 +132,7 @@ const AdminRentals = () => {
         </div>
         <Button className="gap-2 h-11 text-base" onClick={openCreate}>
           <Plus className="w-5 h-5" />
-          Новая аренда
+          Новая аренда (наличные)
         </Button>
       </div>
 
@@ -123,7 +141,7 @@ const AdminRentals = () => {
         {[
           { label: 'Активных', value: counts.active, color: 'var(--status-active)' },
           { label: 'Заканчиваются', value: counts.expiring, color: 'var(--status-pending)' },
-          { label: 'Истекших', value: counts.expired, color: 'var(--status-overdue)' },
+          { label: 'Просроченных', value: counts.expired, color: 'var(--status-overdue)' },
         ].map((s, i) => (
           <motion.div
             key={s.label}
@@ -146,7 +164,7 @@ const AdminRentals = () => {
             <TabsTrigger value="all" className="text-sm px-4">Все ({counts.all})</TabsTrigger>
             <TabsTrigger value="active" className="text-sm px-4">Активные ({counts.active})</TabsTrigger>
             <TabsTrigger value="expiring" className="text-sm px-4">Заканчиваются ({counts.expiring})</TabsTrigger>
-            <TabsTrigger value="expired" className="text-sm px-4">Истекшие ({counts.expired})</TabsTrigger>
+            <TabsTrigger value="expired" className="text-sm px-4">Просроченные ({counts.expired})</TabsTrigger>
           </TabsList>
         </Tabs>
         <div className="relative max-w-[280px] w-full">
@@ -166,7 +184,7 @@ const AdminRentals = () => {
                 <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Период</th>
                 <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Сумма/мес</th>
                 <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Итого</th>
-                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Автопродление</th>
+                <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Осталось</th>
                 <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Статус</th>
                 <th className="text-right p-4 text-sm font-semibold text-muted-foreground">Действия</th>
               </tr>
@@ -180,13 +198,15 @@ const AdminRentals = () => {
                 </tr>
               ) : filtered.map((rental, i) => {
                 const sc = statusConfig[rental.displayStatus] || statusConfig.active;
+                const daysLeft = differenceInDays(parseISO(rental.endDate), new Date());
                 return (
                   <motion.tr
                     key={rental.id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: i * 0.03 }}
-                    className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
+                    className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => setDetailRental(rental)}
                   >
                     <td className="p-4">
                       <Badge variant="outline" className="font-mono text-xs">
@@ -204,16 +224,16 @@ const AdminRentals = () => {
                     <td className="p-4 text-sm">{rental.pricePerMonth?.toLocaleString('ru-RU')} ₽</td>
                     <td className="p-4 font-semibold text-sm">{rental.totalAmount?.toLocaleString('ru-RU')} ₽</td>
                     <td className="p-4">
-                      <Badge variant="outline" style={rental.autoRenew ? { borderColor: 'hsl(var(--status-active) / 0.3)', color: 'hsl(var(--status-active))' } : {}}>
-                        {rental.autoRenew ? 'Да' : 'Нет'}
-                      </Badge>
+                      <span className="text-sm font-medium" style={{ color: daysLeft < 0 ? 'hsl(var(--status-overdue))' : daysLeft <= 7 ? 'hsl(var(--status-pending))' : undefined }}>
+                        {daysLeft < 0 ? `${Math.abs(daysLeft)} дн. назад` : `${daysLeft} дн.`}
+                      </span>
                     </td>
                     <td className="p-4">
                       <Badge variant="outline" style={{ borderColor: `hsl(${sc.color} / 0.3)`, color: `hsl(${sc.color})`, backgroundColor: `hsl(${sc.color} / 0.1)` }}>
                         {sc.label}
                       </Badge>
                     </td>
-                    <td className="p-4 text-right">
+                    <td className="p-4 text-right" onClick={e => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -235,7 +255,7 @@ const AdminRentals = () => {
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem className="text-destructive" onClick={() => {
-                            if (confirm(`Вы точно хотите удалить аренду для ${rental.customerName}? Это действие необратимо.`)) deleteMutation.mutate(rental.id);
+                            if (confirm(`Удалить аренду? Это действие необратимо.`)) deleteMutation.mutate(rental.id);
                           }}>
                             <Trash2 className="h-4 w-4 mr-2" />Удалить
                           </DropdownMenuItem>
@@ -256,7 +276,18 @@ const AdminRentals = () => {
         onSubmitCreate={handleCreate}
         onSubmitEdit={handleEdit}
         editRental={editingRental}
-        isSubmitting={createMutation.isPending || updateMutation.isPending}
+        isSubmitting={cashPaymentMutation.isPending || updateMutation.isPending}
+      />
+
+      <RentalDetailModal
+        open={!!detailRental}
+        onClose={() => setDetailRental(null)}
+        rental={detailRental}
+        payments={payments}
+        onExtend={(id) => extendMutation.mutate({ id, months: 1 })}
+        onRelease={(id) => releaseMutation.mutate(id)}
+        onDelete={(id) => deleteMutation.mutate(id)}
+        onEdit={openEdit}
       />
     </div>
   );
