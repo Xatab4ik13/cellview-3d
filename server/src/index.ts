@@ -14,6 +14,11 @@ import { paymentsRouter } from './routes/payments';
 
 dotenv.config();
 
+// Для sandbox ВТБ: их тестовый сервер использует сертификат, не входящий в стандартные CA
+if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
