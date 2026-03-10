@@ -318,6 +318,20 @@ export async function fetchPayments(filters?: { status?: string; customer_id?: s
   return fetchApi<PaymentData[]>(`/api/payments${qs ? `?${qs}` : ''}`);
 }
 
+export async function createCashPayment(data: {
+  customerId: string;
+  cellId: string;
+  amount: number;
+  duration: number;
+  cellNumber?: number;
+  description?: string;
+}): Promise<{ paymentId: string }> {
+  return fetchApi<{ paymentId: string }>('/api/payments/cash', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
 export async function refundPayment(id: string, amount?: number): Promise<void> {
   await fetchApi(`/api/payments/${id}/refund`, {
     method: 'POST',
