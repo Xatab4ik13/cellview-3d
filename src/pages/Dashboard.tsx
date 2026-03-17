@@ -28,8 +28,8 @@ const Dashboard = () => {
   const [pendingBooking, setPendingBooking] = useState<BookingState | null>(null);
 
   useEffect(() => {
-    const customer = localStorage.getItem('kladovka78_customer');
-    if (!customer) {
+    const token = localStorage.getItem('kladovka78_token');
+    if (!token) {
       navigate('/auth');
     }
   }, [navigate]);
