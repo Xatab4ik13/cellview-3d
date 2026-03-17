@@ -8,6 +8,7 @@ module.exports = {
     env: {
       NODE_ENV: 'production',
       PORT: 3001,
+      NODE_EXTRA_CA_CERTS: '/etc/ssl/certs/ca-certificates.crt',
     },
     // Auto-restart
     watch: false,
