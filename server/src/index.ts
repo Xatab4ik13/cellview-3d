@@ -1,8 +1,8 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
 import { errorHandler } from './middleware/errorHandler';
 import { healthRouter } from './routes/health';
 import { cellsRouter } from './routes/cells';
@@ -12,8 +12,6 @@ import { photosRouter } from './routes/photos';
 import { authRouter } from './routes/auth';
 import { paymentsRouter } from './routes/payments';
 
-
-dotenv.config();
 
 // Для sandbox ВТБ: их тестовый сервер использует сертификат, не входящий в стандартные CA
 if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0') {
