@@ -14,6 +14,7 @@ export interface StorageCell {
   isAvailable: boolean;
   status: CellStatus;
   reservedUntil?: string; // ISO datetime when reservation expires
+  rentalEndDate?: string; // ISO date when active rental ends
   hasSocket: boolean;
   hasShelves: boolean;
   photos: string[];
