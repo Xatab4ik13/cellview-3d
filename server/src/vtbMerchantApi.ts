@@ -1,3 +1,7 @@
+import https from 'node:https';
+import fs from 'node:fs';
+import { URL } from 'node:url';
+
 const VTB_OAUTH_URL = process.env.VTB_OAUTH_URL || 'https://epa-ift-sbp.vtb.ru:443/passport/oauth2/token';
 const VTB_API_URL = (process.env.VTB_API_URL || 'https://test3.api.vtb.ru:8443/openapi/smb/efcp/e-commerce/v1').replace(/\/$/, '');
 const VTB_CLIENT_ID = process.env.VTB_CLIENT_ID;
@@ -5,6 +9,49 @@ const VTB_CLIENT_SECRET = process.env.VTB_CLIENT_SECRET;
 const VTB_MERCHANT_AUTHORIZATION = process.env.VTB_MERCHANT_AUTHORIZATION;
 
 let cachedToken: { value: string; expiresAt: number } | null = null;
+
+// Build custom CA list: system default + Russian Trusted CA bundle
+const EXTRA_CA_PATH = process.env.NODE_EXTRA_CA_CERTS || '/etc/ssl/certs/russian-trusted-bundle.pem';
+let extraCa: string | undefined;
+try {
+  extraCa = fs.readFileSync(EXTRA_CA_PATH, 'utf-8');
+} catch { /* ignore if file not found */ }
+
+const httpsAgent = new https.Agent({
+  ca: extraCa ? [extraCa] : undefined,
+  keepAlive: true,
+  timeout: 30000,
+});
+
+/** Low-level HTTPS request that bypasses undici/fetch issues */
+function httpsRequest(
+  url: string,
+  options: { method?: string; headers?: Record<string, string>; body?: string },
+): Promise<{ status: number; text: string }> {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const req = https.request(
+      {
+        hostname: parsed.hostname,
+        port: parsed.port || 443,
+        path: parsed.pathname + parsed.search,
+        method: options.method || 'GET',
+        headers: options.headers || {},
+        agent: httpsAgent,
+        timeout: 30000,
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (c) => chunks.push(c));
+        res.on('end', () => resolve({ status: res.statusCode || 0, text: Buffer.concat(chunks).toString() }));
+      },
+    );
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(new Error('Request timeout')); });
+    if (options.body) req.write(options.body);
+    req.end();
+  });
+}
 
 type VtbStatus = {
   value?: string;
