@@ -139,7 +139,7 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
           {/* Центрируем проекцию - с отступами для размерных линий */}
           <g transform={`translate(${offsetX}, ${offsetY})`}>
             
-            {/* ===== ПОЛ ===== */}
+            {/* ===== ПОЛ (только для свободных) / ЗАНЯТО ДО (для занятых) ===== */}
             <g>
               {/* Плоскость пола */}
               <polygon 
@@ -148,15 +148,16 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
                 stroke="hsl(var(--border))"
                 strokeWidth="1.5"
               />
-              {/* Надпись ПОЛ */}
-              <text 
-                x={finalBoxWidth / 2 + finalBoxDepth / 2} 
-                y={finalBoxHeight - finalBoxDepth * 0.25 + 5} 
-                textAnchor="middle" 
-                className="text-[10px] fill-muted-foreground font-medium"
-              >
-                ПОЛ
-              </text>
+              {cell.isAvailable && (
+                <text 
+                  x={finalBoxWidth / 2 + finalBoxDepth / 2} 
+                  y={finalBoxHeight - finalBoxDepth * 0.25 + 5} 
+                  textAnchor="middle" 
+                  className="text-[10px] fill-muted-foreground font-medium"
+                >
+                  ПОЛ
+                </text>
+              )}
             </g>
             
             {/* ===== БОКС (диаметрическая проекция) ===== */}
