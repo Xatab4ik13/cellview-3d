@@ -27,8 +27,8 @@ jobs:
             # Pull latest changes
             git pull origin main
 
-            # Install dependencies
-            npm ci --production
+            # Install all dependencies (including devDependencies for build)
+            npm install
 
             # Build TypeScript
             npm run build
@@ -36,7 +36,9 @@ jobs:
             # Run migrations
             npm run migrate || true
 
-            # Restart with PM2
-            pm2 restart kladovka78-api || pm2 start ecosystem.config.js
+            # Restart with PM2 (preserve NODE_EXTRA_CA_CERTS)
+            pm2 delete kladovka78-api || true
+            NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt pm2 start ecosystem.config.js --only kladovka78-api --update-env
+            pm2 save
 
             echo "✅ Backend deployed successfully"
