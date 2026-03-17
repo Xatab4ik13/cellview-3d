@@ -45,6 +45,7 @@ const Dashboard = () => {
   }, [locationState]);
 
   const handleLogout = () => {
+    localStorage.removeItem('kladovka78_token');
     localStorage.removeItem('kladovka78_customer');
     localStorage.removeItem('kladovka78_customer_id');
     navigate('/');

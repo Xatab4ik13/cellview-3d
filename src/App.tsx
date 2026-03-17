@@ -60,6 +60,7 @@ const App = () => (
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/consent" element={<Consent />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/payment/success" element={<PaymentSuccess />} />
