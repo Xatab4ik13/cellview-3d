@@ -5,10 +5,11 @@ module.exports = {
     cwd: '/var/www/kladovka78/server',
     instances: 2,
     exec_mode: 'cluster',
+    node_args: '--use-openssl-ca',
     env: {
       NODE_ENV: 'production',
       PORT: 3001,
-      NODE_EXTRA_CA_CERTS: '/etc/ssl/certs/ca-certificates.crt',
+      NODE_EXTRA_CA_CERTS: '/etc/ssl/certs/russian-trusted-bundle.pem',
     },
     // Auto-restart
     watch: false,
