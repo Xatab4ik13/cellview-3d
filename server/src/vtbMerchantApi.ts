@@ -129,15 +129,26 @@ async function getAccessToken(): Promise<string> {
     client_secret: VTB_CLIENT_SECRET,
   });
 
-  const response = await fetch(VTB_OAUTH_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: body.toString(),
-  });
+  console.log(`[VTB] OAuth request to ${VTB_OAUTH_URL}`);
+  console.log(`[VTB] NODE_EXTRA_CA_CERTS=${process.env.NODE_EXTRA_CA_CERTS || '(not set)'}`);
+  console.log(`[VTB] NODE_TLS_REJECT_UNAUTHORIZED=${process.env.NODE_TLS_REJECT_UNAUTHORIZED || '(not set)'}`);
+
+  let response: globalThis.Response;
+  try {
+    response = await fetch(VTB_OAUTH_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: body.toString(),
+    });
+  } catch (fetchErr: any) {
+    console.error(`[VTB] OAuth fetch FAILED:`, fetchErr?.cause || fetchErr?.message || fetchErr);
+    throw new Error(`VTB OAuth fetch failed: ${fetchErr?.cause?.code || fetchErr?.message || 'unknown'}`);
+  }
 
   const text = await response.text();
+  console.log(`[VTB] OAuth response ${response.status}: ${text.slice(0, 300)}`);
   const data = parseJson<{ access_token?: string; expires_in?: number; error_description?: string }>(text);
 
   if (!response.ok || !data?.access_token) {
