@@ -1,3 +1,7 @@
+import https from 'node:https';
+import fs from 'node:fs';
+import { URL } from 'node:url';
+
 const VTB_OAUTH_URL = process.env.VTB_OAUTH_URL || 'https://epa-ift-sbp.vtb.ru:443/passport/oauth2/token';
 const VTB_API_URL = (process.env.VTB_API_URL || 'https://test3.api.vtb.ru:8443/openapi/smb/efcp/e-commerce/v1').replace(/\/$/, '');
 const VTB_CLIENT_ID = process.env.VTB_CLIENT_ID;
@@ -5,6 +9,49 @@ const VTB_CLIENT_SECRET = process.env.VTB_CLIENT_SECRET;
 const VTB_MERCHANT_AUTHORIZATION = process.env.VTB_MERCHANT_AUTHORIZATION;
 
 let cachedToken: { value: string; expiresAt: number } | null = null;
+
+// Build custom CA list: system default + Russian Trusted CA bundle
+const EXTRA_CA_PATH = process.env.NODE_EXTRA_CA_CERTS || '/etc/ssl/certs/russian-trusted-bundle.pem';
+let extraCa: string | undefined;
+try {
+  extraCa = fs.readFileSync(EXTRA_CA_PATH, 'utf-8');
+} catch { /* ignore if file not found */ }
+
+const httpsAgent = new https.Agent({
+  ca: extraCa ? [extraCa] : undefined,
+  keepAlive: true,
+  timeout: 30000,
+});
+
+/** Low-level HTTPS request that bypasses undici/fetch issues */
+function httpsRequest(
+  url: string,
+  options: { method?: string; headers?: Record<string, string>; body?: string },
+): Promise<{ status: number; text: string }> {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const req = https.request(
+      {
+        hostname: parsed.hostname,
+        port: parsed.port || 443,
+        path: parsed.pathname + parsed.search,
+        method: options.method || 'GET',
+        headers: options.headers || {},
+        agent: httpsAgent,
+        timeout: 30000,
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (c) => chunks.push(c));
+        res.on('end', () => resolve({ status: res.statusCode || 0, text: Buffer.concat(chunks).toString() }));
+      },
+    );
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(new Error('Request timeout')); });
+    if (options.body) req.write(options.body);
+    req.end();
+  });
+}
 
 type VtbStatus = {
   value?: string;
@@ -130,29 +177,24 @@ async function getAccessToken(): Promise<string> {
   });
 
   console.log(`[VTB] OAuth request to ${VTB_OAUTH_URL}`);
-  console.log(`[VTB] NODE_EXTRA_CA_CERTS=${process.env.NODE_EXTRA_CA_CERTS || '(not set)'}`);
-  console.log(`[VTB] NODE_TLS_REJECT_UNAUTHORIZED=${process.env.NODE_TLS_REJECT_UNAUTHORIZED || '(not set)'}`);
 
-  let response: globalThis.Response;
+  let res: { status: number; text: string };
   try {
-    response = await fetch(VTB_OAUTH_URL, {
+    res = await httpsRequest(VTB_OAUTH_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: body.toString(),
     });
-  } catch (fetchErr: any) {
-    console.error(`[VTB] OAuth fetch FAILED:`, fetchErr?.cause || fetchErr?.message || fetchErr);
-    throw new Error(`VTB OAuth fetch failed: ${fetchErr?.cause?.code || fetchErr?.message || 'unknown'}`);
+  } catch (err: any) {
+    console.error(`[VTB] OAuth request FAILED:`, err?.message || err);
+    throw new Error(`VTB OAuth request failed: ${err?.message || 'unknown'}`);
   }
 
-  const text = await response.text();
-  console.log(`[VTB] OAuth response ${response.status}: ${text.slice(0, 300)}`);
-  const data = parseJson<{ access_token?: string; expires_in?: number; error_description?: string }>(text);
+  console.log(`[VTB] OAuth response ${res.status}: ${res.text.slice(0, 300)}`);
+  const data = parseJson<{ access_token?: string; expires_in?: number; error_description?: string }>(res.text);
 
-  if (!response.ok || !data?.access_token) {
-    throw new Error(data?.error_description || `Не удалось получить access_token ВТБ (HTTP ${response.status})`);
+  if (res.status >= 400 || !data?.access_token) {
+    throw new Error(data?.error_description || `Не удалось получить access_token ВТБ (HTTP ${res.status})`);
   }
 
   const ttlSeconds = Math.max(Number(data.expires_in || 179) - 10, 30);
@@ -169,9 +211,9 @@ async function merchantApiRequest<T>(path: string, init: { method?: 'GET' | 'POS
   const url = `${VTB_API_URL}${path}`;
   console.log(`[VTB] API ${init.method || 'GET'} ${url}`);
 
-  let response: globalThis.Response;
+  let res: { status: number; text: string };
   try {
-    response = await fetch(url, {
+    res = await httpsRequest(url, {
       method: init.method || 'GET',
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -181,17 +223,16 @@ async function merchantApiRequest<T>(path: string, init: { method?: 'GET' | 'POS
       },
       body: init.body ? JSON.stringify(init.body) : undefined,
     });
-  } catch (fetchErr: any) {
-    console.error(`[VTB] API fetch FAILED:`, fetchErr?.cause || fetchErr?.message || fetchErr);
-    throw new Error(`VTB API fetch failed: ${fetchErr?.cause?.code || fetchErr?.message || 'unknown'}`);
+  } catch (err: any) {
+    console.error(`[VTB] API request FAILED:`, err?.message || err);
+    throw new Error(`VTB API request failed: ${err?.message || 'unknown'}`);
   }
 
-  const text = await response.text();
-  console.log(`[VTB] API response ${response.status}: ${text.slice(0, 500)}`);
-  const data = parseJson<T>(text);
+  console.log(`[VTB] API response ${res.status}: ${res.text.slice(0, 500)}`);
+  const data = parseJson<T>(res.text);
 
-  if (!response.ok || !data) {
-    throw new Error(text || `Ошибка запроса к VTB Merchant API (HTTP ${response.status})`);
+  if (res.status >= 400 || !data) {
+    throw new Error(res.text || `Ошибка запроса к VTB Merchant API (HTTP ${res.status})`);
   }
 
   return data;
