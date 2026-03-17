@@ -8,10 +8,16 @@ interface ApiResponse<T> {
   error?: string;
 }
 
+function getAuthHeaders(): Record<string, string> {
+  const token = localStorage.getItem('kladovka78_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${endpoint}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...getAuthHeaders(),
       ...options?.headers,
     },
     ...options,
@@ -28,7 +34,6 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
 
 // ============ Ячейки ============
 
-/** API может вернуть числовые поля как строки — приводим к number */
 function parseCell(raw: any): StorageCell {
   return {
     ...raw,
@@ -240,31 +245,44 @@ export interface AuthCustomer {
   name: string;
   phone: string;
   email?: string;
-  telegram?: string;
   type: 'individual' | 'company';
 }
 
-export async function verifyAuthToken(token: string): Promise<AuthCustomer> {
-  return fetchApi<AuthCustomer>('/api/auth/verify-token', {
+export interface AuthResponse {
+  token: string;
+  customer: AuthCustomer;
+}
+
+export async function authRegister(data: { name: string; email: string; phone?: string; password: string }): Promise<AuthResponse> {
+  return fetchApi<AuthResponse>('/api/auth/register', {
     method: 'POST',
-    body: JSON.stringify({ token }),
+    body: JSON.stringify(data),
   });
 }
 
-export async function createAuthSession(): Promise<{ sessionId: string }> {
-  return fetchApi<{ sessionId: string }>('/api/auth/session', {
+export async function authLogin(data: { email: string; password: string }): Promise<AuthResponse> {
+  return fetchApi<AuthResponse>('/api/auth/login', {
     method: 'POST',
+    body: JSON.stringify(data),
   });
 }
 
-export async function pollAuthSession(sessionId: string): Promise<{ status: string; customer?: AuthCustomer }> {
-  return fetchApi<{ status: string; customer?: AuthCustomer }>(`/api/auth/session/${sessionId}/status`);
+export async function authForgotPassword(email: string): Promise<{ message: string }> {
+  return fetchApi<{ message: string }>('/api/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
 }
 
-export async function fetchAuthMe(customerId: string): Promise<AuthCustomer> {
-  return fetchApi<AuthCustomer>('/api/auth/me', {
-    headers: { 'X-Customer-Id': customerId },
+export async function authResetPassword(token: string, password: string): Promise<{ message: string }> {
+  return fetchApi<{ message: string }>('/api/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, password }),
   });
+}
+
+export async function fetchAuthMe(): Promise<AuthCustomer> {
+  return fetchApi<AuthCustomer>('/api/auth/me');
 }
 
 // ============ Платежи ============
@@ -344,4 +362,3 @@ export async function refundPayment(id: string, amount?: number): Promise<void> 
 export async function checkHealth(): Promise<{ status: string; services: Record<string, string> }> {
   return fetchApi('/api/health');
 }
-

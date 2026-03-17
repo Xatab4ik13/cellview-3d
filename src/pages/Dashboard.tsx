@@ -28,8 +28,8 @@ const Dashboard = () => {
   const [pendingBooking, setPendingBooking] = useState<BookingState | null>(null);
 
   useEffect(() => {
-    const customer = localStorage.getItem('kladovka78_customer');
-    if (!customer) {
+    const token = localStorage.getItem('kladovka78_token');
+    if (!token) {
       navigate('/auth');
     }
   }, [navigate]);
@@ -45,6 +45,7 @@ const Dashboard = () => {
   }, [locationState]);
 
   const handleLogout = () => {
+    localStorage.removeItem('kladovka78_token');
     localStorage.removeItem('kladovka78_customer');
     localStorage.removeItem('kladovka78_customer_id');
     navigate('/');
