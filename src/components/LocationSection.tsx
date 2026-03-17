@@ -75,7 +75,7 @@ const LocationSection = () => {
                       Санкт-Петербург
                     </span>
                     <span className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-sm font-semibold">
-                      1 склад
+                      Алтайская 21
                     </span>
                   </div>
                 </div>
