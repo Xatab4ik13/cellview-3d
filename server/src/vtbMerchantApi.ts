@@ -166,18 +166,28 @@ async function getAccessToken(): Promise<string> {
 
 async function merchantApiRequest<T>(path: string, init: { method?: 'GET' | 'POST'; body?: unknown } = {}): Promise<T> {
   const accessToken = await getAccessToken();
-  const response = await fetch(`${VTB_API_URL}${path}`, {
-    method: init.method || 'GET',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'X-IBM-Client-Id': getXIbmClientId(),
-      'Content-Type': 'application/json',
-      ...(VTB_MERCHANT_AUTHORIZATION ? { 'Merchant-Authorization': VTB_MERCHANT_AUTHORIZATION } : {}),
-    },
-    body: init.body ? JSON.stringify(init.body) : undefined,
-  });
+  const url = `${VTB_API_URL}${path}`;
+  console.log(`[VTB] API ${init.method || 'GET'} ${url}`);
+
+  let response: globalThis.Response;
+  try {
+    response = await fetch(url, {
+      method: init.method || 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'X-IBM-Client-Id': getXIbmClientId(),
+        'Content-Type': 'application/json',
+        ...(VTB_MERCHANT_AUTHORIZATION ? { 'Merchant-Authorization': VTB_MERCHANT_AUTHORIZATION } : {}),
+      },
+      body: init.body ? JSON.stringify(init.body) : undefined,
+    });
+  } catch (fetchErr: any) {
+    console.error(`[VTB] API fetch FAILED:`, fetchErr?.cause || fetchErr?.message || fetchErr);
+    throw new Error(`VTB API fetch failed: ${fetchErr?.cause?.code || fetchErr?.message || 'unknown'}`);
+  }
 
   const text = await response.text();
+  console.log(`[VTB] API response ${response.status}: ${text.slice(0, 500)}`);
   const data = parseJson<T>(text);
 
   if (!response.ok || !data) {
