@@ -16,7 +16,8 @@ cellsRouter.get('/', async (req: Request, res: Response, next: NextFunction) => 
         c.floor, c.tier, c.price_per_month as pricePerMonth,
         c.status, c.has_socket as hasSocket, c.has_shelves as hasShelves,
         c.reserved_until as reservedUntil,
-        c.description
+        c.description,
+        (SELECT r.end_date FROM rentals r WHERE r.cell_id = c.id AND r.status = 'active' ORDER BY r.end_date DESC LIMIT 1) as rentalEndDate
       FROM cells c
       ORDER BY c.number ASC
     `);

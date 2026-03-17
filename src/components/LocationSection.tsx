@@ -20,7 +20,7 @@ const LocationSection = () => {
           <div className="order-2 lg:order-1">
             <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-border shadow-lg">
               <iframe 
-                src="https://yandex.ru/map-widget/v1/?ll=30.421389%2C59.858333&z=16&pt=30.421389%2C59.858333%2Cpm2rdm&lang=ru_RU"
+                src="https://yandex.ru/map-widget/v1/?ll=30.32755%2C59.84881&z=16&pt=30.32755%2C59.84881%2Cpm2rdm&lang=ru_RU"
                 width="100%" 
                 height="100%" 
                 style={{ border: 0 }}
@@ -75,7 +75,7 @@ const LocationSection = () => {
                       Санкт-Петербург
                     </span>
                     <span className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-sm font-semibold">
-                      1 склад
+                      Алтайская 21
                     </span>
                   </div>
                 </div>

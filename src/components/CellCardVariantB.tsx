@@ -139,7 +139,7 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
           {/* Центрируем проекцию - с отступами для размерных линий */}
           <g transform={`translate(${offsetX}, ${offsetY})`}>
             
-            {/* ===== ПОЛ ===== */}
+            {/* ===== ПОЛ (только для свободных) / ЗАНЯТО ДО (для занятых) ===== */}
             <g>
               {/* Плоскость пола */}
               <polygon 
@@ -148,15 +148,16 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
                 stroke="hsl(var(--border))"
                 strokeWidth="1.5"
               />
-              {/* Надпись ПОЛ */}
-              <text 
-                x={finalBoxWidth / 2 + finalBoxDepth / 2} 
-                y={finalBoxHeight - finalBoxDepth * 0.25 + 5} 
-                textAnchor="middle" 
-                className="text-[10px] fill-muted-foreground font-medium"
-              >
-                ПОЛ
-              </text>
+              {cell.isAvailable && (
+                <text 
+                  x={finalBoxWidth / 2 + finalBoxDepth / 2} 
+                  y={finalBoxHeight - finalBoxDepth * 0.25 + 5} 
+                  textAnchor="middle" 
+                  className="text-[10px] fill-muted-foreground font-medium"
+                >
+                  ПОЛ
+                </text>
+              )}
             </g>
             
             {/* ===== БОКС (диаметрическая проекция) ===== */}
@@ -218,6 +219,44 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
               stroke="hsl(var(--accent-foreground))"
               strokeWidth="1.5"
             />
+
+            {/* Надпись "Занято до" по центру двери для занятых ячеек */}
+            {!cell.isAvailable && cell.status === 'occupied' && (
+              <g>
+                <rect
+                  x={finalBoxWidth * 0.1}
+                  y={finalBoxHeight * 0.35}
+                  width={finalBoxWidth * 0.8}
+                  height={finalBoxHeight * 0.3}
+                  rx="4"
+                  fill="hsl(var(--background))"
+                  fillOpacity="0.85"
+                  stroke="hsl(var(--border))"
+                  strokeWidth="1"
+                />
+                <text
+                  x={finalBoxWidth * 0.5}
+                  y={finalBoxHeight * 0.47}
+                  textAnchor="middle"
+                  className="fill-muted-foreground font-semibold"
+                  style={{ fontSize: Math.max(8, finalScale * 0.09) }}
+                >
+                  Занято до
+                </text>
+                <text
+                  x={finalBoxWidth * 0.5}
+                  y={finalBoxHeight * 0.58}
+                  textAnchor="middle"
+                  className="fill-foreground font-bold"
+                  style={{ fontSize: Math.max(9, finalScale * 0.11) }}
+                >
+                  {cell.rentalEndDate 
+                    ? new Date(cell.rentalEndDate).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                    : '—'
+                  }
+                </text>
+              </g>
+            )}
             
             {/* ===== РАЗМЕРНЫЕ ЛИНИИ ===== */}
             
