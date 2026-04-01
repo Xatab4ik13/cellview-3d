@@ -3,15 +3,12 @@ import { v4 as uuidv4 } from 'uuid';
 import pool from '../config/database';
 import { AppError } from '../middleware/errorHandler';
 import {
-  createMerchantOrder,
-  createMerchantRefund,
-  getMerchantOrder,
-  getOrderPaymentObject,
-  getVtbStatusChangedAt,
-  getVtbStatusValue,
-  type VtbCallbackPayload,
-  type VtbOrderResponse,
-} from '../vtbMerchantApi';
+  rbsRegisterOrder,
+  rbsGetOrderStatus,
+  rbsRefund,
+  mapRbsStatus,
+  type RbsStatusResponse,
+} from '../vtbRbsApi';
 
 export const paymentsRouter = Router();
 
@@ -59,29 +56,7 @@ function toRubles(amountKopecks: number): number {
   return Number((amountKopecks / 100).toFixed(2));
 }
 
-function mapMerchantStatus(order: VtbOrderResponse | null | undefined): PaymentDbRow['status'] {
-  const orderStatus = getVtbStatusValue(order?.object);
-  const paymentObject = getOrderPaymentObject(order);
-  const paymentStatus = getVtbStatusValue(paymentObject);
-
-  if (paymentStatus === 'CONFIRMED' || orderStatus === 'PAID') return 'paid';
-  if (orderStatus === 'REFUNDED' || orderStatus === 'PARTIALLY_REFUNDED') return 'refunded';
-  if (orderStatus === 'EXPIRED') return 'expired';
-  if (paymentStatus === 'DECLINED' || orderStatus === 'CANCELED' || orderStatus === 'VOIDED') return 'failed';
-  if (paymentStatus === 'AUTHORIZED' || orderStatus === 'PENDING') return 'pending';
-  if (orderStatus === 'CREATED' || orderStatus === 'LCREATED' || paymentStatus === 'NEW') return 'created';
-
-  return 'pending';
-}
-
-function getPaymentMethod(order: VtbOrderResponse | null | undefined): string | null {
-  const paymentType = getOrderPaymentObject(order)?.paymentData?.type;
-  return paymentType ? paymentType.toUpperCase() : null;
-}
-
-function getGatewayPaymentId(order: VtbOrderResponse | null | undefined): string | null {
-  return getOrderPaymentObject(order)?.paymentId || null;
-}
+// mapMerchantStatus and getPaymentMethod removed — replaced by RBS mapRbsStatus
 
 async function fetchCustomerMeta(customerId: string): Promise<CustomerMeta | null> {
   const [rows] = await pool.query('SELECT email, phone, telegram_id, name FROM customers WHERE id = ? LIMIT 1', [customerId]);
@@ -225,14 +200,7 @@ async function updatePaymentState(
   }
 }
 
-function extractCallbackStatus(payload: VtbCallbackPayload): PaymentDbRow['status'] {
-  const status = getVtbStatusValue(payload.object);
-  if (payload.type === 'REFUND') return 'refunded';
-  if (status === 'CONFIRMED') return 'paid';
-  if (status === 'DECLINED' || status === 'REVERSED') return 'failed';
-  if (status === 'AUTHORIZED' || status === 'NEW') return 'pending';
-  return 'pending';
-}
+// extractCallbackStatus removed — RBS uses callback URL with orderId, we poll status via getOrderStatusExtended
 
 // ===================== ROUTES =====================
 
@@ -256,29 +224,25 @@ paymentsRouter.post('/create', async (req: Request, res: Response, next: NextFun
     const paymentId = uuidv4();
     const orderDescription = buildOrderDescription(cellNumber, durationMonths, description);
     const returnUrl = `${SITE_URL}/payment/success?paymentId=${paymentId}`;
-    const expire = new Date(Date.now() + ORDER_EXPIRE_MINUTES * 60 * 1000).toISOString();
+    const failUrl = `${SITE_URL}/payment/fail?paymentId=${paymentId}`;
+    const sessionTimeoutSecs = ORDER_EXPIRE_MINUTES * 60;
 
     const customer = await fetchCustomerMeta(customerId);
-    const orderResponse = await createMerchantOrder({
-      orderId: paymentId,
-      orderName: orderDescription,
-      expire,
+
+    const rbsResult = await rbsRegisterOrder({
+      orderNumber: paymentId,
+      amount: amountKopecks,
       returnUrl,
-      amount: {
-        value: toRubles(amountKopecks),
-        code: 'RUB',
-      },
-      customer: {
-        customerId,
-        email: customer?.email || undefined,
-        phone: normalizePhone(customer?.phone),
-      },
-      additionalInfo: `cell:${cellNumber || ''},duration:${durationMonths}`,
+      failUrl,
+      description: orderDescription,
+      email: customer?.email || undefined,
+      phone: normalizePhone(customer?.phone),
+      sessionTimeoutSecs,
     });
 
-    const payUrl = orderResponse.object?.payUrl;
-    if (!payUrl) {
-      throw new AppError('VTB Merchant API не вернул ссылку на оплату', 502);
+    const formUrl = rbsResult.formUrl;
+    if (!formUrl) {
+      throw new AppError('VTB RBS не вернул ссылку на оплату', 502);
     }
 
     await pool.query(
@@ -293,13 +257,13 @@ paymentsRouter.post('/create', async (req: Request, res: Response, next: NextFun
         orderDescription,
         durationMonths,
         monthlyPrice,
-        orderResponse.object?.orderCode || null,
-        payUrl,
-        mapMerchantStatus(orderResponse),
+        rbsResult.orderId || null,
+        formUrl,
+        'created',
         returnUrl,
-        `${SITE_URL}/payment/fail?paymentId=${paymentId}`,
+        failUrl,
         req.ip || null,
-        JSON.stringify(orderResponse),
+        JSON.stringify(rbsResult),
       ]
     );
 
@@ -307,8 +271,8 @@ paymentsRouter.post('/create', async (req: Request, res: Response, next: NextFun
       success: true,
       data: {
         paymentId,
-        formUrl: payUrl,
-        vtbOrderId: orderResponse.object?.orderCode || paymentId,
+        formUrl,
+        vtbOrderId: rbsResult.orderId || paymentId,
       },
     });
   } catch (error) {
@@ -366,23 +330,25 @@ paymentsRouter.post('/cash', async (req: Request, res: Response, next: NextFunct
   }
 });
 
+// RBS callback — VTB redirects user back or sends server notification with orderId
 paymentsRouter.post('/callback', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const payload = req.body as VtbCallbackPayload;
-    const orderId = payload?.object?.orderId;
-
-    if (!payload?.type || !orderId) {
-      throw new AppError('Некорректный callback от платёжного шлюза', 400);
+    const vtbOrderId = req.body?.orderId || req.query?.orderId;
+    if (!vtbOrderId) {
+      throw new AppError('Отсутствует orderId в callback', 400);
     }
 
-    const payment = await fetchPayment(orderId);
-    const nextStatus = extractCallbackStatus(payload);
-    const paymentMethod = payload.type === 'PAYMENT'
-      ? payload.object?.paymentData?.type?.toUpperCase() || null
-      : payment.payment_method;
-    const statusChangedAt = getVtbStatusChangedAt(payload.object);
+    const [rows] = await pool.query('SELECT * FROM payments WHERE vtb_order_id = ? LIMIT 1', [vtbOrderId]);
+    const payment = (rows as PaymentDbRow[])[0];
+    if (!payment) {
+      throw new AppError('Платёж не найден по orderId', 404);
+    }
 
-    await updatePaymentState(payment, nextStatus, payload, paymentMethod, statusChangedAt ? new Date(statusChangedAt) : undefined);
+    const statusResp = await rbsGetOrderStatus(vtbOrderId);
+    const nextStatus = mapRbsStatus(statusResp.orderStatus ?? statusResp.OrderStatus);
+    const paymentMethod = statusResp.cardAuthInfo?.pan ? 'CARD' : null;
+
+    await updatePaymentState(payment, nextStatus, statusResp, paymentMethod);
 
     res.json({ success: true });
   } catch (error) {
@@ -406,12 +372,15 @@ paymentsRouter.get('/:id/status', async (req: Request, res: Response, next: Next
       });
     }
 
-    const orderResponse = await getMerchantOrder(payment.id);
-    const nextStatus = mapMerchantStatus(orderResponse);
-    const paymentMethod = getPaymentMethod(orderResponse);
-    const paidAtSource = getVtbStatusChangedAt(getOrderPaymentObject(orderResponse)) || getVtbStatusChangedAt(orderResponse.object);
+    if (!payment.vtb_order_id) {
+      return res.json({ success: true, data: { paymentId: payment.id, status: payment.status, amount: toRubles(payment.amount) } });
+    }
 
-    await updatePaymentState(payment, nextStatus, orderResponse, paymentMethod, paidAtSource ? new Date(paidAtSource) : undefined);
+    const statusResp = await rbsGetOrderStatus(payment.vtb_order_id);
+    const nextStatus = mapRbsStatus(statusResp.orderStatus ?? statusResp.OrderStatus);
+    const paymentMethod = statusResp.cardAuthInfo?.pan ? 'CARD' : null;
+
+    await updatePaymentState(payment, nextStatus, statusResp, paymentMethod);
 
     res.json({
       success: true,
@@ -419,8 +388,8 @@ paymentsRouter.get('/:id/status', async (req: Request, res: Response, next: Next
         paymentId: payment.id,
         status: nextStatus,
         amount: toRubles(payment.amount),
-        paidAt: nextStatus === 'paid' ? (payment.paid_at || (paidAtSource ? new Date(paidAtSource) : null)) : null,
-        vtbOrderStatus: getVtbStatusValue(orderResponse.object),
+        paidAt: nextStatus === 'paid' ? (payment.paid_at || new Date()) : null,
+        rbsOrderStatus: statusResp.orderStatus,
       },
     });
   } catch (error) {
@@ -477,10 +446,8 @@ paymentsRouter.post('/:id/refund', async (req: Request, res: Response, next: Nex
       return;
     }
 
-    const orderResponse = await getMerchantOrder(payment.id);
-    const gatewayPaymentId = getGatewayPaymentId(orderResponse);
-    if (!gatewayPaymentId) {
-      throw new AppError('Не найден paymentId транзакции в ответе VTB', 502);
+    if (!payment.vtb_order_id) {
+      throw new AppError('Нет orderId шлюза для возврата', 502);
     }
 
     const requestedAmount = req.body.amount ? Number(req.body.amount) : toRubles(payment.amount);
@@ -489,11 +456,7 @@ paymentsRouter.post('/:id/refund', async (req: Request, res: Response, next: Nex
       throw new AppError('Некорректная сумма возврата', 400);
     }
 
-    const refundResponse = await createMerchantRefund({
-      refundId: uuidv4(),
-      paymentId: gatewayPaymentId,
-      amount: { value: toRubles(refundAmountKopecks), code: 'RUB' },
-    });
+    const refundResponse = await rbsRefund(payment.vtb_order_id, refundAmountKopecks);
 
     await updatePaymentState(payment, 'refunded', refundResponse, payment.payment_method);
 
