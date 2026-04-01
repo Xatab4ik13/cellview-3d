@@ -3,15 +3,12 @@ import { v4 as uuidv4 } from 'uuid';
 import pool from '../config/database';
 import { AppError } from '../middleware/errorHandler';
 import {
-  createMerchantOrder,
-  createMerchantRefund,
-  getMerchantOrder,
-  getOrderPaymentObject,
-  getVtbStatusChangedAt,
-  getVtbStatusValue,
-  type VtbCallbackPayload,
-  type VtbOrderResponse,
-} from '../vtbMerchantApi';
+  rbsRegisterOrder,
+  rbsGetOrderStatus,
+  rbsRefund,
+  mapRbsStatus,
+  type RbsStatusResponse,
+} from '../vtbRbsApi';
 
 export const paymentsRouter = Router();
 
