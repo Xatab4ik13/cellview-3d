@@ -200,14 +200,7 @@ async function updatePaymentState(
   }
 }
 
-function extractCallbackStatus(payload: VtbCallbackPayload): PaymentDbRow['status'] {
-  const status = getVtbStatusValue(payload.object);
-  if (payload.type === 'REFUND') return 'refunded';
-  if (status === 'CONFIRMED') return 'paid';
-  if (status === 'DECLINED' || status === 'REVERSED') return 'failed';
-  if (status === 'AUTHORIZED' || status === 'NEW') return 'pending';
-  return 'pending';
-}
+// extractCallbackStatus removed — RBS uses callback URL with orderId, we poll status via getOrderStatusExtended
 
 // ===================== ROUTES =====================
 
