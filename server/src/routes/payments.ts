@@ -224,29 +224,25 @@ paymentsRouter.post('/create', async (req: Request, res: Response, next: NextFun
     const paymentId = uuidv4();
     const orderDescription = buildOrderDescription(cellNumber, durationMonths, description);
     const returnUrl = `${SITE_URL}/payment/success?paymentId=${paymentId}`;
-    const expire = new Date(Date.now() + ORDER_EXPIRE_MINUTES * 60 * 1000).toISOString();
+    const failUrl = `${SITE_URL}/payment/fail?paymentId=${paymentId}`;
+    const sessionTimeoutSecs = ORDER_EXPIRE_MINUTES * 60;
 
     const customer = await fetchCustomerMeta(customerId);
-    const orderResponse = await createMerchantOrder({
-      orderId: paymentId,
-      orderName: orderDescription,
-      expire,
+
+    const rbsResult = await rbsRegisterOrder({
+      orderNumber: paymentId,
+      amount: amountKopecks,
       returnUrl,
-      amount: {
-        value: toRubles(amountKopecks),
-        code: 'RUB',
-      },
-      customer: {
-        customerId,
-        email: customer?.email || undefined,
-        phone: normalizePhone(customer?.phone),
-      },
-      additionalInfo: `cell:${cellNumber || ''},duration:${durationMonths}`,
+      failUrl,
+      description: orderDescription,
+      email: customer?.email || undefined,
+      phone: normalizePhone(customer?.phone),
+      sessionTimeoutSecs,
     });
 
-    const payUrl = orderResponse.object?.payUrl;
-    if (!payUrl) {
-      throw new AppError('VTB Merchant API не вернул ссылку на оплату', 502);
+    const formUrl = rbsResult.formUrl;
+    if (!formUrl) {
+      throw new AppError('VTB RBS не вернул ссылку на оплату', 502);
     }
 
     await pool.query(
@@ -261,13 +257,13 @@ paymentsRouter.post('/create', async (req: Request, res: Response, next: NextFun
         orderDescription,
         durationMonths,
         monthlyPrice,
-        orderResponse.object?.orderCode || null,
-        payUrl,
-        mapMerchantStatus(orderResponse),
+        rbsResult.orderId || null,
+        formUrl,
+        'created',
         returnUrl,
-        `${SITE_URL}/payment/fail?paymentId=${paymentId}`,
+        failUrl,
         req.ip || null,
-        JSON.stringify(orderResponse),
+        JSON.stringify(rbsResult),
       ]
     );
 
@@ -275,8 +271,8 @@ paymentsRouter.post('/create', async (req: Request, res: Response, next: NextFun
       success: true,
       data: {
         paymentId,
-        formUrl: payUrl,
-        vtbOrderId: orderResponse.object?.orderCode || paymentId,
+        formUrl,
+        vtbOrderId: rbsResult.orderId || paymentId,
       },
     });
   } catch (error) {
