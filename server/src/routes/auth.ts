@@ -28,12 +28,23 @@ authRouter.post(
       }
 
       // Check if email already exists
-      const [existing] = await pool.query(
+      const [existingEmail] = await pool.query(
         'SELECT id FROM customers WHERE email = ?',
         [email]
       );
-      if ((existing as any[]).length > 0) {
+      if ((existingEmail as any[]).length > 0) {
         throw new AppError('Пользователь с таким email уже существует', 409);
+      }
+
+      // Check if phone already exists
+      if (phone) {
+        const [existingPhone] = await pool.query(
+          'SELECT id FROM customers WHERE phone = ?',
+          [phone]
+        );
+        if ((existingPhone as any[]).length > 0) {
+          throw new AppError('Пользователь с таким номером телефона уже существует', 409);
+        }
       }
 
       const id = crypto.randomUUID();
