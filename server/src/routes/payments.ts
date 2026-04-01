@@ -446,10 +446,8 @@ paymentsRouter.post('/:id/refund', async (req: Request, res: Response, next: Nex
       return;
     }
 
-    const orderResponse = await getMerchantOrder(payment.id);
-    const gatewayPaymentId = getGatewayPaymentId(orderResponse);
-    if (!gatewayPaymentId) {
-      throw new AppError('Не найден paymentId транзакции в ответе VTB', 502);
+    if (!payment.vtb_order_id) {
+      throw new AppError('Нет orderId шлюза для возврата', 502);
     }
 
     const requestedAmount = req.body.amount ? Number(req.body.amount) : toRubles(payment.amount);
@@ -458,11 +456,7 @@ paymentsRouter.post('/:id/refund', async (req: Request, res: Response, next: Nex
       throw new AppError('Некорректная сумма возврата', 400);
     }
 
-    const refundResponse = await createMerchantRefund({
-      refundId: uuidv4(),
-      paymentId: gatewayPaymentId,
-      amount: { value: toRubles(refundAmountKopecks), code: 'RUB' },
-    });
+    const refundResponse = await rbsRefund(payment.vtb_order_id, refundAmountKopecks);
 
     await updatePaymentState(payment, 'refunded', refundResponse, payment.payment_method);
 
