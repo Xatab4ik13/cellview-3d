@@ -330,23 +330,25 @@ paymentsRouter.post('/cash', async (req: Request, res: Response, next: NextFunct
   }
 });
 
+// RBS callback — VTB redirects user back or sends server notification with orderId
 paymentsRouter.post('/callback', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const payload = req.body as VtbCallbackPayload;
-    const orderId = payload?.object?.orderId;
-
-    if (!payload?.type || !orderId) {
-      throw new AppError('Некорректный callback от платёжного шлюза', 400);
+    const vtbOrderId = req.body?.orderId || req.query?.orderId;
+    if (!vtbOrderId) {
+      throw new AppError('Отсутствует orderId в callback', 400);
     }
 
-    const payment = await fetchPayment(orderId);
-    const nextStatus = extractCallbackStatus(payload);
-    const paymentMethod = payload.type === 'PAYMENT'
-      ? payload.object?.paymentData?.type?.toUpperCase() || null
-      : payment.payment_method;
-    const statusChangedAt = getVtbStatusChangedAt(payload.object);
+    const [rows] = await pool.query('SELECT * FROM payments WHERE vtb_order_id = ? LIMIT 1', [vtbOrderId]);
+    const payment = (rows as PaymentDbRow[])[0];
+    if (!payment) {
+      throw new AppError('Платёж не найден по orderId', 404);
+    }
 
-    await updatePaymentState(payment, nextStatus, payload, paymentMethod, statusChangedAt ? new Date(statusChangedAt) : undefined);
+    const statusResp = await rbsGetOrderStatus(vtbOrderId);
+    const nextStatus = mapRbsStatus(statusResp.orderStatus ?? statusResp.OrderStatus);
+    const paymentMethod = statusResp.cardAuthInfo?.pan ? 'CARD' : null;
+
+    await updatePaymentState(payment, nextStatus, statusResp, paymentMethod);
 
     res.json({ success: true });
   } catch (error) {
@@ -370,12 +372,15 @@ paymentsRouter.get('/:id/status', async (req: Request, res: Response, next: Next
       });
     }
 
-    const orderResponse = await getMerchantOrder(payment.id);
-    const nextStatus = mapMerchantStatus(orderResponse);
-    const paymentMethod = getPaymentMethod(orderResponse);
-    const paidAtSource = getVtbStatusChangedAt(getOrderPaymentObject(orderResponse)) || getVtbStatusChangedAt(orderResponse.object);
+    if (!payment.vtb_order_id) {
+      return res.json({ success: true, data: { paymentId: payment.id, status: payment.status, amount: toRubles(payment.amount) } });
+    }
 
-    await updatePaymentState(payment, nextStatus, orderResponse, paymentMethod, paidAtSource ? new Date(paidAtSource) : undefined);
+    const statusResp = await rbsGetOrderStatus(payment.vtb_order_id);
+    const nextStatus = mapRbsStatus(statusResp.orderStatus ?? statusResp.OrderStatus);
+    const paymentMethod = statusResp.cardAuthInfo?.pan ? 'CARD' : null;
+
+    await updatePaymentState(payment, nextStatus, statusResp, paymentMethod);
 
     res.json({
       success: true,
@@ -383,8 +388,8 @@ paymentsRouter.get('/:id/status', async (req: Request, res: Response, next: Next
         paymentId: payment.id,
         status: nextStatus,
         amount: toRubles(payment.amount),
-        paidAt: nextStatus === 'paid' ? (payment.paid_at || (paidAtSource ? new Date(paidAtSource) : null)) : null,
-        vtbOrderStatus: getVtbStatusValue(orderResponse.object),
+        paidAt: nextStatus === 'paid' ? (payment.paid_at || new Date()) : null,
+        rbsOrderStatus: statusResp.orderStatus,
       },
     });
   } catch (error) {
