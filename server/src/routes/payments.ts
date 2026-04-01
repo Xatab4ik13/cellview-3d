@@ -56,29 +56,7 @@ function toRubles(amountKopecks: number): number {
   return Number((amountKopecks / 100).toFixed(2));
 }
 
-function mapMerchantStatus(order: VtbOrderResponse | null | undefined): PaymentDbRow['status'] {
-  const orderStatus = getVtbStatusValue(order?.object);
-  const paymentObject = getOrderPaymentObject(order);
-  const paymentStatus = getVtbStatusValue(paymentObject);
-
-  if (paymentStatus === 'CONFIRMED' || orderStatus === 'PAID') return 'paid';
-  if (orderStatus === 'REFUNDED' || orderStatus === 'PARTIALLY_REFUNDED') return 'refunded';
-  if (orderStatus === 'EXPIRED') return 'expired';
-  if (paymentStatus === 'DECLINED' || orderStatus === 'CANCELED' || orderStatus === 'VOIDED') return 'failed';
-  if (paymentStatus === 'AUTHORIZED' || orderStatus === 'PENDING') return 'pending';
-  if (orderStatus === 'CREATED' || orderStatus === 'LCREATED' || paymentStatus === 'NEW') return 'created';
-
-  return 'pending';
-}
-
-function getPaymentMethod(order: VtbOrderResponse | null | undefined): string | null {
-  const paymentType = getOrderPaymentObject(order)?.paymentData?.type;
-  return paymentType ? paymentType.toUpperCase() : null;
-}
-
-function getGatewayPaymentId(order: VtbOrderResponse | null | undefined): string | null {
-  return getOrderPaymentObject(order)?.paymentId || null;
-}
+// mapMerchantStatus and getPaymentMethod removed — replaced by RBS mapRbsStatus
 
 async function fetchCustomerMeta(customerId: string): Promise<CustomerMeta | null> {
   const [rows] = await pool.query('SELECT email, phone, telegram_id, name FROM customers WHERE id = ? LIMIT 1', [customerId]);
