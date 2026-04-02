@@ -785,7 +785,7 @@ const AdminCells = () => {
       volume: vol,
       floor: parseInt(editFormData.floor) || 1,
       tier: parseInt(editFormData.tier) || 1,
-      pricePerMonth: calculatePrice(vol),
+      pricePerMonth: editFormData.customPrice ? parseInt(editFormData.customPrice) : calculatePrice(vol),
       hasSocket: editFormData.hasSocket,
       hasShelves: editFormData.hasShelves,
     };
