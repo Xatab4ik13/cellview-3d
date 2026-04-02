@@ -109,7 +109,8 @@ const CatalogSection = () => {
               Каталог <span className="text-primary">ячеек</span>
             </h2>
             <p className="text-lg text-muted-foreground font-medium">
-              {filteredCells.length} из {storageCells.length} ячеек доступно
+              {storageCells.filter(c => c.isAvailable).length} из {storageCells.length} ячеек доступно
+              {activeFiltersCount > 0 && ` · показано ${filteredCells.length}`}
             </p>
           </div>
           

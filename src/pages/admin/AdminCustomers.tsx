@@ -459,7 +459,12 @@ const AdminCustomers = () => {
       rentals: activeRentals.length,
       totalSpent: `₽ ${totalSpentNum.toLocaleString('ru-RU')}`,
       totalSpentNum,
-      registeredAt: c.createdAt ? new Date(c.createdAt).toLocaleDateString('ru-RU') : '',
+      registeredAt: (() => {
+        const cRentalDates = cRentals.map(r => new Date(r.startDate).getTime()).filter(d => !isNaN(d));
+        const createdDate = c.createdAt ? new Date(c.createdAt).getTime() : Infinity;
+        const earliest = Math.min(createdDate, ...cRentalDates);
+        return earliest !== Infinity ? new Date(earliest).toLocaleDateString('ru-RU') : '';
+      })(),
       status,
       tags: [c.type === 'company' ? 'Юр. лицо' : 'Физ. лицо'],
       notes: [],
