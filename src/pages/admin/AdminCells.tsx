@@ -1419,9 +1419,20 @@ const AdminCells = () => {
                   <span className="text-muted-foreground">Объём:</span>
                   <span className="font-medium">{editVolume.toFixed(2)} м³</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Цена (1500₽/м³):</span>
-                  <span className="font-bold text-primary">₽ {editCalculatedPrice.toLocaleString()}/мес</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Расчётная цена (1500₽/м³):</span>
+                  <span className="font-medium">₽ {editCalculatedPrice.toLocaleString()}/мес</span>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-sm">Цена вручную, ₽/мес</Label>
+                  <Input
+                    type="number"
+                    value={editFormData.customPrice}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, customPrice: e.target.value }))}
+                    placeholder={String(editCalculatedPrice)}
+                    className="h-9 w-40"
+                  />
+                  <p className="text-xs text-muted-foreground">Оставьте пустым для автоматического расчёта</p>
                 </div>
               </div>
             )}
