@@ -33,19 +33,35 @@ const CatalogSection = () => {
     tier: undefined,
   });
   
-  const [priceRange, setPriceRange] = useState<[number, number]>([1000, 8000]);
-  const [volumeRange, setVolumeRange] = useState<[number, number]>([0.5, 6]);
+  // Dynamic ranges based on actual data
+  const dataRanges = useMemo(() => {
+    if (storageCells.length === 0) return { minPrice: 1000, maxPrice: 8000, minVol: 0.5, maxVol: 6 };
+    const prices = storageCells.map(c => c.pricePerMonth);
+    const volumes = storageCells.map(c => c.volume);
+    return {
+      minPrice: Math.floor(Math.min(...prices) / 100) * 100,
+      maxPrice: Math.ceil(Math.max(...prices) / 100) * 100,
+      minVol: Math.floor(Math.min(...volumes) * 10) / 10,
+      maxVol: Math.ceil(Math.max(...volumes) * 10) / 10,
+    };
+  }, [storageCells]);
+
+  const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
+  const [volumeRange, setVolumeRange] = useState<[number, number] | null>(null);
+
+  const effectivePriceRange = priceRange ?? [dataRanges.minPrice, dataRanges.maxPrice];
+  const effectiveVolumeRange = volumeRange ?? [dataRanges.minVol, dataRanges.maxVol];
   
   const filteredCells = useMemo(() => {
     return storageCells.filter(cell => {
       if (filters.availableOnly && !cell.isAvailable) return false;
       if (filters.hasShelves && !cell.hasShelves) return false;
       if (filters.tier !== undefined && cell.tier !== filters.tier) return false;
-      if (cell.pricePerMonth < priceRange[0] || cell.pricePerMonth > priceRange[1]) return false;
-      if (cell.volume < volumeRange[0] || cell.volume > volumeRange[1]) return false;
+      if (cell.pricePerMonth < effectivePriceRange[0] || cell.pricePerMonth > effectivePriceRange[1]) return false;
+      if (cell.volume < effectiveVolumeRange[0] || cell.volume > effectiveVolumeRange[1]) return false;
       return true;
     });
-  }, [filters, priceRange, volumeRange]);
+  }, [storageCells, filters, effectivePriceRange, effectiveVolumeRange]);
   
   // Пагинация
   const totalPages = Math.ceil(filteredCells.length / ITEMS_PER_PAGE);
@@ -70,8 +86,8 @@ const CatalogSection = () => {
       hasShelves: false,
       tier: undefined,
     });
-    setPriceRange([1000, 8000]);
-    setVolumeRange([0.5, 6]);
+    setPriceRange(null);
+    setVolumeRange(null);
     setCurrentPage(1);
   };
   
@@ -79,8 +95,8 @@ const CatalogSection = () => {
     filters.availableOnly,
     filters.hasShelves,
     filters.tier !== undefined,
-    priceRange[0] > 1000 || priceRange[1] < 8000,
-    volumeRange[0] > 0.5 || volumeRange[1] < 6,
+    priceRange !== null && (priceRange[0] > dataRanges.minPrice || priceRange[1] < dataRanges.maxPrice),
+    volumeRange !== null && (volumeRange[0] > dataRanges.minVol || volumeRange[1] < dataRanges.maxVol),
   ].filter(Boolean).length;
 
   return (
@@ -93,7 +109,8 @@ const CatalogSection = () => {
               Каталог <span className="text-primary">ячеек</span>
             </h2>
             <p className="text-lg text-muted-foreground font-medium">
-              {filteredCells.length} из {storageCells.length} ячеек доступно
+              {storageCells.filter(c => c.isAvailable).length} из {storageCells.length} ячеек доступно
+              {activeFiltersCount > 0 && ` · показано ${filteredCells.length}`}
             </p>
           </div>
           
@@ -138,15 +155,15 @@ const CatalogSection = () => {
                   <div className="relative flex-1">
                     <Input
                       type="number"
-                      value={priceRange[0]}
+                      value={effectivePriceRange[0]}
                       onChange={(e) => {
-                        const val = Math.max(1000, Math.min(Number(e.target.value), priceRange[1]));
-                        setPriceRange([val, priceRange[1]]);
+                        const val = Math.max(dataRanges.minPrice, Math.min(Number(e.target.value), effectivePriceRange[1]));
+                        setPriceRange([val, effectivePriceRange[1]]);
                         handleFilterChange();
                       }}
                       className="h-9 text-center text-sm font-medium pr-8"
-                      min={1000}
-                      max={priceRange[1]}
+                      min={dataRanges.minPrice}
+                      max={effectivePriceRange[1]}
                     />
                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">₽</span>
                   </div>
@@ -154,27 +171,27 @@ const CatalogSection = () => {
                   <div className="relative flex-1">
                     <Input
                       type="number"
-                      value={priceRange[1]}
+                      value={effectivePriceRange[1]}
                       onChange={(e) => {
-                        const val = Math.max(priceRange[0], Math.min(Number(e.target.value), 8000));
-                        setPriceRange([priceRange[0], val]);
+                        const val = Math.max(effectivePriceRange[0], Math.min(Number(e.target.value), dataRanges.maxPrice));
+                        setPriceRange([effectivePriceRange[0], val]);
                         handleFilterChange();
                       }}
                       className="h-9 text-center text-sm font-medium pr-8"
-                      min={priceRange[0]}
-                      max={8000}
+                      min={effectivePriceRange[0]}
+                      max={dataRanges.maxPrice}
                     />
                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">₽</span>
                   </div>
                 </div>
                 <Slider
-                  value={priceRange}
+                  value={effectivePriceRange}
                   onValueChange={(value) => {
                     setPriceRange(value as [number, number]);
                     handleFilterChange();
                   }}
-                  min={1000}
-                  max={8000}
+                  min={dataRanges.minPrice}
+                  max={dataRanges.maxPrice}
                   step={100}
                   className="mt-2"
                 />
@@ -189,15 +206,15 @@ const CatalogSection = () => {
                   <div className="relative flex-1">
                     <Input
                       type="number"
-                      value={volumeRange[0]}
+                      value={effectiveVolumeRange[0]}
                       onChange={(e) => {
-                        const val = Math.max(0.5, Math.min(Number(e.target.value), volumeRange[1]));
-                        setVolumeRange([val, volumeRange[1]]);
+                        const val = Math.max(dataRanges.minVol, Math.min(Number(e.target.value), effectiveVolumeRange[1]));
+                        setVolumeRange([val, effectiveVolumeRange[1]]);
                         handleFilterChange();
                       }}
                       className="h-9 text-center text-sm font-medium pr-10"
-                      min={0.5}
-                      max={volumeRange[1]}
+                      min={dataRanges.minVol}
+                      max={effectiveVolumeRange[1]}
                       step={0.1}
                     />
                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">м³</span>
@@ -206,28 +223,28 @@ const CatalogSection = () => {
                   <div className="relative flex-1">
                     <Input
                       type="number"
-                      value={volumeRange[1]}
+                      value={effectiveVolumeRange[1]}
                       onChange={(e) => {
-                        const val = Math.max(volumeRange[0], Math.min(Number(e.target.value), 6));
-                        setVolumeRange([volumeRange[0], val]);
+                        const val = Math.max(effectiveVolumeRange[0], Math.min(Number(e.target.value), dataRanges.maxVol));
+                        setVolumeRange([effectiveVolumeRange[0], val]);
                         handleFilterChange();
                       }}
                       className="h-9 text-center text-sm font-medium pr-10"
-                      min={volumeRange[0]}
-                      max={6}
+                      min={effectiveVolumeRange[0]}
+                      max={dataRanges.maxVol}
                       step={0.1}
                     />
                     <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">м³</span>
                   </div>
                 </div>
                 <Slider
-                  value={volumeRange}
+                  value={effectiveVolumeRange}
                   onValueChange={(value) => {
                     setVolumeRange(value as [number, number]);
                     handleFilterChange();
                   }}
-                  min={0.5}
-                  max={6}
+                  min={dataRanges.minVol}
+                  max={dataRanges.maxVol}
                   step={0.1}
                   className="mt-2"
                 />

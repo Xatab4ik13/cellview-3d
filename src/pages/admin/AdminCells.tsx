@@ -484,6 +484,7 @@ const AdminCells = () => {
   const [editFormData, setEditFormData] = useState({
     number: '', width: '', depth: '', height: '',
     floor: '1', tier: '1', hasSocket: false, hasShelves: false, isAvailable: true,
+    customPrice: '',
   });
   const [editPhotoPreviews, setEditPhotoPreviews] = useState<string[]>([]);
 
@@ -739,6 +740,7 @@ const AdminCells = () => {
       number: String(cell.number), width: String(cell.width), depth: String(cell.depth),
       height: String(cell.height), floor: String(cell.floor), tier: String(cell.tier),
       hasSocket: cell.hasSocket, hasShelves: cell.hasShelves, isAvailable: cell.isAvailable,
+      customPrice: String(cell.pricePerMonth),
     });
     setEditPhotoPreviews(cell.photos || []);
     setEditNewFiles([]);
@@ -783,7 +785,7 @@ const AdminCells = () => {
       volume: vol,
       floor: parseInt(editFormData.floor) || 1,
       tier: parseInt(editFormData.tier) || 1,
-      pricePerMonth: calculatePrice(vol),
+      pricePerMonth: editFormData.customPrice ? parseInt(editFormData.customPrice) : calculatePrice(vol),
       hasSocket: editFormData.hasSocket,
       hasShelves: editFormData.hasShelves,
     };
@@ -1417,9 +1419,20 @@ const AdminCells = () => {
                   <span className="text-muted-foreground">Объём:</span>
                   <span className="font-medium">{editVolume.toFixed(2)} м³</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Цена (1500₽/м³):</span>
-                  <span className="font-bold text-primary">₽ {editCalculatedPrice.toLocaleString()}/мес</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Расчётная цена (1500₽/м³):</span>
+                  <span className="font-medium">₽ {editCalculatedPrice.toLocaleString()}/мес</span>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-sm">Цена вручную, ₽/мес</Label>
+                  <Input
+                    type="number"
+                    value={editFormData.customPrice}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, customPrice: e.target.value }))}
+                    placeholder={String(editCalculatedPrice)}
+                    className="h-9 w-40"
+                  />
+                  <p className="text-xs text-muted-foreground">Оставьте пустым для автоматического расчёта</p>
                 </div>
               </div>
             )}
