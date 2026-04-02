@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Save, Lock, Percent } from 'lucide-react';
+import { Save, Lock, Percent, RefreshCw, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { recalculateCellPrices } from '@/lib/api';
+import { useQueryClient } from '@tanstack/react-query';
 
 const CardBlock = ({ title, icon: Icon, description, children }: { title: string; icon: React.ElementType; description: string; children: React.ReactNode }) => (
   <motion.div
@@ -26,21 +29,31 @@ const CardBlock = ({ title, icon: Icon, description, children }: { title: string
 );
 
 const AdminSettings = () => {
+  const queryClient = useQueryClient();
+  const [isRecalculating, setIsRecalculating] = useState(false);
+
+  const handleRecalculatePrices = async () => {
+    setIsRecalculating(true);
+    try {
+      await recalculateCellPrices();
+      queryClient.invalidateQueries({ queryKey: ['cells'] });
+      toast.success('Цены пересчитаны для всех ячеек');
+    } catch (error: any) {
+      toast.error(`Ошибка: ${error.message}`);
+    } finally {
+      setIsRecalculating(false);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Настройки</h2>
-          <p className="text-base text-muted-foreground mt-1">Ценообразование и безопасность</p>
-        </div>
-        <Button onClick={() => toast.success('Настройки сохранены')} className="gap-2 h-11 text-base">
-          <Save className="w-5 h-5" />
-          Сохранить
-        </Button>
+      <div>
+        <h2 className="text-2xl font-bold">Настройки</h2>
+        <p className="text-base text-muted-foreground mt-1">Ценообразование и безопасность</p>
       </div>
 
       {/* Pricing */}
-      <CardBlock title="Ценообразование" icon={Percent} description="Скидки за длительную аренду">
+      <CardBlock title="Ценообразование" icon={Percent} description="Скидки за длительную аренду и массовый пересчёт цен">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: '1 месяц', value: '0' },
@@ -57,13 +70,23 @@ const AdminSettings = () => {
             </div>
           ))}
         </div>
-        <div className="border-t border-border pt-4 mt-4 space-y-2">
-          <Label className="text-sm">Цена за м³ (базовая)</Label>
-          <div className="flex items-center gap-2">
-            <Input type="number" defaultValue="1500" className="w-32 h-10" />
-            <span className="text-sm text-muted-foreground">₽/мес</span>
+        <div className="border-t border-border pt-4 mt-4 space-y-4">
+          <div className="space-y-2">
+            <Label className="text-sm">Базовая формула: объём × 1500₽, округление до 10₽ вверх</Label>
+            <p className="text-xs text-muted-foreground">
+              Пересчёт применяется ко всем ячейкам, у которых не задана ручная цена.
+              Чтобы задать цену вручную для отдельной ячейки, отредактируйте её в разделе «Ячейки».
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground">Формула: объём × 1500₽, округление до 10₽ вверх</p>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={handleRecalculatePrices}
+            disabled={isRecalculating}
+          >
+            {isRecalculating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            Пересчитать цены для всех ячеек
+          </Button>
         </div>
       </CardBlock>
 
