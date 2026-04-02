@@ -121,6 +121,24 @@ rentalsRouter.post('/', async (req: Request, res: Response, next: NextFunction) 
     // Обновляем статус ячейки
     await conn.query("UPDATE cells SET status = 'occupied', reserved_until = NULL WHERE id = ?", [cellId]);
 
+    // Генерируем revenue_entries — помесячное распределение прибыли
+    const finalTotal = totalAmount || pricePerMonth * months;
+    const monthlyAmount = Math.floor(finalTotal / months);
+    const remainder = finalTotal - monthlyAmount * months;
+
+    for (let i = 0; i < months; i++) {
+      const entryMonth = new Date(start);
+      entryMonth.setMonth(entryMonth.getMonth() + i);
+      const monthStr = entryMonth.toISOString().slice(0, 7) + '-01'; // YYYY-MM-01
+      const amount = i === 0 ? monthlyAmount + remainder : monthlyAmount; // остаток в первый месяц
+      const entryId = `rev-${id}-${i}`;
+
+      await conn.query(
+        `INSERT INTO revenue_entries (id, rental_id, customer_id, cell_id, month, amount) VALUES (?, ?, ?, ?, ?, ?)`,
+        [entryId, id, customerId, cellId, monthStr, amount]
+      );
+    }
+
     await conn.commit();
 
     res.status(201).json({ success: true, data: { id, endDate }, message: 'Аренда оформлена' });
