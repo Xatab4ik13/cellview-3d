@@ -33,19 +33,35 @@ const CatalogSection = () => {
     tier: undefined,
   });
   
-  const [priceRange, setPriceRange] = useState<[number, number]>([1000, 8000]);
-  const [volumeRange, setVolumeRange] = useState<[number, number]>([0.5, 6]);
+  // Dynamic ranges based on actual data
+  const dataRanges = useMemo(() => {
+    if (storageCells.length === 0) return { minPrice: 1000, maxPrice: 8000, minVol: 0.5, maxVol: 6 };
+    const prices = storageCells.map(c => c.pricePerMonth);
+    const volumes = storageCells.map(c => c.volume);
+    return {
+      minPrice: Math.floor(Math.min(...prices) / 100) * 100,
+      maxPrice: Math.ceil(Math.max(...prices) / 100) * 100,
+      minVol: Math.floor(Math.min(...volumes) * 10) / 10,
+      maxVol: Math.ceil(Math.max(...volumes) * 10) / 10,
+    };
+  }, [storageCells]);
+
+  const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
+  const [volumeRange, setVolumeRange] = useState<[number, number] | null>(null);
+
+  const effectivePriceRange = priceRange ?? [dataRanges.minPrice, dataRanges.maxPrice];
+  const effectiveVolumeRange = volumeRange ?? [dataRanges.minVol, dataRanges.maxVol];
   
   const filteredCells = useMemo(() => {
     return storageCells.filter(cell => {
       if (filters.availableOnly && !cell.isAvailable) return false;
       if (filters.hasShelves && !cell.hasShelves) return false;
       if (filters.tier !== undefined && cell.tier !== filters.tier) return false;
-      if (cell.pricePerMonth < priceRange[0] || cell.pricePerMonth > priceRange[1]) return false;
-      if (cell.volume < volumeRange[0] || cell.volume > volumeRange[1]) return false;
+      if (cell.pricePerMonth < effectivePriceRange[0] || cell.pricePerMonth > effectivePriceRange[1]) return false;
+      if (cell.volume < effectiveVolumeRange[0] || cell.volume > effectiveVolumeRange[1]) return false;
       return true;
     });
-  }, [filters, priceRange, volumeRange]);
+  }, [storageCells, filters, effectivePriceRange, effectiveVolumeRange]);
   
   // Пагинация
   const totalPages = Math.ceil(filteredCells.length / ITEMS_PER_PAGE);
