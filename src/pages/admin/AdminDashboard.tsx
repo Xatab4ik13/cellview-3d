@@ -8,6 +8,8 @@ import { useCells } from '@/hooks/useCells';
 import { useRentals } from '@/hooks/useRentals';
 import { useCustomers } from '@/hooks/useCustomers';
 import { usePayments } from '@/hooks/usePayments';
+import { fetchRevenue, RevenueEntry } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
 import { differenceInDays, parseISO, format, startOfMonth, subMonths } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
