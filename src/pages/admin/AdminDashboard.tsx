@@ -33,6 +33,15 @@ const AdminDashboard = () => {
 
   const isLoading = cellsLoading || rentalsLoading || customersLoading || paymentsLoading;
 
+  // Revenue entries (distributed by month)
+  const sixMonthsAgo = format(subMonths(new Date(), 5), 'yyyy-MM');
+  const currentMonth = format(new Date(), 'yyyy-MM');
+  const { data: revenueEntries = [] } = useQuery<RevenueEntry[]>({
+    queryKey: ['revenue', sixMonthsAgo, currentMonth],
+    queryFn: () => fetchRevenue(sixMonthsAgo, currentMonth),
+    staleTime: 1000 * 60 * 5,
+  });
+
   // Cell stats
   const totalCells = cells.length;
   const occupiedCells = cells.filter(c => c.status === 'occupied').length;
