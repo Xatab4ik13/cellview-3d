@@ -71,9 +71,15 @@ const AdminDashboard = () => {
   const monthlyRevenue = activeRentals.reduce((sum, r) => sum + (r.pricePerMonth || 0), 0);
   const avgCheck = paidPayments.length > 0 ? Math.round(totalRevenue / paidPayments.length) : 0;
 
-  // Revenue by month (last 6 months)
+  // Revenue by month — use distributed revenue_entries if available, fallback to payments
   const revenueByMonth = Array.from({ length: 6 }, (_, i) => {
     const month = subMonths(new Date(), 5 - i);
+    const monthKey = format(month, 'yyyy-MM');
+    const entry = revenueEntries.find(e => e.month === monthKey);
+    if (entry) {
+      return { name: format(month, 'MMM', { locale: ru }), revenue: entry.total };
+    }
+    // Fallback: по дате оплаты
     const monthStart = startOfMonth(month);
     const monthEnd = startOfMonth(subMonths(new Date(), 4 - i));
     const monthPayments = paidPayments.filter(p => {
