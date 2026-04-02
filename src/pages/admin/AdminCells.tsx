@@ -484,6 +484,7 @@ const AdminCells = () => {
   const [editFormData, setEditFormData] = useState({
     number: '', width: '', depth: '', height: '',
     floor: '1', tier: '1', hasSocket: false, hasShelves: false, isAvailable: true,
+    customPrice: '',
   });
   const [editPhotoPreviews, setEditPhotoPreviews] = useState<string[]>([]);
 
