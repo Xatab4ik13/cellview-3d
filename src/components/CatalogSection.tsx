@@ -86,8 +86,8 @@ const CatalogSection = () => {
       hasShelves: false,
       tier: undefined,
     });
-    setPriceRange([1000, 8000]);
-    setVolumeRange([0.5, 6]);
+    setPriceRange(null);
+    setVolumeRange(null);
     setCurrentPage(1);
   };
   
@@ -95,8 +95,8 @@ const CatalogSection = () => {
     filters.availableOnly,
     filters.hasShelves,
     filters.tier !== undefined,
-    priceRange[0] > 1000 || priceRange[1] < 8000,
-    volumeRange[0] > 0.5 || volumeRange[1] < 6,
+    priceRange !== null && (priceRange[0] > dataRanges.minPrice || priceRange[1] < dataRanges.maxPrice),
+    volumeRange !== null && (volumeRange[0] > dataRanges.minVol || volumeRange[1] < dataRanges.maxVol),
   ].filter(Boolean).length;
 
   return (
