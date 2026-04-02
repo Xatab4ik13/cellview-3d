@@ -740,6 +740,7 @@ const AdminCells = () => {
       number: String(cell.number), width: String(cell.width), depth: String(cell.depth),
       height: String(cell.height), floor: String(cell.floor), tier: String(cell.tier),
       hasSocket: cell.hasSocket, hasShelves: cell.hasShelves, isAvailable: cell.isAvailable,
+      customPrice: String(cell.pricePerMonth),
     });
     setEditPhotoPreviews(cell.photos || []);
     setEditNewFiles([]);
