@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS revenue_entries (
-  id VARCHAR(36) PRIMARY KEY,
+  id VARCHAR(64) PRIMARY KEY,
   rental_id VARCHAR(36) NOT NULL,
   customer_id VARCHAR(36) NOT NULL,
   cell_id VARCHAR(36) NOT NULL,
