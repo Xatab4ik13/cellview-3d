@@ -8,6 +8,8 @@ import { useCells } from '@/hooks/useCells';
 import { useRentals } from '@/hooks/useRentals';
 import { useCustomers } from '@/hooks/useCustomers';
 import { usePayments } from '@/hooks/usePayments';
+import { fetchRevenue, RevenueEntry } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
 import { differenceInDays, parseISO, format, startOfMonth, subMonths } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
@@ -30,6 +32,15 @@ const AdminDashboard = () => {
   const { data: payments = [], isLoading: paymentsLoading } = usePayments();
 
   const isLoading = cellsLoading || rentalsLoading || customersLoading || paymentsLoading;
+
+  // Revenue entries (distributed by month)
+  const sixMonthsAgo = format(subMonths(new Date(), 5), 'yyyy-MM');
+  const currentMonth = format(new Date(), 'yyyy-MM');
+  const { data: revenueEntries = [] } = useQuery<RevenueEntry[]>({
+    queryKey: ['revenue', sixMonthsAgo, currentMonth],
+    queryFn: () => fetchRevenue(sixMonthsAgo, currentMonth),
+    staleTime: 1000 * 60 * 5,
+  });
 
   // Cell stats
   const totalCells = cells.length;
@@ -60,9 +71,15 @@ const AdminDashboard = () => {
   const monthlyRevenue = activeRentals.reduce((sum, r) => sum + (r.pricePerMonth || 0), 0);
   const avgCheck = paidPayments.length > 0 ? Math.round(totalRevenue / paidPayments.length) : 0;
 
-  // Revenue by month (last 6 months)
+  // Revenue by month — use distributed revenue_entries if available, fallback to payments
   const revenueByMonth = Array.from({ length: 6 }, (_, i) => {
     const month = subMonths(new Date(), 5 - i);
+    const monthKey = format(month, 'yyyy-MM');
+    const entry = revenueEntries.find(e => e.month === monthKey);
+    if (entry) {
+      return { name: format(month, 'MMM', { locale: ru }), revenue: entry.total };
+    }
+    // Fallback: по дате оплаты
     const monthStart = startOfMonth(month);
     const monthEnd = startOfMonth(subMonths(new Date(), 4 - i));
     const monthPayments = paidPayments.filter(p => {

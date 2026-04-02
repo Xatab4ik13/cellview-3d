@@ -357,6 +357,23 @@ export async function refundPayment(id: string, amount?: number): Promise<void> 
   });
 }
 
+// ============ Выручка (revenue) ============
+
+export interface RevenueEntry {
+  month: string;   // YYYY-MM
+  total: number;
+  rentals: number;
+  customers: number;
+}
+
+export async function fetchRevenue(from?: string, to?: string): Promise<RevenueEntry[]> {
+  const params = new URLSearchParams();
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  const qs = params.toString();
+  return fetchApi<RevenueEntry[]>(`/api/revenue${qs ? `?${qs}` : ''}`);
+}
+
 // ============ Health ============
 
 export async function checkHealth(): Promise<{ status: string; services: Record<string, string> }> {
