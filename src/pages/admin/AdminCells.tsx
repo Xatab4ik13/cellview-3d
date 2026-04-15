@@ -1400,17 +1400,17 @@ const AdminCells = () => {
               <div className="grid gap-2">
                 <Label>Ширина (м)</Label>
                 <Input type="number" step="0.1" value={editFormData.width}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, width: e.target.value }))} />
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, width: e.target.value, customPrice: '' }))} />
               </div>
               <div className="grid gap-2">
                 <Label>Глубина (м)</Label>
                 <Input type="number" step="0.1" value={editFormData.depth}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, depth: e.target.value }))} />
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, depth: e.target.value, customPrice: '' }))} />
               </div>
               <div className="grid gap-2">
                 <Label>Высота (м)</Label>
                 <Input type="number" step="0.1" value={editFormData.height}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, height: e.target.value }))} />
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, height: e.target.value, customPrice: '' }))} />
               </div>
             </div>
             {editVolume > 0 && (
