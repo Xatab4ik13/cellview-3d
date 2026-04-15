@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Key, Calendar, MapPin, FileText, Copy, Check, Phone, Loader2, Clock, CreditCard, AlertTriangle, User } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { fetchRentals, fetchCustomer, createPayment, type RentalData } from '@/lib/api';
+import { fetchRentals, fetchCustomer, createPayment, extendRental, type RentalData } from '@/lib/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RESERVATION_HOURS } from '@/types/storage';
 import type { BookingState } from '@/pages/Dashboard';
 
@@ -110,6 +112,9 @@ const RentalsSection = ({ pendingBooking, onClearBooking, onGoToProfile }: Renta
   };
 
   const [paying, setPaying] = useState(false);
+  const [extendDialogRental, setExtendDialogRental] = useState<RentalData | null>(null);
+  const [extendMonths, setExtendMonths] = useState('1');
+  const [extending, setExtending] = useState(false);
 
   const handlePay = async () => {
     if (!pendingBooking || !profileComplete) return;
@@ -303,7 +308,7 @@ const RentalsSection = ({ pendingBooking, onClearBooking, onGoToProfile }: Renta
       {/* Existing active rentals */}
       {rentals.map((rental) => {
         const daysLeft = getDaysLeft(rental.endDate);
-        const accessPhone = '8 (911) 810-83-83';
+        const accessPhone = '8 (921) 656-92-76';
 
         return (
           <Card key={rental.id} className="border-border/50 shadow-lg overflow-hidden">
@@ -393,7 +398,10 @@ const RentalsSection = ({ pendingBooking, onClearBooking, onGoToProfile }: Renta
                     Скачать договор
                   </a>
                 </Button>
-                <Button className="gap-2 font-semibold bg-primary hover:bg-primary/90">
+                <Button 
+                  className="gap-2 font-semibold bg-primary hover:bg-primary/90"
+                  onClick={() => setExtendDialogRental(rental)}
+                >
                   <Calendar className="w-4 h-4" />
                   Продлить аренду
                 </Button>
@@ -402,6 +410,86 @@ const RentalsSection = ({ pendingBooking, onClearBooking, onGoToProfile }: Renta
           </Card>
         );
       })}
+
+      {/* Extend Rental Dialog */}
+      <Dialog open={!!extendDialogRental} onOpenChange={(open) => !open && setExtendDialogRental(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Продлить аренду</DialogTitle>
+            <DialogDescription>
+              Ячейка №{extendDialogRental?.cellNumber}. Выберите срок продления.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Срок продления</label>
+              <Select value={extendMonths} onValueChange={setExtendMonths}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 6, 12].map((m) => (
+                    <SelectItem key={m} value={String(m)}>
+                      {m} {m === 1 ? 'месяц' : m < 5 ? 'месяца' : 'месяцев'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {extendDialogRental?.pricePerMonth && (
+              <div className="bg-muted/50 rounded-xl p-4 border border-border/50">
+                <p className="text-sm text-muted-foreground">К оплате</p>
+                <p className="text-2xl font-bold text-primary">
+                  {(extendDialogRental.pricePerMonth * Number(extendMonths)).toLocaleString('ru-RU')} ₽
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExtendDialogRental(null)}>
+              Отмена
+            </Button>
+            <Button
+              disabled={extending}
+              onClick={async () => {
+                if (!extendDialogRental) return;
+                setExtending(true);
+                try {
+                  const stored = localStorage.getItem('kladovka78_customer');
+                  if (!stored) throw new Error('Не авторизован');
+                  const customer = JSON.parse(stored);
+                  
+                  const result = await createPayment({
+                    customerId: customer.id,
+                    cellId: extendDialogRental.cellId,
+                    amount: extendDialogRental.pricePerMonth * Number(extendMonths),
+                    duration: Number(extendMonths),
+                    cellNumber: extendDialogRental.cellNumber,
+                    description: `Продление ячейки №${extendDialogRental.cellNumber} на ${extendMonths} мес.`,
+                    rentalId: extendDialogRental.id,
+                  });
+
+                  if (result.formUrl) {
+                    window.location.href = result.formUrl;
+                  } else {
+                    throw new Error('Не получена ссылка на оплату');
+                  }
+                } catch (err: any) {
+                  toast({
+                    title: 'Ошибка',
+                    description: err?.message || 'Не удалось создать платёж',
+                    variant: 'destructive',
+                  });
+                } finally {
+                  setExtending(false);
+                }
+              }}
+            >
+              {extending ? <><Loader2 className="w-4 h-4 animate-spin" /> Переход к оплате...</> : 'Оплатить'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Empty state - only show if no rentals AND no pending booking */}
       {rentals.length === 0 && !pendingBooking && (
