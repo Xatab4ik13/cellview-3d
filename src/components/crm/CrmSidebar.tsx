@@ -21,7 +21,7 @@ import {
   Box,
   Key,
   CreditCard,
-  
+  TrendingUp,
   Settings,
   Globe,
   LogOut,
@@ -62,6 +62,7 @@ const navGroups: NavGroup[] = [
     label: 'Финансы',
     items: [
       { title: 'Платежи', url: '/admin/payments', icon: CreditCard },
+      { title: 'Выручка', url: '/admin/revenue', icon: TrendingUp },
     ],
   },
   {
