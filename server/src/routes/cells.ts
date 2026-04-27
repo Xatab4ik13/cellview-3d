@@ -53,11 +53,11 @@ cellsRouter.get('/', async (req: Request, res: Response, next: NextFunction) => 
   }
 });
 
-// PUT /api/cells/recalculate-prices — пересчитать все цены по формуле 1500₽/м³
+// PUT /api/cells/recalculate-prices — пересчитать все цены по формуле 1000₽/м³
 cellsRouter.put('/recalculate-prices', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const [result] = await pool.query(
-      `UPDATE cells SET price_per_month = CEIL(volume * 1500 / 10) * 10`
+      `UPDATE cells SET price_per_month = CEIL(volume * 1000 / 10) * 10`
     );
     const affected = (result as any).affectedRows || 0;
     res.json({ success: true, message: `Цены пересчитаны для ${affected} ячеек` });
