@@ -1302,16 +1302,50 @@ const AdminCells = () => {
               </div>
             </div>
 
+            {/* Manual price override */}
+            <div className="grid gap-2">
+              <Label className="flex items-center justify-between">
+                <span>Цена/мес вручную, ₽</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  необязательно — переопределяет скидку
+                </span>
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder={`По умолчанию: ${assignBasePrice.toLocaleString()} ₽`}
+                  value={assignForm.customMonthlyPrice}
+                  onChange={(e) => setAssignForm(prev => ({ ...prev, customMonthlyPrice: e.target.value }))}
+                  className="h-10"
+                />
+                {assignForm.customMonthlyPrice && (
+                  <Button type="button" variant="outline" size="sm"
+                    onClick={() => setAssignForm(prev => ({ ...prev, customMonthlyPrice: '' }))}>
+                    Сбросить
+                  </Button>
+                )}
+              </div>
+            </div>
+
             {/* Price calculation */}
             <div className="rounded-lg bg-muted/50 p-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Базовая цена:</span>
-                <span>{assignBasePrice.toLocaleString()} ₽/мес</span>
+                <span className={hasCustomPrice ? 'line-through text-muted-foreground' : ''}>
+                  {assignBasePrice.toLocaleString()} ₽/мес
+                </span>
               </div>
-              {assignDiscount > 0 && (
+              {!hasCustomPrice && assignDiscount > 0 && (
                 <div className="flex justify-between text-sm" style={{ color: 'hsl(var(--status-active))' }}>
                   <span>Скидка ({assignDiscount}%):</span>
                   <span>−{(assignBasePrice - assignFinalPrice).toLocaleString()} ₽</span>
+                </div>
+              )}
+              {hasCustomPrice && (
+                <div className="flex justify-between text-sm" style={{ color: 'hsl(var(--primary))' }}>
+                  <span>Ручная цена:</span>
+                  <span>{assignFinalPrice.toLocaleString()} ₽/мес</span>
                 </div>
               )}
               <Separator />
