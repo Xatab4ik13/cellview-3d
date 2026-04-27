@@ -603,7 +603,7 @@ const AdminCells = () => {
       startDate: assignForm.startDate,
       months: assignForm.months,
       pricePerMonth: assignFinalPrice,
-      discount: assignDiscount,
+      discount: hasCustomPrice ? 0 : assignDiscount,
       totalAmount: assignTotal,
       autoRenew: assignForm.autoRenew,
       notes: assignForm.notes,
