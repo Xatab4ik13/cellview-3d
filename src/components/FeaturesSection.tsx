@@ -5,7 +5,7 @@ import {
   Clock, 
   Wifi,
   Car,
-  Coffee,
+  Package,
   Lightbulb
 } from 'lucide-react';
 
@@ -13,7 +13,7 @@ const freeServices = [
   { icon: Wifi, title: 'Быстрый интернет' },
   { icon: Lightbulb, title: 'Розетки' },
   { icon: Car, title: 'Парковка' },
-  { icon: Coffee, title: 'Горячие напитки' },
+  { icon: Package, title: 'Зона для упаковки вещей' },
 ];
 
 const features = [
