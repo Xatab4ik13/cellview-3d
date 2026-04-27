@@ -42,7 +42,7 @@ revenueRouter.get('/', async (req: Request, res: Response, next: NextFunction) =
 // Детализация: какие аренды/платежи формируют выручку этого месяца
 revenueRouter.get('/by-month/:month', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { month } = req.params; // YYYY-MM
+    const month = String(req.params.month || ''); // YYYY-MM
     if (!/^\d{4}-\d{2}$/.test(month)) {
       return res.status(400).json({ success: false, message: 'Формат месяца: YYYY-MM' });
     }
