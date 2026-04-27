@@ -254,6 +254,8 @@ const Header = () => {
         </div>
       </div>
     </header>
+    <CallbackDialog open={callbackOpen} onOpenChange={setCallbackOpen} source="Header — Заказать звонок" />
+    </>
   );
 };
 
