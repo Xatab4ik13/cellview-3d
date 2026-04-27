@@ -93,7 +93,6 @@ const CatalogSection = () => {
   };
   
   const activeFiltersCount = [
-    filters.availableOnly,
     filters.hasShelves,
     filters.tier !== undefined,
     priceRange !== null && (priceRange[0] > dataRanges.minPrice || priceRange[1] < dataRanges.maxPrice),
