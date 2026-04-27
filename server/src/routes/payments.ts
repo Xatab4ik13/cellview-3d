@@ -465,3 +465,40 @@ paymentsRouter.post('/:id/refund', async (req: Request, res: Response, next: Nex
     next(error);
   }
 });
+
+// DELETE /api/payments/:id — удалить платёж (для очистки тестовых/созданных)
+// По умолчанию разрешено удалять только статусы: created, pending, failed, expired.
+// Платёж в статусе paid можно удалить только с ?force=true. Связанная revenue_entries (payment_id) обнуляется.
+paymentsRouter.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const id = req.params.id;
+    const force = req.query.force === 'true' || req.query.force === '1';
+
+    const [rows] = await conn.query('SELECT id, status FROM payments WHERE id = ?', [id]);
+    const payment = (rows as any[])[0];
+    if (!payment) throw new AppError('Платёж не найден', 404);
+
+    const safeStatuses = ['created', 'pending', 'failed', 'expired'];
+    if (!safeStatuses.includes(payment.status) && !force) {
+      throw new AppError(
+        `Удаление платежа со статусом "${payment.status}" возможно только принудительно (force=true)`,
+        400
+      );
+    }
+
+    // Отвязать revenue_entries от платежа (но не удаляем сами entries — они привязаны к аренде)
+    await conn.query('UPDATE revenue_entries SET payment_id = NULL WHERE payment_id = ?', [id]);
+
+    await conn.query('DELETE FROM payments WHERE id = ?', [id]);
+
+    await conn.commit();
+    res.json({ success: true, message: 'Платёж удалён' });
+  } catch (error) {
+    await conn.rollback();
+    next(error);
+  } finally {
+    conn.release();
+  }
+});

@@ -1,14 +1,20 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, CheckCircle, Clock, XCircle, ArrowUpRight, ArrowDownRight, Loader2, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, CheckCircle, Clock, XCircle, ArrowUpRight, ArrowDownRight, Loader2, AlertCircle, Trash2 } from 'lucide-react';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { motion } from 'framer-motion';
 import AnimatedCounter from '@/components/crm/AnimatedCounter';
-import { fetchPayments, PaymentData } from '@/lib/api';
+import { fetchPayments, deletePayment, PaymentData } from '@/lib/api';
+import { toast } from 'sonner';
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   paid: { label: 'Оплачен', color: 'var(--status-active)', icon: CheckCircle },
@@ -22,10 +28,22 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.E
 const AdminPayments = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [deleteTarget, setDeleteTarget] = useState<PaymentData | null>(null);
+  const qc = useQueryClient();
 
   const { data: payments = [], isLoading, error } = useQuery({
     queryKey: ['payments'],
     queryFn: () => fetchPayments(),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: ({ id, force }: { id: string; force: boolean }) => deletePayment(id, force),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['payments'] });
+      toast.success('Платёж удалён');
+      setDeleteTarget(null);
+    },
+    onError: (e: any) => toast.error(`Ошибка удаления: ${e.message}`),
   });
 
   const filtered = payments.filter(p => {
@@ -87,8 +105,10 @@ const AdminPayments = () => {
           <SelectContent>
             <SelectItem value="all">Все статусы</SelectItem>
             <SelectItem value="paid">Оплаченные</SelectItem>
+            <SelectItem value="created">Созданные</SelectItem>
             <SelectItem value="pending">Ожидающие</SelectItem>
             <SelectItem value="failed">С ошибкой</SelectItem>
+            <SelectItem value="expired">Истёкшие</SelectItem>
             <SelectItem value="refunded">Возвраты</SelectItem>
           </SelectContent>
         </Select>
@@ -123,12 +143,13 @@ const AdminPayments = () => {
                   <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Способ</th>
                   <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Дата</th>
                   <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Статус</th>
+                  <th className="text-right p-4 text-sm font-semibold text-muted-foreground w-[60px]"></th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={8} className="p-8 text-center text-muted-foreground">
                       {payments.length === 0 ? 'Платежей пока нет' : 'Ничего не найдено'}
                     </td>
                   </tr>
@@ -174,6 +195,17 @@ const AdminPayments = () => {
                           <StatusIcon className="w-3.5 h-3.5" />{sc.label}
                         </Badge>
                       </td>
+                      <td className="p-4 text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setDeleteTarget(p)}
+                          title="Удалить платёж"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </td>
                     </motion.tr>
                   );
                 })}
@@ -182,6 +214,43 @@ const AdminPayments = () => {
           </div>
         </div>
       )}
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить платёж?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget && (
+                <>
+                  Платёж <span className="font-mono">{deleteTarget.id.slice(0, 8)}</span>
+                  {' '}на сумму <strong>{deleteTarget.amount.toLocaleString('ru-RU')} ₽</strong>
+                  {' '}({statusConfig[deleteTarget.status]?.label || deleteTarget.status}).
+                  <br /><br />
+                  {(deleteTarget.status === 'paid' || deleteTarget.status === 'refunded')
+                    ? 'Платёж уже проведён — будет удалён принудительно. Связанная аренда не будет затронута, но запись о платеже исчезнет.'
+                    : 'Действие нельзя отменить.'}
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (!deleteTarget) return;
+                const force = deleteTarget.status === 'paid' || deleteTarget.status === 'refunded';
+                deleteMutation.mutate({ id: deleteTarget.id, force });
+              }}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
