@@ -468,6 +468,7 @@ const AdminCells = () => {
     autoRenew: false,
     notes: '',
     startDate: new Date().toISOString().split('T')[0],
+    customMonthlyPrice: '' as string, // ручная цена/мес (опционально, переопределяет базовую и скидку)
   });
 
   // Release confirmation
@@ -549,7 +550,12 @@ const AdminCells = () => {
   const assignCustomer = customers.find(c => c.id === assignForm.customerId);
   const assignDiscount = getDiscount(assignForm.months);
   const assignBasePrice = assigningCell?.pricePerMonth || 0;
-  const assignFinalPrice = Math.round(assignBasePrice * (1 - assignDiscount / 100));
+  const assignCustomPriceNum = parseInt(assignForm.customMonthlyPrice);
+  const hasCustomPrice = !!assignForm.customMonthlyPrice && !isNaN(assignCustomPriceNum) && assignCustomPriceNum > 0;
+  // Если задана ручная цена — используем её без скидки. Иначе базовая со скидкой.
+  const assignFinalPrice = hasCustomPrice
+    ? assignCustomPriceNum
+    : Math.round(assignBasePrice * (1 - assignDiscount / 100));
   const assignTotal = assignFinalPrice * assignForm.months;
 
   // ========== Handlers ==========
@@ -562,6 +568,7 @@ const AdminCells = () => {
       autoRenew: false,
       notes: '',
       startDate: new Date().toISOString().split('T')[0],
+      customMonthlyPrice: '',
     });
     setIsCreatingCustomer(false);
     setNewCustomerForm({ name: '', phone: '', email: '', type: 'individual' });
@@ -596,7 +603,7 @@ const AdminCells = () => {
       startDate: assignForm.startDate,
       months: assignForm.months,
       pricePerMonth: assignFinalPrice,
-      discount: assignDiscount,
+      discount: hasCustomPrice ? 0 : assignDiscount,
       totalAmount: assignTotal,
       autoRenew: assignForm.autoRenew,
       notes: assignForm.notes,
@@ -1295,16 +1302,50 @@ const AdminCells = () => {
               </div>
             </div>
 
+            {/* Manual price override */}
+            <div className="grid gap-2">
+              <Label className="flex items-center justify-between">
+                <span>Цена/мес вручную, ₽</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  необязательно — переопределяет скидку
+                </span>
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder={`По умолчанию: ${assignBasePrice.toLocaleString()} ₽`}
+                  value={assignForm.customMonthlyPrice}
+                  onChange={(e) => setAssignForm(prev => ({ ...prev, customMonthlyPrice: e.target.value }))}
+                  className="h-10"
+                />
+                {assignForm.customMonthlyPrice && (
+                  <Button type="button" variant="outline" size="sm"
+                    onClick={() => setAssignForm(prev => ({ ...prev, customMonthlyPrice: '' }))}>
+                    Сбросить
+                  </Button>
+                )}
+              </div>
+            </div>
+
             {/* Price calculation */}
             <div className="rounded-lg bg-muted/50 p-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Базовая цена:</span>
-                <span>{assignBasePrice.toLocaleString()} ₽/мес</span>
+                <span className={hasCustomPrice ? 'line-through text-muted-foreground' : ''}>
+                  {assignBasePrice.toLocaleString()} ₽/мес
+                </span>
               </div>
-              {assignDiscount > 0 && (
+              {!hasCustomPrice && assignDiscount > 0 && (
                 <div className="flex justify-between text-sm" style={{ color: 'hsl(var(--status-active))' }}>
                   <span>Скидка ({assignDiscount}%):</span>
                   <span>−{(assignBasePrice - assignFinalPrice).toLocaleString()} ₽</span>
+                </div>
+              )}
+              {hasCustomPrice && (
+                <div className="flex justify-between text-sm" style={{ color: 'hsl(var(--primary))' }}>
+                  <span>Ручная цена:</span>
+                  <span>{assignFinalPrice.toLocaleString()} ₽/мес</span>
                 </div>
               )}
               <Separator />

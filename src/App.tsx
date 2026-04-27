@@ -32,6 +32,7 @@ const AdminCells = lazy(() => import("./pages/admin/AdminCells"));
 const AdminRentals = lazy(() => import("./pages/admin/AdminRentals"));
 const AdminCustomers = lazy(() => import("./pages/admin/AdminCustomers"));
 const AdminPayments = lazy(() => import("./pages/admin/AdminPayments"));
+const AdminRevenue = lazy(() => import("./pages/admin/AdminRevenue"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminSite = lazy(() => import("./pages/admin/AdminSite"));
 const AdminCameras = lazy(() => import("./pages/admin/AdminCameras"));
@@ -75,6 +76,7 @@ const App = () => (
               <Route path="rentals" element={<AdminRentals />} />
               <Route path="customers" element={<AdminCustomers />} />
               <Route path="payments" element={<AdminPayments />} />
+              <Route path="revenue" element={<AdminRevenue />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="site" element={<AdminSite />} />
               <Route path="cameras" element={<AdminCameras />} />
