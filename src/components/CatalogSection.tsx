@@ -290,21 +290,6 @@ const CatalogSection = () => {
               {/* Toggles */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="available" className="flex items-center gap-2">
-                    <Layers className="w-4 h-4" />
-                    Только свободные
-                  </Label>
-                  <Switch 
-                    id="available"
-                    checked={filters.availableOnly}
-                    onCheckedChange={(checked) => {
-                      setFilters(f => ({ ...f, availableOnly: checked }));
-                      handleFilterChange();
-                    }}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
                   <Label htmlFor="shelves" className="flex items-center gap-2">
                     <Grid3X3 className="w-4 h-4" />
                     С полками
