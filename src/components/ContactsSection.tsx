@@ -135,62 +135,42 @@ const ContactsSection = () => {
             <h3 className="text-2xl font-bold mb-2">Оставить заявку</h3>
             <p className="text-muted-foreground mb-6">Мы перезвоним в течение 15 минут</p>
             
-            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label htmlFor="name" className="text-sm font-medium">
-                    Имя *
-                  </label>
-                  <Input 
-                    id="name" 
-                    placeholder="Ваше имя" 
-                    required
-                  />
+                  <label htmlFor="name" className="text-sm font-medium">Имя *</label>
+                  <Input id="name" name="name" placeholder="Ваше имя" required />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="phone" className="text-sm font-medium">
-                    Телефон *
-                  </label>
-                  <Input 
-                    id="phone" 
-                    type="tel" 
-                    placeholder="+7 (___) ___-__-__" 
-                    required
-                  />
+                  <label htmlFor="phone" className="text-sm font-medium">Телефон *</label>
+                  <Input id="phone" name="phone" type="tel" placeholder="+7 (___) ___-__-__" required />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
-                <label htmlFor="size" className="text-sm font-medium">
-                  Желаемый размер склада
-                </label>
-                <Input 
-                  id="size" 
-                  placeholder="Например: 2-3 м²" 
-                />
+                <label htmlFor="size" className="text-sm font-medium">Желаемый размер склада</label>
+                <Input id="size" name="size" placeholder="Например: 2-3 м³" />
               </div>
-              
+
               <div className="space-y-2">
-                <label htmlFor="message" className="text-sm font-medium">
-                  Комментарий
-                </label>
-                <Textarea 
-                  id="message" 
-                  placeholder="Дополнительные пожелания..."
-                  rows={4}
-                />
+                <label htmlFor="message" className="text-sm font-medium">Комментарий</label>
+                <Textarea id="message" name="message" placeholder="Дополнительные пожелания..." rows={4} />
               </div>
-              
-              <Button type="submit" className="w-full" size="lg">
-                <Send className="w-5 h-5 mr-2" />
-                Отправить заявку
+
+              <Button type="submit" className="w-full" size="lg" disabled={submitting || done}>
+                {submitting ? (
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                ) : done ? (
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                ) : (
+                  <Send className="w-5 h-5 mr-2" />
+                )}
+                {done ? 'Отправлено!' : 'Отправить заявку'}
               </Button>
-              
+
               <div className="flex items-start gap-2 text-xs text-muted-foreground">
                 <CheckCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <p>
-                  Нажимая кнопку, вы даете согласие на обработку персональных данных и соглашаетесь с политикой конфиденциальности
-                </p>
+                <p>Нажимая кнопку, вы даете согласие на обработку персональных данных и соглашаетесь с политикой конфиденциальности</p>
               </div>
             </form>
           </div>
