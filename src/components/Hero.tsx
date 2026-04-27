@@ -52,7 +52,7 @@ const Hero = () => {
   return (
     <section className="relative pt-32 lg:pt-36 overflow-hidden gradient-hero">
       <div className="container mx-auto px-4 py-4 lg:py-6">
-        <div className="grid lg:grid-cols-[minmax(400px,1fr)_1.4fr] gap-8 lg:gap-6 items-center">
+        <div className="grid lg:grid-cols-[minmax(400px,1fr)_1.4fr] gap-8 lg:gap-6 items-stretch">
           {/* Left side - Content */}
           <div className="space-y-6 lg:space-y-8 order-2 lg:order-1">
             <div className="space-y-4">
@@ -124,26 +124,20 @@ const Hero = () => {
           </div>
 
           {/* Right side - Image Carousel */}
-          <div className="order-1 lg:order-2 relative">
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl">
+          <div className="order-1 lg:order-2 relative h-full min-h-[350px]">
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl h-full">
               {/* Carousel images */}
               {heroSlides.map((slide, index) => (
                 <img
                   key={index}
                   src={slide.image}
                   alt={slide.title}
-                  className={`w-full h-[350px] lg:h-[480px] object-cover absolute inset-0 transition-opacity duration-700 ${
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
                     currentSlide === index ? 'opacity-100' : 'opacity-0'
                   }`}
                 />
               ))}
-              {/* First image as base for layout */}
-              <img
-                src={heroSlides[0].image}
-                alt=""
-                className="w-full h-[350px] lg:h-[480px] object-cover invisible"
-              />
-              
+
               {/* Text overlay with semi-transparent purple background */}
               <div className="absolute bottom-6 left-6">
                 <div className="bg-primary/80 backdrop-blur-sm px-5 py-3 rounded-xl transition-all duration-500">
