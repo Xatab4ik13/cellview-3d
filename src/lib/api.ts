@@ -374,6 +374,33 @@ export async function fetchRevenue(from?: string, to?: string): Promise<RevenueE
   return fetchApi<RevenueEntry[]>(`/api/revenue${qs ? `?${qs}` : ''}`);
 }
 
+export interface RevenueMonthEntry {
+  id: string;
+  amount: number;
+  rentalId: string;
+  cellId: string;
+  customerId: string;
+  paymentId: string | null;
+  customerName: string;
+  customerPhone: string;
+  cellNumber: number;
+  rentalStart: string;
+  rentalEnd: string;
+  rentalMonths: number;
+  pricePerMonth: number;
+  totalAmount: number;
+  rentalStatus: string;
+  paymentAmount: number | null;
+  paymentDate: string | null;
+  paymentStatus: string | null;
+}
+
+export async function fetchRevenueByMonth(month: string): Promise<{
+  month: string; total: number; count: number; entries: RevenueMonthEntry[];
+}> {
+  return fetchApi(`/api/revenue/by-month/${month}`);
+}
+
 // ============ Health ============
 
 export async function checkHealth(): Promise<{ status: string; services: Record<string, string> }> {
