@@ -909,7 +909,7 @@ const AdminCells = () => {
                   }
                 }
                 await refetchCells();
-                toast.success('Цены пересчитаны по формуле 1500₽/м³');
+                toast.success('Цены пересчитаны по формуле 1000₽/м³');
               } catch (e: any) {
                 toast.error(`Ошибка: ${e.message}`);
               }
@@ -976,7 +976,7 @@ const AdminCells = () => {
                     <span className="font-medium">{((parseFloat(formData.width) || 0) * (parseFloat(formData.depth) || 0)).toFixed(2)} м²</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Цена (1500₽/м³):</span>
+                    <span className="text-muted-foreground">Цена (1000₽/м³):</span>
                     <span className="font-bold text-primary">₽ {calculatedPrice.toLocaleString()}/мес</span>
                   </div>
                 </div>
@@ -1466,7 +1466,7 @@ const AdminCells = () => {
                   <span className="font-medium">{editVolume.toFixed(2)} м³</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Расчётная цена (1500₽/м³):</span>
+                  <span className="text-muted-foreground">Расчётная цена (1000₽/м³):</span>
                   <span className="font-medium">₽ {editCalculatedPrice.toLocaleString()}/мес</span>
                 </div>
                 <div className="space-y-1">
