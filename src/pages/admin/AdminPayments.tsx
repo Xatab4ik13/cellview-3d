@@ -1,14 +1,20 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, CheckCircle, Clock, XCircle, ArrowUpRight, ArrowDownRight, Loader2, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, CheckCircle, Clock, XCircle, ArrowUpRight, ArrowDownRight, Loader2, AlertCircle, Trash2 } from 'lucide-react';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { motion } from 'framer-motion';
 import AnimatedCounter from '@/components/crm/AnimatedCounter';
-import { fetchPayments, PaymentData } from '@/lib/api';
+import { fetchPayments, deletePayment, PaymentData } from '@/lib/api';
+import { toast } from 'sonner';
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   paid: { label: 'Оплачен', color: 'var(--status-active)', icon: CheckCircle },
@@ -22,10 +28,22 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.E
 const AdminPayments = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [deleteTarget, setDeleteTarget] = useState<PaymentData | null>(null);
+  const qc = useQueryClient();
 
   const { data: payments = [], isLoading, error } = useQuery({
     queryKey: ['payments'],
     queryFn: () => fetchPayments(),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: ({ id, force }: { id: string; force: boolean }) => deletePayment(id, force),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['payments'] });
+      toast.success('Платёж удалён');
+      setDeleteTarget(null);
+    },
+    onError: (e: any) => toast.error(`Ошибка удаления: ${e.message}`),
   });
 
   const filtered = payments.filter(p => {
