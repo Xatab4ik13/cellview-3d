@@ -468,6 +468,7 @@ const AdminCells = () => {
     autoRenew: false,
     notes: '',
     startDate: new Date().toISOString().split('T')[0],
+    customMonthlyPrice: '' as string, // ручная цена/мес (опционально, переопределяет базовую и скидку)
   });
 
   // Release confirmation
