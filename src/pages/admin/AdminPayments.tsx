@@ -143,12 +143,13 @@ const AdminPayments = () => {
                   <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Способ</th>
                   <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Дата</th>
                   <th className="text-left p-4 text-sm font-semibold text-muted-foreground">Статус</th>
+                  <th className="text-right p-4 text-sm font-semibold text-muted-foreground w-[60px]"></th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={8} className="p-8 text-center text-muted-foreground">
                       {payments.length === 0 ? 'Платежей пока нет' : 'Ничего не найдено'}
                     </td>
                   </tr>
@@ -193,6 +194,17 @@ const AdminPayments = () => {
                         <Badge variant="outline" className="gap-1.5" style={{ borderColor: `hsl(${sc.color} / 0.3)`, color: `hsl(${sc.color})`, backgroundColor: `hsl(${sc.color} / 0.1)` }}>
                           <StatusIcon className="w-3.5 h-3.5" />{sc.label}
                         </Badge>
+                      </td>
+                      <td className="p-4 text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setDeleteTarget(p)}
+                          title="Удалить платёж"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </td>
                     </motion.tr>
                   );
