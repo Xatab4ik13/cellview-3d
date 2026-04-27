@@ -550,7 +550,12 @@ const AdminCells = () => {
   const assignCustomer = customers.find(c => c.id === assignForm.customerId);
   const assignDiscount = getDiscount(assignForm.months);
   const assignBasePrice = assigningCell?.pricePerMonth || 0;
-  const assignFinalPrice = Math.round(assignBasePrice * (1 - assignDiscount / 100));
+  const assignCustomPriceNum = parseInt(assignForm.customMonthlyPrice);
+  const hasCustomPrice = !!assignForm.customMonthlyPrice && !isNaN(assignCustomPriceNum) && assignCustomPriceNum > 0;
+  // Если задана ручная цена — используем её без скидки. Иначе базовая со скидкой.
+  const assignFinalPrice = hasCustomPrice
+    ? assignCustomPriceNum
+    : Math.round(assignBasePrice * (1 - assignDiscount / 100));
   const assignTotal = assignFinalPrice * assignForm.months;
 
   // ========== Handlers ==========
@@ -563,6 +568,7 @@ const AdminCells = () => {
       autoRenew: false,
       notes: '',
       startDate: new Date().toISOString().split('T')[0],
+      customMonthlyPrice: '',
     });
     setIsCreatingCustomer(false);
     setNewCustomerForm({ name: '', phone: '', email: '', type: 'individual' });
