@@ -1,10 +1,51 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Phone, Mail, MapPin, Clock, Send, CheckCircle } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, Send, CheckCircle, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import storageCellImage from '@/assets/storage-cell-1.jpg';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'https://api.kladovka78.ru';
+
 const ContactsSection = () => {
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const payload = {
+      name: String(fd.get('name') || '').trim(),
+      phone: String(fd.get('phone') || '').trim(),
+      size: String(fd.get('size') || '').trim(),
+      message: String(fd.get('message') || '').trim(),
+      source: 'Форма "Оставить заявку" на главной',
+    };
+    if (!payload.name || !payload.phone) {
+      toast.error('Укажите имя и телефон');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/leads/callback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || 'Не удалось отправить');
+      setDone(true);
+      toast.success('Заявка отправлена! Перезвоним в течение 15 минут');
+      (e.target as HTMLFormElement).reset();
+      setTimeout(() => setDone(false), 4000);
+    } catch (err: any) {
+      toast.error(err.message || 'Ошибка отправки. Позвоните: 8 (911) 810-83-83');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <section id="contacts" className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4">
@@ -94,62 +135,42 @@ const ContactsSection = () => {
             <h3 className="text-2xl font-bold mb-2">Оставить заявку</h3>
             <p className="text-muted-foreground mb-6">Мы перезвоним в течение 15 минут</p>
             
-            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label htmlFor="name" className="text-sm font-medium">
-                    Имя *
-                  </label>
-                  <Input 
-                    id="name" 
-                    placeholder="Ваше имя" 
-                    required
-                  />
+                  <label htmlFor="name" className="text-sm font-medium">Имя *</label>
+                  <Input id="name" name="name" placeholder="Ваше имя" required />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="phone" className="text-sm font-medium">
-                    Телефон *
-                  </label>
-                  <Input 
-                    id="phone" 
-                    type="tel" 
-                    placeholder="+7 (___) ___-__-__" 
-                    required
-                  />
+                  <label htmlFor="phone" className="text-sm font-medium">Телефон *</label>
+                  <Input id="phone" name="phone" type="tel" placeholder="+7 (___) ___-__-__" required />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
-                <label htmlFor="size" className="text-sm font-medium">
-                  Желаемый размер склада
-                </label>
-                <Input 
-                  id="size" 
-                  placeholder="Например: 2-3 м²" 
-                />
+                <label htmlFor="size" className="text-sm font-medium">Желаемый размер склада</label>
+                <Input id="size" name="size" placeholder="Например: 2-3 м³" />
               </div>
-              
+
               <div className="space-y-2">
-                <label htmlFor="message" className="text-sm font-medium">
-                  Комментарий
-                </label>
-                <Textarea 
-                  id="message" 
-                  placeholder="Дополнительные пожелания..."
-                  rows={4}
-                />
+                <label htmlFor="message" className="text-sm font-medium">Комментарий</label>
+                <Textarea id="message" name="message" placeholder="Дополнительные пожелания..." rows={4} />
               </div>
-              
-              <Button type="submit" className="w-full" size="lg">
-                <Send className="w-5 h-5 mr-2" />
-                Отправить заявку
+
+              <Button type="submit" className="w-full" size="lg" disabled={submitting || done}>
+                {submitting ? (
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                ) : done ? (
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                ) : (
+                  <Send className="w-5 h-5 mr-2" />
+                )}
+                {done ? 'Отправлено!' : 'Отправить заявку'}
               </Button>
-              
+
               <div className="flex items-start gap-2 text-xs text-muted-foreground">
                 <CheckCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <p>
-                  Нажимая кнопку, вы даете согласие на обработку персональных данных и соглашаетесь с политикой конфиденциальности
-                </p>
+                <p>Нажимая кнопку, вы даете согласие на обработку персональных данных и соглашаетесь с политикой конфиденциальности</p>
               </div>
             </form>
           </div>

@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Menu, X, Phone, MapPin, HelpCircle, User, MessageCircle, Package, Wallet, FileText, CircleHelp, Mail, ChevronRight } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import logo from '@/assets/logo.png';
+import { CallbackDialog } from '@/components/CallbackDialog';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [callbackOpen, setCallbackOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -41,6 +43,7 @@ const Header = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
+    <>
     <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border">
       {/* Top row */}
       <div className="border-b border-border/50">
@@ -72,7 +75,7 @@ const Header = () => {
 
             {/* CTA Button - Desktop */}
             <div className="hidden lg:flex items-center gap-4">
-              <Button variant="outline" className="rounded-full px-6">
+              <Button variant="outline" className="rounded-full px-6" onClick={() => setCallbackOpen(true)}>
                 Заказать звонок
               </Button>
               
@@ -195,6 +198,7 @@ const Header = () => {
                     <Button 
                       variant="default" 
                       className="w-full h-14 text-base font-bold rounded-xl bg-gradient-to-r from-accent to-accent/80 hover:opacity-90"
+                      onClick={() => { setIsMenuOpen(false); setCallbackOpen(true); }}
                     >
                       Заказать звонок
                     </Button>
@@ -251,6 +255,8 @@ const Header = () => {
         </div>
       </div>
     </header>
+    <CallbackDialog open={callbackOpen} onOpenChange={setCallbackOpen} source="Header — Заказать звонок" />
+    </>
   );
 };
 
