@@ -7,9 +7,9 @@ import storageHero2 from '@/assets/storage-hero-2.jpg';
 import storageHero3 from '@/assets/storage-hero-3.jpg';
 
 const sizeOptions = [
-  { label: 'Маленький', range: '0,5 - 6 м²' },
-  { label: 'Средний', range: '6 - 15 м²' },
-  { label: 'Большой', range: 'от 15 м²' },
+  { label: 'Маленький', range: '0,5 - 1,2 м³' },
+  { label: 'Средний', range: '1,3 - 3,9 м³' },
+  { label: 'Большой', range: '4,0 - 10 м³' },
 ];
 
 const locations = [
@@ -27,7 +27,7 @@ const heroSlides = [
   },
   {
     image: storageHero3,
-    title: 'Ваш личный код доступа',
+    title: 'Ваш личный замок',
   },
 ];
 
@@ -46,7 +46,7 @@ const Hero = () => {
     { icon: Shield, text: 'Безопасность' },
     { icon: Video, text: 'Видеонаблюдение' },
     { icon: Clock, text: 'Доступ 24/7' },
-    { icon: Key, text: 'Личный код' },
+    { icon: Key, text: 'Личный замок' },
   ];
 
   return (
