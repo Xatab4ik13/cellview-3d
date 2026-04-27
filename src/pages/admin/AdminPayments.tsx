@@ -105,8 +105,10 @@ const AdminPayments = () => {
           <SelectContent>
             <SelectItem value="all">Все статусы</SelectItem>
             <SelectItem value="paid">Оплаченные</SelectItem>
+            <SelectItem value="created">Созданные</SelectItem>
             <SelectItem value="pending">Ожидающие</SelectItem>
             <SelectItem value="failed">С ошибкой</SelectItem>
+            <SelectItem value="expired">Истёкшие</SelectItem>
             <SelectItem value="refunded">Возвраты</SelectItem>
           </SelectContent>
         </Select>
