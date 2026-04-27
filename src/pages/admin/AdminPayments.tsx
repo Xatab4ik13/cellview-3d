@@ -214,6 +214,43 @@ const AdminPayments = () => {
           </div>
         </div>
       )}
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить платёж?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget && (
+                <>
+                  Платёж <span className="font-mono">{deleteTarget.id.slice(0, 8)}</span>
+                  {' '}на сумму <strong>{deleteTarget.amount.toLocaleString('ru-RU')} ₽</strong>
+                  {' '}({statusConfig[deleteTarget.status]?.label || deleteTarget.status}).
+                  <br /><br />
+                  {(deleteTarget.status === 'paid' || deleteTarget.status === 'refunded')
+                    ? 'Платёж уже проведён — будет удалён принудительно. Связанная аренда не будет затронута, но запись о платеже исчезнет.'
+                    : 'Действие нельзя отменить.'}
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (!deleteTarget) return;
+                const force = deleteTarget.status === 'paid' || deleteTarget.status === 'refunded';
+                deleteMutation.mutate({ id: deleteTarget.id, force });
+              }}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
