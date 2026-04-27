@@ -12,6 +12,7 @@ import { photosRouter } from './routes/photos';
 import { authRouter } from './routes/auth';
 import { paymentsRouter } from './routes/payments';
 import { revenueRouter } from './routes/revenue';
+import { leadsRouter } from './routes/leads';
 
 
 // Для sandbox ВТБ: их тестовый сервер использует сертификат, не входящий в стандартные CA
@@ -47,6 +48,7 @@ app.use('/api/rentals', rentalsRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/payments', paymentsRouter);
 app.use('/api/revenue', revenueRouter);
+app.use('/api/leads', leadsRouter);
 
 // Error handling
 app.use(errorHandler);
