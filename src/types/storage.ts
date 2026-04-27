@@ -48,8 +48,9 @@ export const CELL_SIZE_LABELS: Record<CellSize, string> = {
   xlarge: 'Очень большая (от 15 м²)',
 };
 
-// Расчёт цены: 1500₽ за кубометр, округление до десятков вверх
+// Расчёт цены: 1000₽ за кубометр, округление до десятков вверх
+export const PRICE_PER_M3 = 1000;
 export const calculatePrice = (volume: number): number => {
-  const rawPrice = volume * 1500;
+  const rawPrice = volume * PRICE_PER_M3;
   return Math.ceil(rawPrice / 10) * 10;
 };
