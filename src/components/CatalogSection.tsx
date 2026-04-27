@@ -53,8 +53,9 @@ const CatalogSection = () => {
   const effectiveVolumeRange = volumeRange ?? [dataRanges.minVol, dataRanges.maxVol];
   
   const filteredCells = useMemo(() => {
+    // Публичный каталог — показываем только доступные клиенту ячейки
     return storageCells.filter(cell => {
-      if (filters.availableOnly && !cell.isAvailable) return false;
+      if (!cell.isAvailable) return false;
       if (filters.hasShelves && !cell.hasShelves) return false;
       if (filters.tier !== undefined && cell.tier !== filters.tier) return false;
       if (cell.pricePerMonth < effectivePriceRange[0] || cell.pricePerMonth > effectivePriceRange[1]) return false;
