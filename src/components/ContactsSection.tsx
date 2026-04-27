@@ -1,10 +1,51 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Phone, Mail, MapPin, Clock, Send, CheckCircle } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, Send, CheckCircle, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import storageCellImage from '@/assets/storage-cell-1.jpg';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'https://api.kladovka78.ru';
+
 const ContactsSection = () => {
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const payload = {
+      name: String(fd.get('name') || '').trim(),
+      phone: String(fd.get('phone') || '').trim(),
+      size: String(fd.get('size') || '').trim(),
+      message: String(fd.get('message') || '').trim(),
+      source: 'Форма "Оставить заявку" на главной',
+    };
+    if (!payload.name || !payload.phone) {
+      toast.error('Укажите имя и телефон');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/leads/callback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || 'Не удалось отправить');
+      setDone(true);
+      toast.success('Заявка отправлена! Перезвоним в течение 15 минут');
+      (e.target as HTMLFormElement).reset();
+      setTimeout(() => setDone(false), 4000);
+    } catch (err: any) {
+      toast.error(err.message || 'Ошибка отправки. Позвоните: 8 (911) 810-83-83');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <section id="contacts" className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4">
