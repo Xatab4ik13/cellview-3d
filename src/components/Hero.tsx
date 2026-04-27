@@ -62,7 +62,7 @@ const Hero = () => {
               </h1>
               
               <p className="text-xl font-medium text-muted-foreground max-w-lg">
-                Снять место недорого можно у нас!
+                Выгодная аренда кладовой без залога.
               </p>
             </div>
 
@@ -101,17 +101,10 @@ const Hero = () => {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link to="/catalog" className="flex-1">
                   <Button variant="default" size="lg" className="w-full shadow-primary text-base font-bold">
-                    Забронировать склад
+                    Забронировать кладовку
                   </Button>
                 </Link>
-                <Button variant="accent" size="lg" className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90 shadow-accent font-bold text-base">
-                  Скидка 50%*
-                </Button>
               </div>
-              
-              <p className="text-xs text-muted-foreground mt-3">
-                * Подробности уточняйте у менеджеров
-              </p>
             </div>
 
             {/* Features grid */}
