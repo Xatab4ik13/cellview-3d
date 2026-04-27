@@ -209,10 +209,13 @@ rentalsRouter.put('/:id/release', async (req: Request, res: Response, next: Next
 
 // PUT /api/rentals/:id — обновить аренду (даты, сумму)
 rentalsRouter.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
+  const conn = await pool.getConnection();
   try {
+    await conn.beginTransaction();
+
     const { startDate, endDate, totalAmount, pricePerMonth, notes } = req.body;
 
-    const [rows] = await pool.query('SELECT * FROM rentals WHERE id = ?', [req.params.id]);
+    const [rows] = await conn.query('SELECT * FROM rentals WHERE id = ? FOR UPDATE', [req.params.id]);
     const rental = (rows as any[])[0];
     if (!rental) throw new AppError('Аренда не найдена', 404);
 
@@ -228,11 +231,42 @@ rentalsRouter.put('/:id', async (req: Request, res: Response, next: NextFunction
     if (updates.length === 0) throw new AppError('Нет данных для обновления', 400);
 
     params.push(req.params.id);
-    await pool.query(`UPDATE rentals SET ${updates.join(', ')} WHERE id = ?`, params);
+    await conn.query(`UPDATE rentals SET ${updates.join(', ')} WHERE id = ?`, params);
 
+    // Если изменилась цена/сумма/даты — пересоздать revenue_entries
+    const priceChanged = pricePerMonth !== undefined || totalAmount !== undefined;
+    const datesChanged = startDate !== undefined || endDate !== undefined;
+    if (priceChanged || datesChanged) {
+      // Получаем актуальные данные
+      const [updatedRows] = await conn.query('SELECT * FROM rentals WHERE id = ?', [req.params.id]);
+      const updated = (updatedRows as any[])[0];
+      const months = updated.duration_months || 1;
+      const finalTotal = updated.total_amount || updated.monthly_price * months;
+      const monthlyAmount = Math.floor(finalTotal / months);
+      const remainder = finalTotal - monthlyAmount * months;
+      const start = new Date(updated.start_date);
+
+      await conn.query('DELETE FROM revenue_entries WHERE rental_id = ?', [req.params.id]);
+      for (let i = 0; i < months; i++) {
+        const entryMonth = new Date(start);
+        entryMonth.setMonth(entryMonth.getMonth() + i);
+        const monthStr = entryMonth.toISOString().slice(0, 7) + '-01';
+        const amount = i === 0 ? monthlyAmount + remainder : monthlyAmount;
+        const entryId = `rev-${req.params.id}-${i}`;
+        await conn.query(
+          `INSERT INTO revenue_entries (id, rental_id, customer_id, cell_id, month, amount) VALUES (?, ?, ?, ?, ?, ?)`,
+          [entryId, req.params.id, updated.customer_id, updated.cell_id, monthStr, amount]
+        );
+      }
+    }
+
+    await conn.commit();
     res.json({ success: true, message: 'Аренда обновлена' });
   } catch (error) {
+    await conn.rollback();
     next(error);
+  } finally {
+    conn.release();
   }
 });
 
