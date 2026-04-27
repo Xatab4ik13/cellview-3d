@@ -21,10 +21,10 @@ import { defaultDocuments, iconMap, type SiteDocument } from '@/data/siteDocumen
 const AdminSite = () => {
   const [siteData, setSiteData] = useState({
     seoTitle: 'Кладовка78 — Аренда складских ячеек в Санкт-Петербурге',
-    seoDescription: 'Надёжное хранение вещей от 1500₽/мес. Видеонаблюдение 24/7. Удобный доступ.',
+    seoDescription: 'Надёжное хранение вещей от 1000₽/мес. Видеонаблюдение 24/7. Удобный доступ.',
     seoKeywords: 'склад, аренда ячейки, хранение вещей, Санкт-Петербург',
     heroTitle: 'Надёжное хранение вещей',
-    heroSubtitle: 'Арендуйте складскую ячейку от 1500₽ в месяц с круглосуточным доступом',
+    heroSubtitle: 'Арендуйте складскую ячейку от 1000₽ в месяц с круглосуточным доступом',
     phone: '+7 (812) 555-78-78',
     email: 'info@kladovka78.ru',
     address: 'Санкт-Петербург, ул. Примерная, д. 78',
