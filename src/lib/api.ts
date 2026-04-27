@@ -357,6 +357,11 @@ export async function refundPayment(id: string, amount?: number): Promise<void> 
   });
 }
 
+export async function deletePayment(id: string, force = false): Promise<void> {
+  const qs = force ? '?force=true' : '';
+  await fetchApi(`/api/payments/${id}${qs}`, { method: 'DELETE' });
+}
+
 // ============ Выручка (revenue) ============
 
 export interface RevenueEntry {
