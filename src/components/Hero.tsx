@@ -7,9 +7,9 @@ import storageHero2 from '@/assets/storage-hero-2.jpg';
 import storageHero3 from '@/assets/storage-hero-3.jpg';
 
 const sizeOptions = [
-  { label: 'Маленький', range: '0,5 - 6 м²' },
-  { label: 'Средний', range: '6 - 15 м²' },
-  { label: 'Большой', range: 'от 15 м²' },
+  { label: 'Маленький', range: '0,5 - 1,2 м³' },
+  { label: 'Средний', range: '1,3 - 3,9 м³' },
+  { label: 'Большой', range: '4,0 - 10 м³' },
 ];
 
 const locations = [
@@ -27,7 +27,7 @@ const heroSlides = [
   },
   {
     image: storageHero3,
-    title: 'Ваш личный код доступа',
+    title: 'Ваш личный замок',
   },
 ];
 
@@ -46,13 +46,13 @@ const Hero = () => {
     { icon: Shield, text: 'Безопасность' },
     { icon: Video, text: 'Видеонаблюдение' },
     { icon: Clock, text: 'Доступ 24/7' },
-    { icon: Key, text: 'Личный код' },
+    { icon: Key, text: 'Личный замок' },
   ];
 
   return (
     <section className="relative pt-32 lg:pt-36 overflow-hidden gradient-hero">
       <div className="container mx-auto px-4 py-4 lg:py-6">
-        <div className="grid lg:grid-cols-[minmax(400px,1fr)_1.4fr] gap-8 lg:gap-6 items-center">
+        <div className="grid lg:grid-cols-[minmax(400px,1fr)_1.4fr] gap-8 lg:gap-6 items-stretch">
           {/* Left side - Content */}
           <div className="space-y-6 lg:space-y-8 order-2 lg:order-1">
             <div className="space-y-4">
@@ -62,7 +62,7 @@ const Hero = () => {
               </h1>
               
               <p className="text-xl font-medium text-muted-foreground max-w-lg">
-                Снять место недорого можно у нас!
+                Выгодная аренда кладовой без залога.
               </p>
             </div>
 
@@ -101,17 +101,10 @@ const Hero = () => {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link to="/catalog" className="flex-1">
                   <Button variant="default" size="lg" className="w-full shadow-primary text-base font-bold">
-                    Забронировать склад
+                    Забронировать кладовку
                   </Button>
                 </Link>
-                <Button variant="accent" size="lg" className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90 shadow-accent font-bold text-base">
-                  Скидка 50%*
-                </Button>
               </div>
-              
-              <p className="text-xs text-muted-foreground mt-3">
-                * Подробности уточняйте у менеджеров
-              </p>
             </div>
 
             {/* Features grid */}
@@ -131,26 +124,20 @@ const Hero = () => {
           </div>
 
           {/* Right side - Image Carousel */}
-          <div className="order-1 lg:order-2 relative">
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl">
+          <div className="order-1 lg:order-2 relative h-full min-h-[350px]">
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl h-full">
               {/* Carousel images */}
               {heroSlides.map((slide, index) => (
                 <img
                   key={index}
                   src={slide.image}
                   alt={slide.title}
-                  className={`w-full h-[350px] lg:h-[480px] object-cover absolute inset-0 transition-opacity duration-700 ${
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
                     currentSlide === index ? 'opacity-100' : 'opacity-0'
                   }`}
                 />
               ))}
-              {/* First image as base for layout */}
-              <img
-                src={heroSlides[0].image}
-                alt=""
-                className="w-full h-[350px] lg:h-[480px] object-cover invisible"
-              />
-              
+
               {/* Text overlay with semi-transparent purple background */}
               <div className="absolute bottom-6 left-6">
                 <div className="bg-primary/80 backdrop-blur-sm px-5 py-3 rounded-xl transition-all duration-500">

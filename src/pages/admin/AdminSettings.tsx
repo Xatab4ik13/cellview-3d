@@ -72,7 +72,7 @@ const AdminSettings = () => {
         </div>
         <div className="border-t border-border pt-4 mt-4 space-y-4">
           <div className="space-y-2">
-            <Label className="text-sm">Базовая формула: объём × 1500₽, округление до 10₽ вверх</Label>
+            <Label className="text-sm">Базовая формула: объём × 1000₽, округление до 10₽ вверх</Label>
             <p className="text-xs text-muted-foreground">
               Пересчёт применяется ко всем ячейкам, у которых не задана ручная цена.
               Чтобы задать цену вручную для отдельной ячейки, отредактируйте её в разделе «Ячейки».

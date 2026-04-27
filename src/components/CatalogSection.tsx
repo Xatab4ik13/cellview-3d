@@ -53,8 +53,9 @@ const CatalogSection = () => {
   const effectiveVolumeRange = volumeRange ?? [dataRanges.minVol, dataRanges.maxVol];
   
   const filteredCells = useMemo(() => {
+    // Публичный каталог — показываем только доступные клиенту ячейки
     return storageCells.filter(cell => {
-      if (filters.availableOnly && !cell.isAvailable) return false;
+      if (!cell.isAvailable) return false;
       if (filters.hasShelves && !cell.hasShelves) return false;
       if (filters.tier !== undefined && cell.tier !== filters.tier) return false;
       if (cell.pricePerMonth < effectivePriceRange[0] || cell.pricePerMonth > effectivePriceRange[1]) return false;
@@ -92,7 +93,6 @@ const CatalogSection = () => {
   };
   
   const activeFiltersCount = [
-    filters.availableOnly,
     filters.hasShelves,
     filters.tier !== undefined,
     priceRange !== null && (priceRange[0] > dataRanges.minPrice || priceRange[1] < dataRanges.maxPrice),
@@ -109,8 +109,7 @@ const CatalogSection = () => {
               Каталог <span className="text-primary">ячеек</span>
             </h2>
             <p className="text-lg text-muted-foreground font-medium">
-              {storageCells.filter(c => c.isAvailable).length} из {storageCells.length} ячеек доступно
-              {activeFiltersCount > 0 && ` · показано ${filteredCells.length}`}
+              Свободно {filteredCells.length} {filteredCells.length === 1 ? 'кладовка' : 'кладовок'}
             </p>
           </div>
           
@@ -289,21 +288,6 @@ const CatalogSection = () => {
               
               {/* Toggles */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="available" className="flex items-center gap-2">
-                    <Layers className="w-4 h-4" />
-                    Только свободные
-                  </Label>
-                  <Switch 
-                    id="available"
-                    checked={filters.availableOnly}
-                    onCheckedChange={(checked) => {
-                      setFilters(f => ({ ...f, availableOnly: checked }));
-                      handleFilterChange();
-                    }}
-                  />
-                </div>
-                
                 <div className="flex items-center justify-between">
                   <Label htmlFor="shelves" className="flex items-center gap-2">
                     <Grid3X3 className="w-4 h-4" />

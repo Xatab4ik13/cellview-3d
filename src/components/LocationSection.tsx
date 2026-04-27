@@ -2,6 +2,12 @@ import { MapPin, Phone, Clock, Navigation, Car, Train } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import storageCellImage from '@/assets/storage-cell-1.jpg';
 
+// Точные координаты входа Mami (Алтайская 21, помещение 22-Н)
+const MAP_LAT = 59.82820;
+const MAP_LON = 30.37540;
+const MAP_POINT = `${MAP_LON},${MAP_LAT}`;
+const ROUTE_URL = `https://yandex.ru/maps/?rtext=~${MAP_LAT},${MAP_LON}&rtt=auto`;
+
 const LocationSection = () => {
   return (
     <section id="location" className="py-16 lg:py-24 bg-muted/30">
@@ -20,7 +26,7 @@ const LocationSection = () => {
           <div className="order-2 lg:order-1">
             <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-border shadow-lg">
               <iframe 
-                src="https://yandex.ru/map-widget/v1/?ll=30.32755%2C59.84881&z=16&pt=30.32755%2C59.84881%2Cpm2rdm&lang=ru_RU"
+                src={`https://yandex.ru/map-widget/v1/?ll=${MAP_POINT}&z=17&pt=${MAP_POINT},pm2rdm&lang=ru_RU`}
                 width="100%" 
                 height="100%" 
                 style={{ border: 0 }}
@@ -39,7 +45,7 @@ const LocationSection = () => {
                 <div>
                   <h4 className="font-semibold text-sm">На метро</h4>
                   <p className="text-xs text-muted-foreground">
-                    Ст. Московская — 15 мин пешком
+                    Ст. Купчино — 4 мин пешком
                   </p>
                 </div>
               </div>
@@ -127,9 +133,11 @@ const LocationSection = () => {
 
                 <div className="pt-4 border-t border-border">
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <Button className="flex-1" size="lg">
-                      <Navigation className="w-4 h-4" />
-                      Построить маршрут
+                    <Button className="flex-1" size="lg" asChild>
+                      <a href={ROUTE_URL} target="_blank" rel="noopener noreferrer">
+                        <Navigation className="w-4 h-4" />
+                        Построить маршрут
+                      </a>
                     </Button>
                     <Button variant="outline" className="flex-1" size="lg" asChild>
                       <a href="tel:+79118108383">
@@ -146,7 +154,7 @@ const LocationSection = () => {
             <div className="flex items-center gap-4 p-4 bg-primary/5 rounded-xl border border-primary/20">
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Цена</p>
-                <p className="text-2xl font-bold text-primary">1500 ₽/м³</p>
+                <p className="text-2xl font-bold text-primary">1000 ₽/м³</p>
               </div>
               <div className="flex-1 text-sm text-muted-foreground">
                 Ячейки от 0,5 м³ до 10 м³ с круглосуточным доступом и видеонаблюдением
