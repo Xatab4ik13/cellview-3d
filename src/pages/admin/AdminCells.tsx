@@ -670,6 +670,24 @@ const AdminCells = () => {
     }
   };
 
+  const handleDelete = (cell: StorageCell) => {
+    setDeletingCell(cell);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (!deletingCell) return;
+    deleteMutation.mutate(deletingCell.id, {
+      onSuccess: () => {
+        setIsDeleteDialogOpen(false);
+        setDeletingCell(null);
+        if (selectedCell?.id === deletingCell.id) {
+          setSelectedCell(null);
+        }
+      },
+    });
+  };
+
   // Photo handlers
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
