@@ -1207,6 +1207,9 @@ const AdminCells = () => {
                           <DropdownMenuItem onClick={() => openEditDialog(cell)}>
                             <Edit className="h-4 w-4 mr-2" />Редактировать
                           </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(cell)}>
+                            <Trash2 className="h-4 w-4 mr-2" />Удалить
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
