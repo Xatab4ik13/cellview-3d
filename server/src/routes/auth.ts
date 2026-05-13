@@ -23,8 +23,8 @@ authRouter.post(
     try {
       const { name, email, phone, password } = req.body;
 
-      if (!name || !email || !password) {
-        throw new AppError('Имя, email и пароль обязательны', 400);
+      if (!name || !email || !phone || !password) {
+        throw new AppError('Имя, email, телефон и пароль обязательны', 400);
       }
 
       // Check if email already exists
