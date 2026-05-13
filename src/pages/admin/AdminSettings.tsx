@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { recalculateCellPrices } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
+import { useDiscounts, useSaveDiscounts, Discounts } from '@/hooks/useSettings';
 
 const CardBlock = ({ title, icon: Icon, description, children }: { title: string; icon: React.ElementType; description: string; children: React.ReactNode }) => (
   <motion.div
@@ -32,6 +33,21 @@ const AdminSettings = () => {
   const queryClient = useQueryClient();
   const [isRecalculating, setIsRecalculating] = useState(false);
 
+  const { data: discounts } = useDiscounts();
+  const saveDiscounts = useSaveDiscounts();
+  const [form, setForm] = useState<Discounts>({ 1: 0, 3: 5, 6: 10, 12: 15 });
+
+  useEffect(() => {
+    if (discounts) setForm(discounts);
+  }, [discounts]);
+
+  const handleSaveDiscounts = () => {
+    saveDiscounts.mutate(form, {
+      onSuccess: () => toast.success('Скидки сохранены — изменения видны на сайте'),
+      onError: (e: any) => toast.error(`Ошибка: ${e.message}`),
+    });
+  };
+
   const handleRecalculatePrices = async () => {
     setIsRecalculating(true);
     try {
@@ -45,6 +61,13 @@ const AdminSettings = () => {
     }
   };
 
+  const fields: { key: keyof Discounts; label: string }[] = [
+    { key: 1, label: '1 месяц' },
+    { key: 3, label: '3 месяца' },
+    { key: 6, label: '6 месяцев' },
+    { key: 12, label: '12 месяцев' },
+  ];
+
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
@@ -55,20 +78,28 @@ const AdminSettings = () => {
       {/* Pricing */}
       <CardBlock title="Ценообразование" icon={Percent} description="Скидки за длительную аренду и массовый пересчёт цен">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: '1 месяц', value: '0' },
-            { label: '3 месяца', value: '5' },
-            { label: '6 месяцев', value: '10' },
-            { label: '12 месяцев', value: '15' },
-          ].map(d => (
-            <div key={d.label} className="space-y-2">
-              <Label className="text-sm">{d.label}</Label>
+          {fields.map(f => (
+            <div key={f.key} className="space-y-2">
+              <Label className="text-sm">{f.label}</Label>
               <div className="flex items-center gap-2">
-                <Input type="number" defaultValue={d.value} className="w-20 h-10" />
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={form[f.key]}
+                  onChange={(e) => setForm(prev => ({ ...prev, [f.key]: Number(e.target.value) || 0 }))}
+                  className="w-20 h-10"
+                />
                 <span className="text-sm text-muted-foreground">%</span>
               </div>
             </div>
           ))}
+        </div>
+        <div className="pt-2">
+          <Button onClick={handleSaveDiscounts} disabled={saveDiscounts.isPending} className="gap-2">
+            {saveDiscounts.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Сохранить скидки
+          </Button>
         </div>
         <div className="border-t border-border pt-4 mt-4 space-y-4">
           <div className="space-y-2">
