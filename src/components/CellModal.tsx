@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StorageCell, calculatePrice, RESERVATION_HOURS } from '@/types/storage';
+import { useDiscounts } from '@/hooks/useSettings';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -29,6 +30,7 @@ type DurationOption = 1 | 3 | 6 | 12;
 
 const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
   const navigate = useNavigate();
+  const { data: discountSettings } = useDiscounts();
   const [selectedDuration, setSelectedDuration] = useState<DurationOption>(1);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   
@@ -43,12 +45,12 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
   
   const monthlyPrice = cell.pricePerMonth || calculatePrice(cell.volume);
   
-  // Скидки по длительности
+  // Скидки по длительности (из настроек CRM)
   const discounts: Record<DurationOption, number> = {
-    1: 0,
-    3: 5,
-    6: 10,
-    12: 15,
+    1: discountSettings?.[1] ?? 0,
+    3: discountSettings?.[3] ?? 5,
+    6: discountSettings?.[6] ?? 10,
+    12: discountSettings?.[12] ?? 15,
   };
   
   const durationLabels: Record<DurationOption, string> = {
