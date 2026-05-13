@@ -41,7 +41,7 @@ const CellModal = ({ cell, isOpen, onClose }: CellModalProps) => {
   
   const photos = cell.photos;
   
-  const monthlyPrice = calculatePrice(cell.volume);
+  const monthlyPrice = cell.pricePerMonth || calculatePrice(cell.volume);
   
   // Скидки по длительности
   const discounts: Record<DurationOption, number> = {
