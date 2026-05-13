@@ -336,7 +336,7 @@ const CellCardVariantB = ({ cell, onSelect }: CellCardProps) => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-2xl font-extrabold text-foreground">
-              {calculatePrice(cell.volume).toLocaleString('ru-RU')}
+              {(cell.pricePerMonth || calculatePrice(cell.volume)).toLocaleString('ru-RU')}
               <span className="text-base font-medium text-muted-foreground ml-1">₽/мес</span>
             </p>
           </div>
