@@ -480,6 +480,10 @@ const AdminCells = () => {
   const [isReleaseDialogOpen, setIsReleaseDialogOpen] = useState(false);
   const [releasingCellId, setReleasingCellId] = useState<string | null>(null);
 
+  // Delete confirmation
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingCell, setDeletingCell] = useState<StorageCell | null>(null);
+
   // Form states
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
@@ -664,6 +668,24 @@ const AdminCells = () => {
     } else {
       toast.error('Аренда не найдена');
     }
+  };
+
+  const handleDelete = (cell: StorageCell) => {
+    setDeletingCell(cell);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (!deletingCell) return;
+    deleteMutation.mutate(deletingCell.id, {
+      onSuccess: () => {
+        setIsDeleteDialogOpen(false);
+        setDeletingCell(null);
+        if (selectedCell?.id === deletingCell.id) {
+          setSelectedCell(null);
+        }
+      },
+    });
   };
 
   // Photo handlers
@@ -1185,6 +1207,9 @@ const AdminCells = () => {
                           <DropdownMenuItem onClick={() => openEditDialog(cell)}>
                             <Edit className="h-4 w-4 mr-2" />Редактировать
                           </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(cell)}>
+                            <Trash2 className="h-4 w-4 mr-2" />Удалить
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
@@ -1413,6 +1438,33 @@ const AdminCells = () => {
             <AlertDialogCancel>Отмена</AlertDialogCancel>
             <AlertDialogAction onClick={confirmRelease} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Освободить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ========== Delete Cell Dialog ========== */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить ячейку?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deletingCell && (
+                <>
+                  Ячейка №<strong>{deletingCell.number}</strong> будет удалена безвозвратно.
+                  {deletingCell.status !== 'available' && (
+                    <><br /><span className="text-destructive">Внимание: ячейка занята или забронирована.</span></>
+                  )}
+                  <br /><br />
+                  Это действие нельзя отменить.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Удалить
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
