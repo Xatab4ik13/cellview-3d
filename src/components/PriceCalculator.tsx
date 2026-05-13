@@ -5,24 +5,18 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Calculator, Percent, Box } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { calculatePrice } from '@/types/storage';
+import { useDiscounts, getDiscountForMonths } from '@/hooks/useSettings';
 
 type DurationOption = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
-
-// Скидки по длительности
-const getDiscount = (months: number): number => {
-  if (months >= 12) return 15;
-  if (months >= 6) return 10;
-  if (months >= 3) return 5;
-  return 0;
-};
 
 const PriceCalculator = () => {
   const [volume, setVolume] = useState<number>(2);
   const [duration, setDuration] = useState<number>(1);
+  const { data: discountSettings } = useDiscounts();
 
   const calculations = useMemo(() => {
     const monthlyPrice = calculatePrice(volume);
-    const discount = getDiscount(duration);
+    const discount = discountSettings ? getDiscountForMonths(discountSettings, duration) : 0;
     const totalBeforeDiscount = monthlyPrice * duration;
     const discountAmount = Math.floor(totalBeforeDiscount * discount / 100);
     const totalPrice = Math.ceil((totalBeforeDiscount - discountAmount) / 10) * 10;
