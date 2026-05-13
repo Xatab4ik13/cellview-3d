@@ -1443,6 +1443,33 @@ const AdminCells = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* ========== Delete Cell Dialog ========== */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить ячейку?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deletingCell && (
+                <>
+                  Ячейка №<strong>{deletingCell.number}</strong> будет удалена безвозвратно.
+                  {deletingCell.status !== 'available' && (
+                    <><br /><span className="text-destructive">Внимание: ячейка занята или забронирована.</span></>
+                  )}
+                  <br /><br />
+                  Это действие нельзя отменить.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* ========== Edit Dialog ========== */}
       <Dialog modal open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
