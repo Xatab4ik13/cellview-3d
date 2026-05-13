@@ -480,6 +480,10 @@ const AdminCells = () => {
   const [isReleaseDialogOpen, setIsReleaseDialogOpen] = useState(false);
   const [releasingCellId, setReleasingCellId] = useState<string | null>(null);
 
+  // Delete confirmation
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingCell, setDeletingCell] = useState<StorageCell | null>(null);
+
   // Form states
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
