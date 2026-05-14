@@ -141,8 +141,12 @@ export default function RentalFormDialog({ open, onClose, onSubmitCreate, onSubm
   };
 
   return (
-    <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-md">
+    <Dialog open={open} onOpenChange={v => !v && onClose()} modal>
+      <DialogContent
+        className="max-w-md"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Редактировать аренду' : 'Новая аренда'}</DialogTitle>
         </DialogHeader>
