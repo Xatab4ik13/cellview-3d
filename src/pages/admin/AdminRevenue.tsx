@@ -260,6 +260,8 @@ const AdminRevenue = () => {
               <th className="text-right px-4 py-2 font-medium text-muted-foreground">Аренд</th>
               <th className="text-right px-4 py-2 font-medium text-muted-foreground">Клиентов</th>
               <th className="text-right px-4 py-2 font-medium text-muted-foreground">Сумма</th>
+              <th className="text-right px-4 py-2 font-medium text-muted-foreground">Прогноз<br/>(при продл.)</th>
+              <th className="text-right px-4 py-2 font-medium text-muted-foreground">Итого<br/>с прогнозом</th>
               <th className="px-4 py-2"></th>
             </tr>
           </thead>
@@ -269,6 +271,8 @@ const AdminRevenue = () => {
               const isCurrent = ym === currentYm;
               const isFuture = ym > currentYm;
               const empty = v.total === 0;
+              const forecast = forecastMap.get(ym) || 0;
+              const combined = v.total + forecast;
               return (
                 <tr
                   key={ym}
@@ -298,6 +302,16 @@ const AdminRevenue = () => {
                   }}>
                     {empty ? '—' : fmtRub(v.total)}
                   </td>
+                  <td className="px-4 py-3 text-right" style={{
+                    color: forecast > 0 ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'
+                  }}>
+                    {forecast > 0 ? `+${fmtRub(forecast)}` : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-right font-semibold" style={{
+                    color: combined === 0 ? 'hsl(var(--muted-foreground))' : 'hsl(var(--primary))'
+                  }}>
+                    {combined === 0 ? '—' : fmtRub(combined)}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     {!empty && <ChevronRight className="h-4 w-4 inline text-muted-foreground" />}
                   </td>
@@ -309,6 +323,8 @@ const AdminRevenue = () => {
             <tr className="border-t border-border bg-muted/30 font-bold">
               <td className="px-4 py-3" colSpan={4}>Итого за {year}</td>
               <td className="px-4 py-3 text-right text-primary">{fmtRub(yearTotal)}</td>
+              <td className="px-4 py-3 text-right text-primary">+{fmtRub(forecastTotal)}</td>
+              <td className="px-4 py-3 text-right text-primary">{fmtRub(yearTotal + forecastTotal)}</td>
               <td></td>
             </tr>
           </tfoot>
