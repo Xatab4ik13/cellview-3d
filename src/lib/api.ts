@@ -234,6 +234,10 @@ export async function releaseRental(id: string): Promise<void> {
   await fetchApi(`/api/rentals/${id}/release`, { method: 'PUT' });
 }
 
+export async function completeRental(id: string): Promise<void> {
+  await fetchApi(`/api/rentals/${id}/complete`, { method: 'PUT' });
+}
+
 export async function deleteRental(id: string): Promise<void> {
   await fetchApi(`/api/rentals/${id}`, { method: 'DELETE' });
 }
