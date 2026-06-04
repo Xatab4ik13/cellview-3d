@@ -23,6 +23,7 @@ const statusConfig: Record<string, { label: string; color: string }> = {
   expiring: { label: 'Заканчивается', color: 'var(--status-pending)' },
   expired: { label: 'Просрочена', color: 'var(--status-overdue)' },
   cancelled: { label: 'Отменена', color: 'var(--status-overdue)' },
+  completed: { label: 'Завершена', color: 'var(--status-active)' },
 };
 
 const paymentStatusConfig: Record<string, { label: string; color: string }> = {
@@ -35,6 +36,7 @@ const paymentStatusConfig: Record<string, { label: string; color: string }> = {
 };
 
 function getDisplayStatus(rental: RentalData) {
+  if (rental.status === 'completed') return 'completed';
   if (rental.status === 'cancelled') return 'cancelled';
   if (rental.status === 'expired') return 'expired';
   const daysLeft = differenceInDays(parseISO(rental.endDate), new Date());
