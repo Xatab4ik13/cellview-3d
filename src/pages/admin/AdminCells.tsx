@@ -839,8 +839,9 @@ const AdminCells = () => {
           try {
             await uploadCellPhotos(editingCell.id, editNewFiles);
             toast.success(`Обновлено, загружено ${editNewFiles.length} новых фото`);
-          } catch (err) {
-            toast.warning('Ячейка обновлена, но новые фото не загружены');
+          } catch (err: any) {
+            console.error('Photo upload failed:', err);
+            toast.warning(`Ячейка обновлена, но фото не загружены: ${err?.message || 'ошибка сети'}`);
           }
         }
         setIsEditDialogOpen(false);
