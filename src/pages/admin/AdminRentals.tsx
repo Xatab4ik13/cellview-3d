@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useRentals, useCreateRental, useUpdateRental, useExtendRental, useReleaseRental, useDeleteRental } from '@/hooks/useRentals';
+import { useRentals, useCreateRental, useUpdateRental, useExtendRental, useReleaseRental, useCompleteRental, useDeleteRental } from '@/hooks/useRentals';
 import { usePayments, useCreateCashPayment } from '@/hooks/usePayments';
 import { useCells } from '@/hooks/useCells';
 import { format, differenceInDays, parseISO } from 'date-fns';
