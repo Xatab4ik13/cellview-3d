@@ -66,6 +66,34 @@ const AdminRevenue = () => {
 
   const currentYm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
+  // ===== Прогноз с гипотетическими продлениями =====
+  // Берём активные аренды. После их фактической даты окончания
+  // считаем, что аренда продлевается ежемесячно по той же цене
+  // до конца выбранного года. Это даёт прогноз "если продлят".
+  const { data: rentals = [] } = useRentals();
+  const forecastMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (let m = 1; m <= 12; m++) {
+      map.set(`${year}-${String(m).padStart(2, '0')}`, 0);
+    }
+    rentals.forEach(r => {
+      if (r.status !== 'active') return;
+      const end = new Date(r.endDate);
+      // Стартуем со следующего месяца после фактического окончания
+      const start = new Date(end.getFullYear(), end.getMonth() + 1, 1);
+      for (let i = 0; i < 24; i++) {
+        const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+        if (d.getFullYear() > year) break;
+        if (d.getFullYear() < year) continue;
+        const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        // Прогноз только для будущих месяцев (включая текущий)
+        if (ym < currentYm) continue;
+        map.set(ym, (map.get(ym) || 0) + (Number(r.pricePerMonth) || 0));
+      }
+    });
+    return map;
+  }, [rentals, year, currentYm]);
+
   const yearTotal = Array.from(yearMap.values()).reduce((s, v) => s + v.total, 0);
   const factTotal = Array.from(yearMap.entries())
     .filter(([ym]) => ym <= currentYm)
@@ -73,6 +101,7 @@ const AdminRevenue = () => {
   const planTotal = Array.from(yearMap.entries())
     .filter(([ym]) => ym > currentYm)
     .reduce((s, [, v]) => s + v.total, 0);
+  const forecastTotal = Array.from(forecastMap.values()).reduce((s, v) => s + v, 0);
 
   // ===== Detail view =====
   if (selectedMonth && detail) {
