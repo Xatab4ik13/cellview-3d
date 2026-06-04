@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, MoreHorizontal, Edit, Ban, RefreshCw, Plus, Loader2, Trash2, Banknote } from 'lucide-react';
+import { Search, MoreHorizontal, Edit, Ban, RefreshCw, Plus, Loader2, Trash2, Banknote, CheckCircle2 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
