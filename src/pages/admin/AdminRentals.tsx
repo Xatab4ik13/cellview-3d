@@ -69,6 +69,7 @@ const AdminRentals = () => {
       (r.customerPhone || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       String(r.cellNumber || '').includes(searchQuery);
     if (tab === 'all') return matchSearch;
+    if (tab === 'expired') return matchSearch && (r.displayStatus === 'expired' || r.displayStatus === 'cancelled' || r.displayStatus === 'completed');
     return matchSearch && r.displayStatus === tab;
   });
 
