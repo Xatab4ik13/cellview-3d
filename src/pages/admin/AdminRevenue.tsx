@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, TrendingUp, Calendar, Users, Wallet, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, TrendingUp, Calendar, Users, Wallet, ArrowLeft, Repeat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { fetchRevenue, fetchRevenueByMonth, RevenueMonthEntry } from '@/lib/api';
 import AnimatedCounter from '@/components/crm/AnimatedCounter';
+import { useRentals } from '@/hooks/useRentals';
 
 const MONTH_NAMES = [
   'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
