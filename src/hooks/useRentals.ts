@@ -68,6 +68,19 @@ export function useReleaseRental() {
   });
 }
 
+export function useCompleteRental() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: completeRental,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['rentals'] });
+      qc.invalidateQueries({ queryKey: ['cells'] });
+      toast.success('Аренда переведена в "Завершена"');
+    },
+    onError: (e: any) => toast.error(`Ошибка: ${e.message}`),
+  });
+}
+
 export function useDeleteRental() {
   const qc = useQueryClient();
   return useMutation({
