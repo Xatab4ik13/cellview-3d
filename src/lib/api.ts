@@ -100,9 +100,17 @@ export async function uploadCellPhotos(cellId: string, files: File[]): Promise<{
     body: formData,
   });
 
-  const json = await res.json();
+  // nginx может вернуть 413 (Payload Too Large) — это не JSON
+  if (res.status === 413) {
+    throw new Error('Файл слишком большой (лимит сервера). Уменьшите размер изображения.');
+  }
+
+  let json: any = null;
+  try { json = await res.json(); } catch {
+    throw new Error(`Ошибка сервера (HTTP ${res.status})`);
+  }
   if (!res.ok || !json.success) {
-    throw new Error(json.error || 'Ошибка загрузки фото');
+    throw new Error(json?.error || `Ошибка загрузки фото (HTTP ${res.status})`);
   }
   return json.data;
 }
