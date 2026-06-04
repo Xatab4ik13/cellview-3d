@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchRentals, fetchRental, createRental, updateRental, extendRental, releaseRental, deleteRental, RentalData } from '@/lib/api';
+import { fetchRentals, fetchRental, createRental, updateRental, extendRental, releaseRental, completeRental, deleteRental, RentalData } from '@/lib/api';
 import { toast } from 'sonner';
 
 export function useRentals(filters?: { status?: string; cell_id?: string; customer_id?: string }) {
