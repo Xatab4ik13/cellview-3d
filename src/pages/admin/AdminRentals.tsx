@@ -58,6 +58,7 @@ const AdminRentals = () => {
   const updateMutation = useUpdateRental();
   const extendMutation = useExtendRental();
   const releaseMutation = useReleaseRental();
+  const completeMutation = useCompleteRental();
   const deleteMutation = useDeleteRental();
 
   const enriched = rentals.map(r => ({ ...r, displayStatus: getRentalDisplayStatus(r) }));
