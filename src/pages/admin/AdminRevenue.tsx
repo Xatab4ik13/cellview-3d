@@ -18,14 +18,19 @@ function fmtMonth(ym: string) {
   return `${MONTH_NAMES[m - 1]} ${y}`;
 }
 
-function fmtRub(n: number) {
-  return n.toLocaleString('ru-RU') + ' ₽';
+function fmtRub(n: any) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return '0 ₽';
+  return v.toLocaleString('ru-RU') + ' ₽';
 }
 
-function fmtDate(d: string) {
+function fmtDate(d: any) {
+  if (!d) return '—';
   try {
-    return new Date(d).toLocaleDateString('ru-RU');
-  } catch { return d; }
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return '—';
+    return dt.toLocaleDateString('ru-RU');
+  } catch { return '—'; }
 }
 
 const AdminRevenue = () => {
