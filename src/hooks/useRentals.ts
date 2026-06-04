@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchRentals, fetchRental, createRental, updateRental, extendRental, releaseRental, deleteRental, RentalData } from '@/lib/api';
+import { fetchRentals, fetchRental, createRental, updateRental, extendRental, releaseRental, completeRental, deleteRental, RentalData } from '@/lib/api';
 import { toast } from 'sonner';
 
 export function useRentals(filters?: { status?: string; cell_id?: string; customer_id?: string }) {
@@ -63,6 +63,19 @@ export function useReleaseRental() {
       qc.invalidateQueries({ queryKey: ['rentals'] });
       qc.invalidateQueries({ queryKey: ['cells'] });
       toast.success('Ячейка освобождена');
+    },
+    onError: (e: any) => toast.error(`Ошибка: ${e.message}`),
+  });
+}
+
+export function useCompleteRental() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: completeRental,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['rentals'] });
+      qc.invalidateQueries({ queryKey: ['cells'] });
+      toast.success('Аренда переведена в "Завершена"');
     },
     onError: (e: any) => toast.error(`Ошибка: ${e.message}`),
   });

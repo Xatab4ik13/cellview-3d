@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, MoreHorizontal, Edit, Ban, RefreshCw, Plus, Loader2, Trash2, Banknote } from 'lucide-react';
+import { Search, MoreHorizontal, Edit, Ban, RefreshCw, Plus, Loader2, Trash2, Banknote, CheckCircle2 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useRentals, useCreateRental, useUpdateRental, useExtendRental, useReleaseRental, useDeleteRental } from '@/hooks/useRentals';
+import { useRentals, useCreateRental, useUpdateRental, useExtendRental, useReleaseRental, useCompleteRental, useDeleteRental } from '@/hooks/useRentals';
 import { usePayments, useCreateCashPayment } from '@/hooks/usePayments';
 import { useCells } from '@/hooks/useCells';
 import { format, differenceInDays, parseISO } from 'date-fns';
@@ -22,9 +22,11 @@ const statusConfig: Record<string, { label: string; color: string }> = {
   expiring: { label: 'Заканчивается', color: 'var(--status-pending)' },
   expired: { label: 'Просрочена', color: 'var(--status-overdue)' },
   cancelled: { label: 'Отменена', color: 'var(--status-overdue)' },
+  completed: { label: 'Завершена', color: 'var(--status-active)' },
 };
 
 function getRentalDisplayStatus(rental: { status: string; endDate: string }) {
+  if (rental.status === 'completed') return 'completed';
   if (rental.status === 'cancelled') return 'cancelled';
   if (rental.status === 'expired') return 'expired';
   const daysLeft = differenceInDays(parseISO(rental.endDate), new Date());
@@ -56,6 +58,7 @@ const AdminRentals = () => {
   const updateMutation = useUpdateRental();
   const extendMutation = useExtendRental();
   const releaseMutation = useReleaseRental();
+  const completeMutation = useCompleteRental();
   const deleteMutation = useDeleteRental();
 
   const enriched = rentals.map(r => ({ ...r, displayStatus: getRentalDisplayStatus(r) }));
@@ -66,6 +69,7 @@ const AdminRentals = () => {
       (r.customerPhone || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       String(r.cellNumber || '').includes(searchQuery);
     if (tab === 'all') return matchSearch;
+    if (tab === 'expired') return matchSearch && (r.displayStatus === 'expired' || r.displayStatus === 'cancelled' || r.displayStatus === 'completed');
     return matchSearch && r.displayStatus === tab;
   });
 
@@ -73,7 +77,7 @@ const AdminRentals = () => {
     all: enriched.length,
     active: enriched.filter(r => r.displayStatus === 'active').length,
     expiring: enriched.filter(r => r.displayStatus === 'expiring').length,
-    expired: enriched.filter(r => r.displayStatus === 'expired' || r.displayStatus === 'cancelled').length,
+    expired: enriched.filter(r => r.displayStatus === 'expired' || r.displayStatus === 'cancelled' || r.displayStatus === 'completed').length,
   };
 
   const handleCreate = (data: any) => {
@@ -247,12 +251,19 @@ const AdminRentals = () => {
                           <DropdownMenuItem onClick={() => extendMutation.mutate({ id: rental.id, months: 1 })}>
                             <RefreshCw className="h-4 w-4 mr-2" />Продлить на 1 мес
                           </DropdownMenuItem>
-                          {rental.displayStatus !== 'expired' && rental.displayStatus !== 'cancelled' && (
-                            <DropdownMenuItem className="text-destructive" onClick={() => {
-                              if (confirm(`Завершить аренду для ${rental.customerName}?`)) releaseMutation.mutate(rental.id);
-                            }}>
-                              <Ban className="h-4 w-4 mr-2" />Завершить
-                            </DropdownMenuItem>
+                          {rental.displayStatus !== 'expired' && rental.displayStatus !== 'cancelled' && rental.displayStatus !== 'completed' && (
+                            <>
+                              <DropdownMenuItem onClick={() => {
+                                if (confirm(`Перевести аренду ${rental.customerName} в статус "Завершена"?`)) completeMutation.mutate(rental.id);
+                              }}>
+                                <CheckCircle2 className="h-4 w-4 mr-2" />Завершить вручную
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive" onClick={() => {
+                                if (confirm(`Завершить аренду для ${rental.customerName}?`)) releaseMutation.mutate(rental.id);
+                              }}>
+                                <Ban className="h-4 w-4 mr-2" />Просрочить
+                              </DropdownMenuItem>
+                            </>
                           )}
                           <DropdownMenuItem className="text-destructive" onClick={() => {
                             if (confirm(`Удалить аренду? Это действие необратимо.`)) deleteMutation.mutate(rental.id);

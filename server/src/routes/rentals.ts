@@ -175,6 +175,29 @@ rentalsRouter.put('/:id/extend', async (req: Request, res: Response, next: NextF
   }
 });
 
+// PUT /api/rentals/:id/complete — вручную завершить аренду (статус "completed")
+rentalsRouter.put('/:id/complete', async (req: Request, res: Response, next: NextFunction) => {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [rows] = await conn.query('SELECT * FROM rentals WHERE id = ? FOR UPDATE', [req.params.id]);
+    const rental = (rows as any[])[0];
+    if (!rental) throw new AppError('Аренда не найдена', 404);
+
+    await conn.query("UPDATE rentals SET status = 'completed' WHERE id = ?", [req.params.id]);
+    await conn.query("UPDATE cells SET status = 'available', reserved_until = NULL WHERE id = ?", [rental.cell_id]);
+
+    await conn.commit();
+    res.json({ success: true, message: 'Аренда завершена' });
+  } catch (error) {
+    await conn.rollback();
+    next(error);
+  } finally {
+    conn.release();
+  }
+});
+
 // PUT /api/rentals/:id/release — освободить ячейку (завершить аренду)
 rentalsRouter.put('/:id/release', async (req: Request, res: Response, next: NextFunction) => {
   const conn = await pool.getConnection();

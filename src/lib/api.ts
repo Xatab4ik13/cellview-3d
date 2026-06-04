@@ -181,7 +181,7 @@ export interface RentalData {
   discount: number;
   totalAmount: number;
   autoRenew: boolean;
-  status: 'active' | 'expired' | 'cancelled';
+  status: 'active' | 'expired' | 'cancelled' | 'completed';
   notes?: string;
   createdAt?: string;
 }
@@ -232,6 +232,10 @@ export async function extendRental(id: string, months: number): Promise<{ endDat
 
 export async function releaseRental(id: string): Promise<void> {
   await fetchApi(`/api/rentals/${id}/release`, { method: 'PUT' });
+}
+
+export async function completeRental(id: string): Promise<void> {
+  await fetchApi(`/api/rentals/${id}/complete`, { method: 'PUT' });
 }
 
 export async function deleteRental(id: string): Promise<void> {
