@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, TrendingUp, Calendar, Users, Wallet, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, TrendingUp, Calendar, Users, Wallet, ArrowLeft, Repeat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { fetchRevenue, fetchRevenueByMonth, RevenueMonthEntry } from '@/lib/api';
 import AnimatedCounter from '@/components/crm/AnimatedCounter';
+import { useRentals } from '@/hooks/useRentals';
 
 const MONTH_NAMES = [
   'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
@@ -65,6 +66,34 @@ const AdminRevenue = () => {
 
   const currentYm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
+  // ===== Прогноз с гипотетическими продлениями =====
+  // Берём активные аренды. После их фактической даты окончания
+  // считаем, что аренда продлевается ежемесячно по той же цене
+  // до конца выбранного года. Это даёт прогноз "если продлят".
+  const { data: rentals = [] } = useRentals();
+  const forecastMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (let m = 1; m <= 12; m++) {
+      map.set(`${year}-${String(m).padStart(2, '0')}`, 0);
+    }
+    rentals.forEach(r => {
+      if (r.status !== 'active') return;
+      const end = new Date(r.endDate);
+      // Стартуем со следующего месяца после фактического окончания
+      const start = new Date(end.getFullYear(), end.getMonth() + 1, 1);
+      for (let i = 0; i < 24; i++) {
+        const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+        if (d.getFullYear() > year) break;
+        if (d.getFullYear() < year) continue;
+        const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        // Прогноз только для будущих месяцев (включая текущий)
+        if (ym < currentYm) continue;
+        map.set(ym, (map.get(ym) || 0) + (Number(r.pricePerMonth) || 0));
+      }
+    });
+    return map;
+  }, [rentals, year, currentYm]);
+
   const yearTotal = Array.from(yearMap.values()).reduce((s, v) => s + v.total, 0);
   const factTotal = Array.from(yearMap.entries())
     .filter(([ym]) => ym <= currentYm)
@@ -72,6 +101,7 @@ const AdminRevenue = () => {
   const planTotal = Array.from(yearMap.entries())
     .filter(([ym]) => ym > currentYm)
     .reduce((s, [, v]) => s + v.total, 0);
+  const forecastTotal = Array.from(forecastMap.values()).reduce((s, v) => s + v, 0);
 
   // ===== Detail view =====
   if (selectedMonth && detail) {
@@ -187,11 +217,12 @@ const AdminRevenue = () => {
       </div>
 
       {/* Top stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Итого за год', value: yearTotal, color: 'var(--primary)', icon: TrendingUp },
+          { label: 'Итого за год (факт+план)', value: yearTotal, color: 'var(--primary)', icon: TrendingUp },
           { label: `Факт (до ${fmtMonth(currentYm)})`, value: factTotal, color: 'var(--status-active)', icon: Wallet },
-          { label: 'План (будущие месяцы)', value: planTotal, color: 'var(--status-pending)', icon: Calendar },
+          { label: 'План (подтверждённые аренды)', value: planTotal, color: 'var(--status-pending)', icon: Calendar },
+          { label: 'Прогноз при продлениях', value: forecastTotal, color: 'var(--primary)', icon: Repeat },
         ].map((s, i) => (
           <motion.div
             key={s.label}
@@ -211,6 +242,10 @@ const AdminRevenue = () => {
         ))}
       </div>
 
+      <p className="text-xs text-muted-foreground -mt-2">
+        «Прогноз при продлениях» — гипотетическая выручка, если каждая активная аренда будет продлеваться ежемесячно по текущей цене до конца {year} года.
+      </p>
+
       {/* Months grid */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">
         <div className="px-4 py-3 bg-muted/40 font-semibold flex items-center justify-between">
@@ -225,6 +260,8 @@ const AdminRevenue = () => {
               <th className="text-right px-4 py-2 font-medium text-muted-foreground">Аренд</th>
               <th className="text-right px-4 py-2 font-medium text-muted-foreground">Клиентов</th>
               <th className="text-right px-4 py-2 font-medium text-muted-foreground">Сумма</th>
+              <th className="text-right px-4 py-2 font-medium text-muted-foreground">Прогноз<br/>(при продл.)</th>
+              <th className="text-right px-4 py-2 font-medium text-muted-foreground">Итого<br/>с прогнозом</th>
               <th className="px-4 py-2"></th>
             </tr>
           </thead>
@@ -234,6 +271,8 @@ const AdminRevenue = () => {
               const isCurrent = ym === currentYm;
               const isFuture = ym > currentYm;
               const empty = v.total === 0;
+              const forecast = forecastMap.get(ym) || 0;
+              const combined = v.total + forecast;
               return (
                 <tr
                   key={ym}
@@ -263,6 +302,16 @@ const AdminRevenue = () => {
                   }}>
                     {empty ? '—' : fmtRub(v.total)}
                   </td>
+                  <td className="px-4 py-3 text-right" style={{
+                    color: forecast > 0 ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'
+                  }}>
+                    {forecast > 0 ? `+${fmtRub(forecast)}` : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-right font-semibold" style={{
+                    color: combined === 0 ? 'hsl(var(--muted-foreground))' : 'hsl(var(--primary))'
+                  }}>
+                    {combined === 0 ? '—' : fmtRub(combined)}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     {!empty && <ChevronRight className="h-4 w-4 inline text-muted-foreground" />}
                   </td>
@@ -274,6 +323,8 @@ const AdminRevenue = () => {
             <tr className="border-t border-border bg-muted/30 font-bold">
               <td className="px-4 py-3" colSpan={4}>Итого за {year}</td>
               <td className="px-4 py-3 text-right text-primary">{fmtRub(yearTotal)}</td>
+              <td className="px-4 py-3 text-right text-primary">+{fmtRub(forecastTotal)}</td>
+              <td className="px-4 py-3 text-right text-primary">{fmtRub(yearTotal + forecastTotal)}</td>
               <td></td>
             </tr>
           </tfoot>
