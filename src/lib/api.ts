@@ -181,7 +181,7 @@ export interface RentalData {
   discount: number;
   totalAmount: number;
   autoRenew: boolean;
-  status: 'active' | 'expired' | 'cancelled';
+  status: 'active' | 'expired' | 'cancelled' | 'completed';
   notes?: string;
   createdAt?: string;
 }
