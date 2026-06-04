@@ -158,8 +158,8 @@ const AdminSite = () => {
             <Eye className="w-5 h-5" />
             Предпросмотр
           </Button>
-          <Button onClick={handleSave} className="gap-2 h-11 text-base">
-            <Save className="w-5 h-5" />
+          <Button onClick={handleSave} disabled={saveSite.isPending || saveDocs.isPending || siteLoading} className="gap-2 h-11 text-base">
+            {(saveSite.isPending || saveDocs.isPending) ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
             Сохранить
           </Button>
         </div>
