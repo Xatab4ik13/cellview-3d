@@ -76,7 +76,7 @@ const AdminRentals = () => {
     all: enriched.length,
     active: enriched.filter(r => r.displayStatus === 'active').length,
     expiring: enriched.filter(r => r.displayStatus === 'expiring').length,
-    expired: enriched.filter(r => r.displayStatus === 'expired' || r.displayStatus === 'cancelled').length,
+    expired: enriched.filter(r => r.displayStatus === 'expired' || r.displayStatus === 'cancelled' || r.displayStatus === 'completed').length,
   };
 
   const handleCreate = (data: any) => {
