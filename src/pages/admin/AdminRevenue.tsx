@@ -217,11 +217,12 @@ const AdminRevenue = () => {
       </div>
 
       {/* Top stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Итого за год', value: yearTotal, color: 'var(--primary)', icon: TrendingUp },
+          { label: 'Итого за год (факт+план)', value: yearTotal, color: 'var(--primary)', icon: TrendingUp },
           { label: `Факт (до ${fmtMonth(currentYm)})`, value: factTotal, color: 'var(--status-active)', icon: Wallet },
-          { label: 'План (будущие месяцы)', value: planTotal, color: 'var(--status-pending)', icon: Calendar },
+          { label: 'План (подтверждённые аренды)', value: planTotal, color: 'var(--status-pending)', icon: Calendar },
+          { label: 'Прогноз при продлениях', value: forecastTotal, color: 'var(--primary)', icon: Repeat },
         ].map((s, i) => (
           <motion.div
             key={s.label}
@@ -240,6 +241,10 @@ const AdminRevenue = () => {
           </motion.div>
         ))}
       </div>
+
+      <p className="text-xs text-muted-foreground -mt-2">
+        «Прогноз при продлениях» — гипотетическая выручка, если каждая активная аренда будет продлеваться ежемесячно по текущей цене до конца {year} года.
+      </p>
 
       {/* Months grid */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">
