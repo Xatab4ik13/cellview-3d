@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Globe, Type, Image, Search, Save, Eye, Palette, Layout, FileText, Phone, MapPin, Clock, ExternalLink, File, Plus, Trash2, Edit, X, Upload, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Globe, Type, Image, Search, Save, Eye, Palette, Layout, FileText, Phone, MapPin, Clock, ExternalLink, File, Plus, Trash2, Edit, X, Upload, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,38 +16,43 @@ import {
 } from '@/components/ui/alert-dialog';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { defaultDocuments, iconMap, type SiteDocument } from '@/data/siteDocuments';
+import { iconMap, type SiteDocument } from '@/data/siteDocuments';
+import {
+  useSiteSettings, useSaveSiteSettings, DEFAULT_SITE_SETTINGS, SiteSettings,
+  useSiteDocuments, useSaveSiteDocuments,
+} from '@/hooks/useSettings';
 
 const AdminSite = () => {
-  const [siteData, setSiteData] = useState({
-    seoTitle: 'Кладовка78 — Аренда складских ячеек в Санкт-Петербурге',
-    seoDescription: 'Надёжное хранение вещей от 1000₽/мес. Видеонаблюдение 24/7. Удобный доступ.',
-    seoKeywords: 'склад, аренда ячейки, хранение вещей, Санкт-Петербург',
-    heroTitle: 'Надёжное хранение вещей',
-    heroSubtitle: 'Арендуйте складскую ячейку от 1000₽ в месяц с круглосуточным доступом',
-    phone: '+7 (812) 555-78-78',
-    email: 'info@kladovka78.ru',
-    address: 'Санкт-Петербург, ул. Примерная, д. 78',
-    workHours: 'Пн-Вс: 08:00 — 22:00',
-    telegram: '@kladovka78',
-    whatsapp: '+78125557878',
-    vk: 'https://vk.com/kladovka78',
-    showPricing: true,
-    showFAQ: true,
-    showCatalog: true,
-    showContacts: true,
-  });
+  const { data: loadedSite, isLoading: siteLoading } = useSiteSettings();
+  const saveSite = useSaveSiteSettings();
+  const { data: loadedDocs = [], isLoading: docsLoading } = useSiteDocuments();
+  const saveDocs = useSaveSiteDocuments();
 
-  const [documents, setDocuments] = useState<SiteDocument[]>(defaultDocuments);
+  const [siteData, setSiteData] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS);
+  const [documents, setDocuments] = useState<SiteDocument[]>([]);
+
+  // Sync from server -> local state
+  useEffect(() => { if (loadedSite) setSiteData(loadedSite); }, [loadedSite]);
+  useEffect(() => { setDocuments(loadedDocs || []); }, [loadedDocs]);
+
   const [isDocDialogOpen, setIsDocDialogOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<SiteDocument | null>(null);
   const [docForm, setDocForm] = useState({ title: '', description: '', fileUrl: '' });
   const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
   const [viewingDoc, setViewingDoc] = useState<SiteDocument | null>(null);
 
-  const handleSave = () => {
-    toast.success('Настройки сайта сохранены');
+  const handleSave = async () => {
+    try {
+      await Promise.all([
+        saveSite.mutateAsync(siteData),
+        saveDocs.mutateAsync(documents),
+      ]);
+      toast.success('Настройки сайта сохранены');
+    } catch (e: any) {
+      toast.error(`Ошибка сохранения: ${e.message}`);
+    }
   };
+
 
   const openNewDoc = () => {
     setEditingDoc(null);
@@ -153,8 +158,8 @@ const AdminSite = () => {
             <Eye className="w-5 h-5" />
             Предпросмотр
           </Button>
-          <Button onClick={handleSave} className="gap-2 h-11 text-base">
-            <Save className="w-5 h-5" />
+          <Button onClick={handleSave} disabled={saveSite.isPending || saveDocs.isPending || siteLoading} className="gap-2 h-11 text-base">
+            {(saveSite.isPending || saveDocs.isPending) ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
             Сохранить
           </Button>
         </div>
