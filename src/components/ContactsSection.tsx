@@ -144,7 +144,7 @@ const ContactsSection = () => {
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="phone" className="text-sm font-medium">Телефон *</label>
-                  <Input id="phone" name="phone" type="tel" placeholder="+7 (___) ___-__-__" required />
+                  <PhoneInput id="phone" name="phone" required />
                 </div>
               </div>
 
