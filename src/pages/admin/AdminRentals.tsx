@@ -231,7 +231,7 @@ const AdminRentals = () => {
                     <td className="p-4 text-sm">{rental.pricePerMonth?.toLocaleString('ru-RU')} ₽</td>
                     <td className="p-4 font-semibold text-sm">{rental.totalAmount?.toLocaleString('ru-RU')} ₽</td>
                     <td className="p-4">
-                      <span className="text-sm font-medium" style={{ color: daysLeft < 0 ? 'hsl(var(--status-overdue))' : daysLeft <= 7 ? 'hsl(var(--status-pending))' : undefined }}>
+                      <span className="text-sm font-medium" style={{ color: rental.displayStatus === 'completed' ? 'hsl(var(--status-new))' : daysLeft < 0 ? 'hsl(var(--status-overdue))' : daysLeft <= 7 ? 'hsl(var(--status-pending))' : undefined }}>
                         {daysLeft < 0 ? `${Math.abs(daysLeft)} дн. назад` : `${daysLeft} дн.`}
                       </span>
                     </td>
