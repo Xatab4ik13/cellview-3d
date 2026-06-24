@@ -349,14 +349,39 @@ const AdminSite = () => {
               />
             </div>
             <div className="grid gap-2">
-              <Label>Ссылка на файл (URL)</Label>
-              <Input
-                placeholder="https://example.com/documents/file.pdf"
-                value={docForm.fileUrl}
-                onChange={e => setDocForm(p => ({ ...p, fileUrl: e.target.value }))}
-                className="h-11"
-              />
-              <p className="text-xs text-muted-foreground">Загрузите файл на сервер и вставьте прямую ссылку для скачивания</p>
+              <Label>Файл документа</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="doc-file-input"
+                  type="file"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf,.odt,.jpg,.jpeg,.png"
+                  className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadDocFile(f); e.currentTarget.value = ''; }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-2 h-11"
+                  disabled={uploadingDoc}
+                  onClick={() => document.getElementById('doc-file-input')?.click()}
+                >
+                  {uploadingDoc ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {docForm.fileUrl ? 'Заменить файл' : 'Загрузить файл'}
+                </Button>
+                {docForm.fileUrl && (
+                  <div className="flex items-center gap-2 text-sm min-w-0">
+                    <File className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <a href={docForm.fileUrl} target="_blank" rel="noreferrer" className="truncate text-primary hover:underline">
+                      {docFileName || 'Открыть файл'}
+                    </a>
+                    {docForm.fileType && <Badge variant="outline" className="text-[10px]">{docForm.fileType}</Badge>}
+                    <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => { setDocForm(p => ({ ...p, fileUrl: '', fileType: '' })); setDocFileName(''); }}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">PDF, DOC/DOCX, XLS/XLSX, PPT/PPTX, TXT, JPG, PNG — до 25 МБ. Файл будет доступен клиенту в личном кабинете.</p>
             </div>
           </div>
           <DialogFooter>
