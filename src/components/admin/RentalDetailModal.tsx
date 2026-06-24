@@ -51,7 +51,7 @@ function formatDate(dateStr: string) {
   catch { return dateStr; }
 }
 
-export default function RentalDetailModal({ open, onClose, rental, payments, onExtend, onRelease, onDelete, onEdit }: RentalDetailModalProps) {
+export default function RentalDetailModal({ open, onClose, rental, payments, onExtend, onRelease, onComplete, onDelete, onEdit }: RentalDetailModalProps) {
   if (!rental) return null;
 
   const displayStatus = getDisplayStatus(rental);
@@ -59,6 +59,7 @@ export default function RentalDetailModal({ open, onClose, rental, payments, onE
   const daysLeft = differenceInDays(parseISO(rental.endDate), new Date());
   const linkedPayments = payments.filter(p => p.rentalId === rental.id || (p.customerId === rental.customerId && p.cellId === rental.cellId));
   const isActive = displayStatus === 'active' || displayStatus === 'expiring';
+  const isCompleted = displayStatus === 'completed';
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
