@@ -9,6 +9,7 @@ import {
   mapRbsStatus,
   type RbsStatusResponse,
 } from '../vtbRbsApi';
+import { notifyAdminPayment } from '../config/adminNotify';
 
 export const paymentsRouter = Router();
 
@@ -154,17 +155,31 @@ async function activateRental(payment: PaymentDbRow): Promise<void> {
 
 async function notifyPaymentSuccess(payment: PaymentDbRow): Promise<void> {
   const customer = await fetchCustomerMeta(payment.customer_id);
-  if (!customer?.telegram_id) return;
 
   // Get cell number
-  let cellNumber = '—';
+  let cellNumber: string | number = '—';
   if (payment.cell_id) {
     const [cellRows] = await pool.query('SELECT number FROM cells WHERE id = ? LIMIT 1', [payment.cell_id]);
     const cell = (cellRows as any[])[0];
-    if (cell) cellNumber = String(cell.number);
+    if (cell) cellNumber = cell.number;
   }
 
   const amountRubles = Math.round(payment.amount / 100);
+
+  // Admin email notification
+  await notifyAdminPayment({
+    customerName: customer?.name,
+    customerPhone: customer?.phone,
+    cellNumber,
+    amountRubles,
+    durationMonths: payment.duration_months,
+    method: payment.payment_method || 'VTB',
+    paymentId: payment.id,
+    kind: 'new',
+  });
+
+  // Telegram (если привязан)
+  if (!customer?.telegram_id) return;
   const message =
     `✅ *Оплата получена!*\n\n` +
     `📦 Ячейка №${cellNumber}\n` +
