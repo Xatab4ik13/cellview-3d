@@ -374,12 +374,12 @@ export async function deletePayment(id: string, force = false): Promise<void> {
   await fetchApi(`/api/payments/${id}${qs}`, { method: 'DELETE' });
 }
 
-// ============ Выручка (revenue) ============
+// ============ Выручка (revenue) — кассовый метод ============
 
 export interface RevenueEntry {
   month: string;   // YYYY-MM
-  total: number;
-  rentals: number;
+  total: number;   // руб
+  payments: number;
   customers: number;
 }
 
@@ -391,31 +391,42 @@ export async function fetchRevenue(from?: string, to?: string): Promise<RevenueE
   return fetchApi<RevenueEntry[]>(`/api/revenue${qs ? `?${qs}` : ''}`);
 }
 
-export interface RevenueMonthEntry {
+export interface RevenuePayment {
   id: string;
+  paidAt: string;
   amount: number;
-  rentalId: string;
-  cellId: string;
+  paymentMethod: string | null;
+  description: string | null;
+  durationMonths: number | null;
+  rentalId: string | null;
   customerId: string;
-  paymentId: string | null;
   customerName: string;
   customerPhone: string;
-  cellNumber: number;
-  rentalStart: string;
-  rentalEnd: string;
-  rentalMonths: number;
-  pricePerMonth: number;
-  totalAmount: number;
-  rentalStatus: string;
-  paymentAmount: number | null;
-  paymentDate: string | null;
-  paymentStatus: string | null;
+  cellNumber: number | null;
 }
 
 export async function fetchRevenueByMonth(month: string): Promise<{
-  month: string; total: number; count: number; entries: RevenueMonthEntry[];
+  month: string; total: number; count: number; customers: number; entries: RevenuePayment[];
 }> {
   return fetchApi(`/api/revenue/by-month/${month}`);
+}
+
+export interface RevenueForecastEntry {
+  rentalId: string;
+  endDate: string;
+  durationMonths: number;
+  pricePerMonth: number;
+  forecastAmount: number;
+  customerId: string;
+  customerName: string;
+  customerPhone: string;
+  cellNumber: number | null;
+}
+
+export async function fetchRevenueForecast(month: string): Promise<{
+  month: string; total: number; count: number; entries: RevenueForecastEntry[];
+}> {
+  return fetchApi(`/api/revenue/forecast/${month}`);
 }
 
 // ============ Health ============
