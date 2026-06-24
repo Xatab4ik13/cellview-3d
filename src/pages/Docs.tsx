@@ -4,10 +4,12 @@ import { Download, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { defaultDocuments, iconMap } from '@/data/siteDocuments';
+import { iconMap } from '@/data/siteDocuments';
+import { useSiteDocuments } from '@/hooks/useSettings';
 
 const Docs = () => {
-  const published = defaultDocuments.filter(d => d.isPublished);
+  const { data: docs = [] } = useSiteDocuments();
+  const published = docs.filter(d => d.isPublished);
 
   return (
     <div className="min-h-screen bg-background">
