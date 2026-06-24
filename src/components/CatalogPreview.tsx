@@ -14,8 +14,9 @@ const CatalogPreview = () => {
   const [selectedCell, setSelectedCell] = useState<StorageCell | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // Показываем только первые 8 ячеек
-  const previewCells = storageCells.slice(0, PREVIEW_COUNT);
+  // На главной показываем только свободные ячейки, занятые/брони — только в полном каталоге
+  const availableCells = storageCells.filter((c) => c.status === 'available');
+  const previewCells = availableCells.slice(0, PREVIEW_COUNT);
   
   const handleSelectCell = (cell: StorageCell) => {
     setSelectedCell(cell);
@@ -32,7 +33,7 @@ const CatalogPreview = () => {
               Каталог ячеек
             </h2>
             <p className="text-muted-foreground">
-              {storageCells.length} ячеек в наличии
+              {availableCells.length} свободных ячеек в наличии
             </p>
           </div>
           

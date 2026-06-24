@@ -36,8 +36,21 @@ const LocationSection = () => {
               />
             </div>
             
+            {/* Вход со двора — заметка под картой */}
+            <div className="mt-4 flex items-start gap-3 p-4 bg-accent/10 border border-accent/30 rounded-xl">
+              <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
+                <MapPin className="w-5 h-5 text-accent" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-sm">Вход со двора</h4>
+                <p className="text-xs text-muted-foreground">
+                  Заезд во двор с ул. Алтайская, далее — к помещению 22-Н
+                </p>
+              </div>
+            </div>
+
             {/* Transport info */}
-            <div className="grid sm:grid-cols-2 gap-4 mt-6">
+            <div className="grid sm:grid-cols-2 gap-4 mt-4">
               <div className="flex items-start gap-3 p-4 bg-card rounded-xl border border-border">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <Train className="w-5 h-5 text-primary" />
@@ -45,7 +58,7 @@ const LocationSection = () => {
                 <div>
                   <h4 className="font-semibold text-sm">На метро</h4>
                   <p className="text-xs text-muted-foreground">
-                    Ст. Купчино — 4 мин пешком
+                    Маршрут удобно построить через Яндекс Карты
                   </p>
                 </div>
               </div>
@@ -57,7 +70,7 @@ const LocationSection = () => {
                 <div>
                   <h4 className="font-semibold text-sm">На машине</h4>
                   <p className="text-xs text-muted-foreground">
-                    Бесплатная парковка у входа
+                    Бесплатная парковка во дворе у входа
                   </p>
                 </div>
               </div>
