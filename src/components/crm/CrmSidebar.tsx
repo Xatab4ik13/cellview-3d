@@ -27,6 +27,7 @@ import {
   LogOut,
   ChevronDown,
   Video,
+  Inbox,
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -47,6 +48,7 @@ const navGroups: NavGroup[] = [
     label: 'CRM',
     items: [
       { title: 'Дашборд', url: '/admin', icon: LayoutDashboard },
+      { title: 'Заявки', url: '/admin/leads', icon: Inbox },
       { title: 'Клиенты', url: '/admin/customers', icon: Users },
     ],
   },
