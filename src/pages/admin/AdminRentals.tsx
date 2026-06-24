@@ -69,7 +69,8 @@ const AdminRentals = () => {
       (r.customerPhone || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       String(r.cellNumber || '').includes(searchQuery);
     if (tab === 'all') return matchSearch;
-    if (tab === 'expired') return matchSearch && (r.displayStatus === 'expired' || r.displayStatus === 'cancelled' || r.displayStatus === 'completed');
+    if (tab === 'expired') return matchSearch && (r.displayStatus === 'expired' || r.displayStatus === 'cancelled');
+    if (tab === 'completed') return matchSearch && r.displayStatus === 'completed';
     return matchSearch && r.displayStatus === tab;
   });
 
@@ -77,7 +78,8 @@ const AdminRentals = () => {
     all: enriched.length,
     active: enriched.filter(r => r.displayStatus === 'active').length,
     expiring: enriched.filter(r => r.displayStatus === 'expiring').length,
-    expired: enriched.filter(r => r.displayStatus === 'expired' || r.displayStatus === 'cancelled' || r.displayStatus === 'completed').length,
+    expired: enriched.filter(r => r.displayStatus === 'expired' || r.displayStatus === 'cancelled').length,
+    completed: enriched.filter(r => r.displayStatus === 'completed').length,
   };
 
   const handleCreate = (data: any) => {
