@@ -51,12 +51,13 @@ FROM (
   FROM rentals r
   JOIN (
     SELECT
-      rental_id,
-      SUM(COALESCE(NULLIF(duration_months, 0), 1)) AS paid_months
-    FROM payments
-    WHERE status = 'paid'
-      AND rental_id IS NOT NULL
-    GROUP BY rental_id
+      p.rental_id,
+      SUM(COALESCE(NULLIF(p.duration_months, 0), GREATEST(1, ROUND((p.amount / 100) / NULLIF(r.monthly_price, 0))))) AS paid_months
+    FROM payments p
+    JOIN rentals r ON r.id = p.rental_id
+    WHERE p.status = 'paid'
+      AND p.rental_id IS NOT NULL
+    GROUP BY p.rental_id
   ) paid ON paid.rental_id = r.id
   WHERE r.duration_months > paid.paid_months
     AND r.monthly_price > 0
