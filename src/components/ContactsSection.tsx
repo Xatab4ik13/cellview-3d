@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Phone, Mail, MapPin, Clock, Send, CheckCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PhoneInput } from '@/components/ui/phone-input';
 import storageCellImage from '@/assets/storage-cell-1.jpg';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.kladovka78.ru';
