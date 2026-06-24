@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import storageCellImage from '@/assets/storage-cell-1.jpg';
 
 // Точные координаты входа (Алтайская 21, помещение 22-Н)
-const MAP_LAT = 59.848898;
-const MAP_LON = 30.327869;
+const MAP_LAT = 59.848956;
+const MAP_LON = 30.327906;
 const MAP_POINT = `${MAP_LON},${MAP_LAT}`;
 const ROUTE_URL = `https://yandex.ru/maps/?rtext=~${MAP_LAT},${MAP_LON}&rtt=auto`;
 

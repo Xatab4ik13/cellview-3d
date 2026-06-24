@@ -89,16 +89,17 @@ const Contacts = () => {
                   </div>
                 </div>
 
-                {/* Map placeholder */}
+                {/* Map */}
                 <div className="aspect-video rounded-2xl bg-muted overflow-hidden border border-border/50">
                   <iframe 
-                    src="https://yandex.ru/map-widget/v1/?ll=30.421389%2C59.858333&z=16&pt=30.421389%2C59.858333%2Cpm2rdm&lang=ru_RU" 
+                    src="https://yandex.ru/map-widget/v1/?ll=30.327906%2C59.848956&z=17&pt=30.327906%2C59.848956%2Cpm2rdm&lang=ru_RU" 
                     width="100%" 
                     height="100%" 
                     style={{ border: 0 }}
                     allowFullScreen
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
+                    title="Расположение Кладовка78 на карте"
                   />
                 </div>
               </div>
