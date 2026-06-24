@@ -300,6 +300,7 @@ const AdminRentals = () => {
         payments={payments}
         onExtend={(id) => extendMutation.mutate({ id, months: 1 })}
         onRelease={(id) => releaseMutation.mutate(id)}
+        onComplete={(id) => completeMutation.mutate(id)}
         onDelete={(id) => deleteMutation.mutate(id)}
         onEdit={openEdit}
       />
