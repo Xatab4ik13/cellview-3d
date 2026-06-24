@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, CheckCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PhoneInput } from '@/components/ui/phone-input';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.kladovka78.ru';
 
