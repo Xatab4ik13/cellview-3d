@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Key, User, Calendar, CreditCard, RefreshCw, Ban, Trash2, Phone, Mail, Box, Clock, Banknote } from 'lucide-react';
+import { Key, User, Calendar, CreditCard, RefreshCw, Ban, Trash2, Phone, Mail, Box, Clock, Banknote, CheckCircle2 } from 'lucide-react';
 import { RentalData, PaymentData } from '@/lib/api';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -14,6 +14,7 @@ interface RentalDetailModalProps {
   payments: PaymentData[];
   onExtend: (id: string) => void;
   onRelease: (id: string) => void;
+  onComplete: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit: (rental: RentalData) => void;
 }
@@ -50,7 +51,7 @@ function formatDate(dateStr: string) {
   catch { return dateStr; }
 }
 
-export default function RentalDetailModal({ open, onClose, rental, payments, onExtend, onRelease, onDelete, onEdit }: RentalDetailModalProps) {
+export default function RentalDetailModal({ open, onClose, rental, payments, onExtend, onRelease, onComplete, onDelete, onEdit }: RentalDetailModalProps) {
   if (!rental) return null;
 
   const displayStatus = getDisplayStatus(rental);
@@ -58,6 +59,7 @@ export default function RentalDetailModal({ open, onClose, rental, payments, onE
   const daysLeft = differenceInDays(parseISO(rental.endDate), new Date());
   const linkedPayments = payments.filter(p => p.rentalId === rental.id || (p.customerId === rental.customerId && p.cellId === rental.cellId));
   const isActive = displayStatus === 'active' || displayStatus === 'expiring';
+  const isCompleted = displayStatus === 'completed';
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
@@ -163,17 +165,24 @@ export default function RentalDetailModal({ open, onClose, rental, payments, onE
           <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { onClose(); onEdit(rental); }}>
             <Key className="h-3.5 w-3.5" />Редактировать
           </Button>
+          {!isCompleted && (
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { onClose(); onExtend(rental.id); }}>
+              <RefreshCw className="h-3.5 w-3.5" />Продлить на 1 мес
+            </Button>
+          )}
+          {!isCompleted && (
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+              if (confirm(`Перевести аренду ${rental.customerName} в статус "Завершена"?`)) { onClose(); onComplete(rental.id); }
+            }}>
+              <CheckCircle2 className="h-3.5 w-3.5" />Завершить
+            </Button>
+          )}
           {isActive && (
-            <>
-              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { onClose(); onExtend(rental.id); }}>
-                <RefreshCw className="h-3.5 w-3.5" />Продлить на 1 мес
-              </Button>
-              <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => {
-                if (confirm(`Завершить аренду для ${rental.customerName}?`)) { onClose(); onRelease(rental.id); }
-              }}>
-                <Ban className="h-3.5 w-3.5" />Завершить
-              </Button>
-            </>
+            <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => {
+              if (confirm(`Просрочить аренду для ${rental.customerName}?`)) { onClose(); onRelease(rental.id); }
+            }}>
+              <Ban className="h-3.5 w-3.5" />Просрочить
+            </Button>
           )}
           <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive ml-auto" onClick={() => {
             if (confirm(`Удалить аренду? Это действие необратимо.`)) { onClose(); onDelete(rental.id); }

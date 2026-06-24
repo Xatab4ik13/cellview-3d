@@ -69,7 +69,8 @@ const AdminRentals = () => {
       (r.customerPhone || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       String(r.cellNumber || '').includes(searchQuery);
     if (tab === 'all') return matchSearch;
-    if (tab === 'expired') return matchSearch && (r.displayStatus === 'expired' || r.displayStatus === 'cancelled' || r.displayStatus === 'completed');
+    if (tab === 'expired') return matchSearch && (r.displayStatus === 'expired' || r.displayStatus === 'cancelled');
+    if (tab === 'completed') return matchSearch && r.displayStatus === 'completed';
     return matchSearch && r.displayStatus === tab;
   });
 
@@ -77,7 +78,8 @@ const AdminRentals = () => {
     all: enriched.length,
     active: enriched.filter(r => r.displayStatus === 'active').length,
     expiring: enriched.filter(r => r.displayStatus === 'expiring').length,
-    expired: enriched.filter(r => r.displayStatus === 'expired' || r.displayStatus === 'cancelled' || r.displayStatus === 'completed').length,
+    expired: enriched.filter(r => r.displayStatus === 'expired' || r.displayStatus === 'cancelled').length,
+    completed: enriched.filter(r => r.displayStatus === 'completed').length,
   };
 
   const handleCreate = (data: any) => {
@@ -169,6 +171,7 @@ const AdminRentals = () => {
             <TabsTrigger value="active" className="text-sm px-4">Активные ({counts.active})</TabsTrigger>
             <TabsTrigger value="expiring" className="text-sm px-4">Заканчиваются ({counts.expiring})</TabsTrigger>
             <TabsTrigger value="expired" className="text-sm px-4">Просроченные ({counts.expired})</TabsTrigger>
+            <TabsTrigger value="completed" className="text-sm px-4">Завершённые ({counts.completed})</TabsTrigger>
           </TabsList>
         </Tabs>
         <div className="relative max-w-[280px] w-full">
@@ -228,7 +231,7 @@ const AdminRentals = () => {
                     <td className="p-4 text-sm">{rental.pricePerMonth?.toLocaleString('ru-RU')} ₽</td>
                     <td className="p-4 font-semibold text-sm">{rental.totalAmount?.toLocaleString('ru-RU')} ₽</td>
                     <td className="p-4">
-                      <span className="text-sm font-medium" style={{ color: daysLeft < 0 ? 'hsl(var(--status-overdue))' : daysLeft <= 7 ? 'hsl(var(--status-pending))' : undefined }}>
+                      <span className="text-sm font-medium" style={{ color: rental.displayStatus === 'completed' ? 'hsl(var(--status-new))' : daysLeft < 0 ? 'hsl(var(--status-overdue))' : daysLeft <= 7 ? 'hsl(var(--status-pending))' : undefined }}>
                         {daysLeft < 0 ? `${Math.abs(daysLeft)} дн. назад` : `${daysLeft} дн.`}
                       </span>
                     </td>
@@ -297,6 +300,7 @@ const AdminRentals = () => {
         payments={payments}
         onExtend={(id) => extendMutation.mutate({ id, months: 1 })}
         onRelease={(id) => releaseMutation.mutate(id)}
+        onComplete={(id) => completeMutation.mutate(id)}
         onDelete={(id) => deleteMutation.mutate(id)}
         onEdit={openEdit}
       />
