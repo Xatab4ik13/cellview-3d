@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import pool from '../config/database';
 import { AppError } from '../middleware/errorHandler';
 import { v4 as uuidv4 } from 'uuid';
+import { notifyAdminPayment } from '../config/adminNotify';
 
 export const rentalsRouter = Router();
 
@@ -174,7 +175,7 @@ rentalsRouter.put('/:id/extend', async (req: Request, res: Response, next: NextF
     const newTotal = Number(rental.total_amount || 0) + addedAmount;
 
     await conn.query(
-      'UPDATE rentals SET end_date = ?, duration_months = duration_months + ?, total_amount = ? WHERE id = ?',
+      'UPDATE rentals SET end_date = ?, duration_months = duration_months + ?, total_amount = ?, expiry_notified_at = NULL WHERE id = ?',
       [newEndDate, months, newTotal, req.params.id]
     );
 
@@ -201,6 +202,31 @@ rentalsRouter.put('/:id/extend', async (req: Request, res: Response, next: NextF
     }
 
     await conn.commit();
+
+    // Admin email notification (after commit)
+    try {
+      const [cust] = await pool.query('SELECT name, phone FROM customers WHERE id = ? LIMIT 1', [rental.customer_id]);
+      const customer = (cust as any[])[0] || {};
+      let cellNumber: string | number = '—';
+      if (rental.cell_id) {
+        const [cellRows] = await pool.query('SELECT number FROM cells WHERE id = ? LIMIT 1', [rental.cell_id]);
+        const cell = (cellRows as any[])[0];
+        if (cell) cellNumber = cell.number;
+      }
+      await notifyAdminPayment({
+        customerName: customer.name,
+        customerPhone: customer.phone,
+        cellNumber,
+        amountRubles: addedAmount,
+        durationMonths: Number(months),
+        method,
+        paymentId,
+        kind: 'extension',
+      });
+    } catch (e) {
+      console.error('[rentals/extend] admin notify failed:', e);
+    }
+
     res.json({ success: true, data: { endDate: newEndDate, paymentId }, message: `Аренда продлена на ${months} мес.` });
   } catch (error) {
     await conn.rollback();
