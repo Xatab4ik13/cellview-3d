@@ -171,6 +171,7 @@ const AdminRentals = () => {
             <TabsTrigger value="active" className="text-sm px-4">Активные ({counts.active})</TabsTrigger>
             <TabsTrigger value="expiring" className="text-sm px-4">Заканчиваются ({counts.expiring})</TabsTrigger>
             <TabsTrigger value="expired" className="text-sm px-4">Просроченные ({counts.expired})</TabsTrigger>
+            <TabsTrigger value="completed" className="text-sm px-4">Завершённые ({counts.completed})</TabsTrigger>
           </TabsList>
         </Tabs>
         <div className="relative max-w-[280px] w-full">
