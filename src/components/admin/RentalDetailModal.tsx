@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Key, User, Calendar, CreditCard, RefreshCw, Ban, Trash2, Phone, Mail, Box, Clock, Banknote } from 'lucide-react';
+import { Key, User, Calendar, CreditCard, RefreshCw, Ban, Trash2, Phone, Mail, Box, Clock, Banknote, CheckCircle2 } from 'lucide-react';
 import { RentalData, PaymentData } from '@/lib/api';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -14,6 +14,7 @@ interface RentalDetailModalProps {
   payments: PaymentData[];
   onExtend: (id: string) => void;
   onRelease: (id: string) => void;
+  onComplete: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit: (rental: RentalData) => void;
 }
