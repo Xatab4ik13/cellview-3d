@@ -37,7 +37,9 @@ const AdminSite = () => {
 
   const [isDocDialogOpen, setIsDocDialogOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<SiteDocument | null>(null);
-  const [docForm, setDocForm] = useState({ title: '', description: '', fileUrl: '' });
+  const [docForm, setDocForm] = useState({ title: '', description: '', fileUrl: '', fileType: '' });
+  const [docFileName, setDocFileName] = useState<string>('');
+  const [uploadingDoc, setUploadingDoc] = useState(false);
   const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
   const [viewingDoc, setViewingDoc] = useState<SiteDocument | null>(null);
 
@@ -56,14 +58,36 @@ const AdminSite = () => {
 
   const openNewDoc = () => {
     setEditingDoc(null);
-    setDocForm({ title: '', description: '', fileUrl: '' });
+    setDocForm({ title: '', description: '', fileUrl: '', fileType: '' });
+    setDocFileName('');
     setIsDocDialogOpen(true);
   };
 
   const openEditDoc = (doc: SiteDocument) => {
     setEditingDoc(doc);
-    setDocForm({ title: doc.title, description: doc.description, fileUrl: doc.fileUrl || '' });
+    setDocForm({ title: doc.title, description: doc.description, fileUrl: doc.fileUrl || '', fileType: doc.type || '' });
+    setDocFileName(doc.fileUrl ? doc.fileUrl.split('/').pop() || '' : '');
     setIsDocDialogOpen(true);
+  };
+
+  const API_BASE = import.meta.env.VITE_API_URL || 'https://api.kladovka78.ru';
+
+  const handleUploadDocFile = async (file: File) => {
+    setUploadingDoc(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`${API_BASE}/api/settings/site-documents/upload`, { method: 'POST', body: fd });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
+      setDocForm(p => ({ ...p, fileUrl: json.data.url, fileType: json.data.type }));
+      setDocFileName(json.data.originalName || file.name);
+      toast.success('Файл загружен');
+    } catch (e: any) {
+      toast.error(`Ошибка загрузки: ${e.message}`);
+    } finally {
+      setUploadingDoc(false);
+    }
   };
 
   const handleSaveDoc = () => {
@@ -74,7 +98,7 @@ const AdminSite = () => {
     const now = new Date().toISOString().split('T')[0];
     if (editingDoc) {
       setDocuments(prev => prev.map(d =>
-        d.id === editingDoc.id ? { ...d, title: docForm.title, description: docForm.description, fileUrl: docForm.fileUrl.trim() || undefined, updatedAt: now } : d
+        d.id === editingDoc.id ? { ...d, title: docForm.title, description: docForm.description, fileUrl: docForm.fileUrl.trim() || undefined, type: docForm.fileType || d.type, updatedAt: now } : d
       ));
       toast.success(`Документ "${docForm.title}" обновлён`);
     } else {
@@ -83,7 +107,7 @@ const AdminSite = () => {
         title: docForm.title.trim(),
         description: docForm.description.trim(),
         icon: 'FileText',
-        type: 'PDF',
+        type: docForm.fileType || 'PDF',
         isPublished: false,
         updatedAt: now,
         fileUrl: docForm.fileUrl.trim() || undefined,
