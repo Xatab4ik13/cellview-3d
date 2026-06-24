@@ -2,6 +2,9 @@ import { Router, Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import pool from '../config/database';
 import { sendEmail } from '../config/mailer';
+import { renderTemplate } from '../config/adminNotify';
+
+const ADMIN_NOTIFY_EMAIL = process.env.ADMIN_NOTIFY_EMAIL || '89118108383@mail.ru';
 
 export const leadsRouter = Router();
 
@@ -33,22 +36,28 @@ leadsRouter.post('/callback', async (req: Request, res: Response, next: NextFunc
     const escape = (s: string) =>
       s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
 
-    const html = `
-      <h2>Новая заявка с сайта Кладовка78</h2>
-      <p><b>Источник:</b> ${escape(safeSource)}</p>
-      <p><b>Имя:</b> ${escape(safeName)}</p>
-      <p><b>Телефон:</b> <a href="tel:${escape(safePhone)}">${escape(safePhone)}</a></p>
-      ${safeSize ? `<p><b>Желаемый размер:</b> ${escape(safeSize)}</p>` : ''}
-      ${safeMessage ? `<p><b>Комментарий:</b><br/>${escape(safeMessage).replace(/\n/g, '<br/>')}</p>` : ''}
-      <hr/>
-      <p style="color:#888;font-size:12px">Время: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} (МСК) · ID: ${id}</p>
-    `;
+    const isCallback = /звон|callback/i.test(safeSource);
+    const title = isCallback ? 'Заказ обратного звонка' : 'Новый вопрос с сайта';
+
+    const html = renderTemplate({
+      title,
+      intro: 'Поступила заявка с сайта Кладовка78.',
+      accent: '#7c3aed',
+      rows: [
+        { label: 'Источник', value: safeSource },
+        { label: 'Имя', value: safeName },
+        { label: 'Телефон', value: safePhone },
+        { label: 'Желаемый размер', value: safeSize },
+        { label: 'Комментарий', value: safeMessage },
+        { label: 'ID заявки', value: id },
+      ],
+    });
 
     // Email — не блокируем ответ, если SMTP недоступен
     try {
       await sendEmail(
-        process.env.LEADS_TO || 'info@kladovka78.ru',
-        `Заявка с сайта: ${safeName} — ${safePhone}`,
+        process.env.LEADS_TO || ADMIN_NOTIFY_EMAIL,
+        `${title}: ${safeName} — ${safePhone}`,
         html
       );
     } catch (e) {
