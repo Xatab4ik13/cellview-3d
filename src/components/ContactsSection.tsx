@@ -180,7 +180,7 @@ const ContactsSection = () => {
         {/* Map */}
         <div className="mt-12 aspect-[21/9] bg-muted rounded-2xl overflow-hidden border border-border">
           <iframe 
-            src="https://yandex.ru/map-widget/v1/?ll=30.32755%2C59.84881&z=16&pt=30.32755%2C59.84881%2Cpm2rdm&lang=ru_RU"
+            src="https://yandex.ru/map-widget/v1/?ll=30.327906%2C59.848956&z=20&pt=30.327906%2C59.848956%2Cpm2rdm&lang=ru_RU"
             width="100%"
             height="100%"
             style={{ border: 0 }}
