@@ -15,14 +15,15 @@ SELECT
   MAX(t.amount) AS monthly_price,
   'paid',
   'CASH',
-  MIN(t.created_at),
-  MIN(t.created_at)
+  MIN(t.month),
+  MIN(t.month)
 FROM (
   SELECT
     re.id,
     re.rental_id,
     re.customer_id,
     re.cell_id,
+    re.month,
     re.amount,
     re.created_at,
     LEFT(re.id, LENGTH(re.id) - LENGTH(SUBSTRING_INDEX(re.id, '-', -1)) - 1) AS group_key
