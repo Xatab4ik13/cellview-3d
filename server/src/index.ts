@@ -14,6 +14,8 @@ import { paymentsRouter } from './routes/payments';
 import { revenueRouter } from './routes/revenue';
 import { leadsRouter } from './routes/leads';
 import { settingsRouter } from './routes/settings';
+import { documentUploadsRouter } from './routes/documentUploads';
+import pool from './config/database';
 
 
 // Для sandbox ВТБ: их тестовый сервер использует сертификат, не входящий в стандартные CA
@@ -50,10 +52,31 @@ app.use('/api/auth', authRouter);
 app.use('/api/payments', paymentsRouter);
 app.use('/api/revenue', revenueRouter);
 app.use('/api/leads', leadsRouter);
+app.use('/api/settings/site-documents', documentUploadsRouter);
 app.use('/api/settings', settingsRouter);
 
 // Error handling
 app.use(errorHandler);
+
+// ===== Авто-очистка просроченных платежей (старше 24 часов в статусах created/pending) =====
+async function cleanupStalePayments() {
+  try {
+    const [result] = await pool.query(
+      `DELETE FROM payments
+       WHERE status IN ('created', 'pending')
+         AND created_at < NOW() - INTERVAL 24 HOUR`
+    );
+    const affected = (result as any).affectedRows || 0;
+    if (affected > 0) {
+      console.log(`[cleanup] удалено ${affected} просроченных неоплаченных платежей`);
+    }
+  } catch (err) {
+    console.error('[cleanup] ошибка авто-очистки платежей:', err);
+  }
+}
+// Запуск каждый час + один раз сразу при старте
+setInterval(cleanupStalePayments, 60 * 60 * 1000);
+setTimeout(cleanupStalePayments, 30 * 1000);
 
 app.listen(PORT, () => {
   console.log(`🚀 Kladovka78 API running on port ${PORT}`);

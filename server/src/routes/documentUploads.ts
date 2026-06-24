@@ -1,0 +1,77 @@
+import { Router, Request, Response, NextFunction } from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { AppError } from '../middleware/errorHandler';
+
+export const documentUploadsRouter = Router();
+
+const UPLOAD_DIR = process.env.UPLOAD_DIR || '/var/www/kladovka78/uploads';
+const DOCS_DIR = path.join(UPLOAD_DIR, 'docs');
+
+if (!fs.existsSync(DOCS_DIR)) {
+  fs.mkdirSync(DOCS_DIR, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, DOCS_DIR),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeBase = path
+      .basename(file.originalname, ext)
+      .replace(/[^a-zA-Zа-яА-Я0-9-_]+/g, '_')
+      .slice(0, 60);
+    cb(null, `${Date.now()}-${safeBase}${ext}`);
+  },
+});
+
+const ALLOWED_EXT = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.rtf', '.odt', '.jpg', '.jpeg', '.png'];
+
+const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (ALLOWED_EXT.includes(ext)) cb(null, true);
+  else cb(new AppError(`Допустимые форматы: ${ALLOWED_EXT.join(', ')}`, 400));
+};
+
+const upload = multer({ storage, fileFilter, limits: { fileSize: 25 * 1024 * 1024 } });
+
+// POST /api/settings/site-documents/upload — загрузить файл документа
+documentUploadsRouter.post('/upload', upload.single('file'), (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const file = req.file as Express.Multer.File | undefined;
+    if (!file) throw new AppError('Файл не загружен', 400);
+
+    const url = `/uploads/docs/${file.filename}`;
+    const ext = path.extname(file.originalname).toLowerCase().replace('.', '').toUpperCase();
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+    res.status(201).json({
+      success: true,
+      data: {
+        url: `${baseUrl}${url}`,
+        type: ext || 'FILE',
+        size: file.size,
+        originalName: file.originalname,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// DELETE /api/settings/site-documents/upload — удалить файл по URL
+documentUploadsRouter.delete('/upload', (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { url } = req.body || {};
+    if (!url) throw new AppError('Укажите URL файла', 400);
+    const relative = String(url).replace(/^https?:\/\/[^/]+/, '');
+    if (!relative.startsWith('/uploads/docs/')) {
+      return res.json({ success: true, message: 'Внешний URL — файл не удалён' });
+    }
+    const filePath = path.join(UPLOAD_DIR, relative.replace('/uploads/', ''));
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});

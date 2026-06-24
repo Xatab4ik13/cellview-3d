@@ -37,7 +37,9 @@ const AdminSite = () => {
 
   const [isDocDialogOpen, setIsDocDialogOpen] = useState(false);
   const [editingDoc, setEditingDoc] = useState<SiteDocument | null>(null);
-  const [docForm, setDocForm] = useState({ title: '', description: '', fileUrl: '' });
+  const [docForm, setDocForm] = useState({ title: '', description: '', fileUrl: '', fileType: '' });
+  const [docFileName, setDocFileName] = useState<string>('');
+  const [uploadingDoc, setUploadingDoc] = useState(false);
   const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
   const [viewingDoc, setViewingDoc] = useState<SiteDocument | null>(null);
 
@@ -56,14 +58,36 @@ const AdminSite = () => {
 
   const openNewDoc = () => {
     setEditingDoc(null);
-    setDocForm({ title: '', description: '', fileUrl: '' });
+    setDocForm({ title: '', description: '', fileUrl: '', fileType: '' });
+    setDocFileName('');
     setIsDocDialogOpen(true);
   };
 
   const openEditDoc = (doc: SiteDocument) => {
     setEditingDoc(doc);
-    setDocForm({ title: doc.title, description: doc.description, fileUrl: doc.fileUrl || '' });
+    setDocForm({ title: doc.title, description: doc.description, fileUrl: doc.fileUrl || '', fileType: doc.type || '' });
+    setDocFileName(doc.fileUrl ? doc.fileUrl.split('/').pop() || '' : '');
     setIsDocDialogOpen(true);
+  };
+
+  const API_BASE = import.meta.env.VITE_API_URL || 'https://api.kladovka78.ru';
+
+  const handleUploadDocFile = async (file: File) => {
+    setUploadingDoc(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`${API_BASE}/api/settings/site-documents/upload`, { method: 'POST', body: fd });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
+      setDocForm(p => ({ ...p, fileUrl: json.data.url, fileType: json.data.type }));
+      setDocFileName(json.data.originalName || file.name);
+      toast.success('Файл загружен');
+    } catch (e: any) {
+      toast.error(`Ошибка загрузки: ${e.message}`);
+    } finally {
+      setUploadingDoc(false);
+    }
   };
 
   const handleSaveDoc = () => {
@@ -74,7 +98,7 @@ const AdminSite = () => {
     const now = new Date().toISOString().split('T')[0];
     if (editingDoc) {
       setDocuments(prev => prev.map(d =>
-        d.id === editingDoc.id ? { ...d, title: docForm.title, description: docForm.description, fileUrl: docForm.fileUrl.trim() || undefined, updatedAt: now } : d
+        d.id === editingDoc.id ? { ...d, title: docForm.title, description: docForm.description, fileUrl: docForm.fileUrl.trim() || undefined, type: docForm.fileType || d.type, updatedAt: now } : d
       ));
       toast.success(`Документ "${docForm.title}" обновлён`);
     } else {
@@ -83,7 +107,7 @@ const AdminSite = () => {
         title: docForm.title.trim(),
         description: docForm.description.trim(),
         icon: 'FileText',
-        type: 'PDF',
+        type: docForm.fileType || 'PDF',
         isPublished: false,
         updatedAt: now,
         fileUrl: docForm.fileUrl.trim() || undefined,
@@ -325,14 +349,39 @@ const AdminSite = () => {
               />
             </div>
             <div className="grid gap-2">
-              <Label>Ссылка на файл (URL)</Label>
-              <Input
-                placeholder="https://example.com/documents/file.pdf"
-                value={docForm.fileUrl}
-                onChange={e => setDocForm(p => ({ ...p, fileUrl: e.target.value }))}
-                className="h-11"
-              />
-              <p className="text-xs text-muted-foreground">Загрузите файл на сервер и вставьте прямую ссылку для скачивания</p>
+              <Label>Файл документа</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="doc-file-input"
+                  type="file"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf,.odt,.jpg,.jpeg,.png"
+                  className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleUploadDocFile(f); e.currentTarget.value = ''; }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-2 h-11"
+                  disabled={uploadingDoc}
+                  onClick={() => document.getElementById('doc-file-input')?.click()}
+                >
+                  {uploadingDoc ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {docForm.fileUrl ? 'Заменить файл' : 'Загрузить файл'}
+                </Button>
+                {docForm.fileUrl && (
+                  <div className="flex items-center gap-2 text-sm min-w-0">
+                    <File className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <a href={docForm.fileUrl} target="_blank" rel="noreferrer" className="truncate text-primary hover:underline">
+                      {docFileName || 'Открыть файл'}
+                    </a>
+                    {docForm.fileType && <Badge variant="outline" className="text-[10px]">{docForm.fileType}</Badge>}
+                    <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => { setDocForm(p => ({ ...p, fileUrl: '', fileType: '' })); setDocFileName(''); }}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">PDF, DOC/DOCX, XLS/XLSX, PPT/PPTX, TXT, JPG, PNG — до 25 МБ. Файл будет доступен клиенту в личном кабинете.</p>
             </div>
           </div>
           <DialogFooter>

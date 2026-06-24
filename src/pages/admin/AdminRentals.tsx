@@ -22,7 +22,7 @@ const statusConfig: Record<string, { label: string; color: string }> = {
   expiring: { label: 'Заканчивается', color: 'var(--status-pending)' },
   expired: { label: 'Просрочена', color: 'var(--status-overdue)' },
   cancelled: { label: 'Отменена', color: 'var(--status-overdue)' },
-  completed: { label: 'Завершена', color: 'var(--status-active)' },
+  completed: { label: 'Завершена', color: 'var(--status-new)' },
 };
 
 function getRentalDisplayStatus(rental: { status: string; endDate: string }) {
@@ -251,19 +251,19 @@ const AdminRentals = () => {
                           <DropdownMenuItem onClick={() => extendMutation.mutate({ id: rental.id, months: 1 })}>
                             <RefreshCw className="h-4 w-4 mr-2" />Продлить на 1 мес
                           </DropdownMenuItem>
+                          {rental.displayStatus !== 'completed' && (
+                            <DropdownMenuItem onClick={() => {
+                              if (confirm(`Перевести аренду ${rental.customerName} в статус "Завершена"?`)) completeMutation.mutate(rental.id);
+                            }}>
+                              <CheckCircle2 className="h-4 w-4 mr-2" />Завершить
+                            </DropdownMenuItem>
+                          )}
                           {rental.displayStatus !== 'expired' && rental.displayStatus !== 'cancelled' && rental.displayStatus !== 'completed' && (
-                            <>
-                              <DropdownMenuItem onClick={() => {
-                                if (confirm(`Перевести аренду ${rental.customerName} в статус "Завершена"?`)) completeMutation.mutate(rental.id);
-                              }}>
-                                <CheckCircle2 className="h-4 w-4 mr-2" />Завершить вручную
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive" onClick={() => {
-                                if (confirm(`Завершить аренду для ${rental.customerName}?`)) releaseMutation.mutate(rental.id);
-                              }}>
-                                <Ban className="h-4 w-4 mr-2" />Просрочить
-                              </DropdownMenuItem>
-                            </>
+                            <DropdownMenuItem className="text-destructive" onClick={() => {
+                              if (confirm(`Просрочить аренду для ${rental.customerName}?`)) releaseMutation.mutate(rental.id);
+                            }}>
+                              <Ban className="h-4 w-4 mr-2" />Просрочить
+                            </DropdownMenuItem>
                           )}
                           <DropdownMenuItem className="text-destructive" onClick={() => {
                             if (confirm(`Удалить аренду? Это действие необратимо.`)) deleteMutation.mutate(rental.id);

@@ -1,15 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { FileText, Shield, HelpCircle, Phone, Mail, MessageCircle, ExternalLink } from 'lucide-react';
+import { FileText, HelpCircle, Phone, Mail, MessageCircle, ExternalLink, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useSiteDocuments } from '@/hooks/useSettings';
+import { iconMap } from '@/data/siteDocuments';
 
 const InfoSection = () => {
-  const documents = [
-    { title: 'Условия аренды', description: 'Правила и условия договора аренды', icon: FileText },
-    { title: 'Правила безопасности', description: 'Требования к хранению вещей', icon: Shield },
-    { title: 'Политика конфиденциальности', description: 'Обработка персональных данных', icon: FileText },
-  ];
+  const { data: allDocs = [] } = useSiteDocuments();
+  const documents = allDocs.filter(d => d.isPublished);
 
   const faqItems = [
     {
@@ -45,20 +44,37 @@ const InfoSection = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6">
-          {documents.map((doc, index) => (
-            <button
-              key={index}
-              className="flex items-start gap-4 p-5 border border-border/50 rounded-xl hover:bg-secondary/50 hover:border-primary/30 transition-all text-left group"
-            >
-              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-                <doc.icon className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold">{doc.title}</p>
-                <p className="text-sm text-muted-foreground">{doc.description}</p>
-              </div>
-            </button>
-          ))}
+          {documents.length === 0 && (
+            <p className="text-sm text-muted-foreground col-span-full text-center py-4">Документы появятся здесь</p>
+          )}
+          {documents.map(doc => {
+            const Icon = iconMap[doc.icon] || FileText;
+            const isInternal = doc.fileUrl && doc.fileUrl.startsWith('/') && !doc.fileUrl.includes('.');
+            const content = (
+              <>
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                  <Icon className="w-6 h-6 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold truncate">{doc.title}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{doc.description}</p>
+                </div>
+                {doc.fileUrl && !isInternal && <Download className="w-4 h-4 text-muted-foreground shrink-0" />}
+              </>
+            );
+            const baseCls = "flex items-start gap-4 p-5 border border-border/50 rounded-xl hover:bg-secondary/50 hover:border-primary/30 transition-all text-left group";
+            if (!doc.fileUrl) {
+              return <div key={doc.id} className={baseCls}>{content}</div>;
+            }
+            if (isInternal) {
+              return <Link key={doc.id} to={doc.fileUrl} className={baseCls}>{content}</Link>;
+            }
+            return (
+              <a key={doc.id} href={doc.fileUrl} target="_blank" rel="noopener noreferrer" download className={baseCls}>
+                {content}
+              </a>
+            );
+          })}
         </CardContent>
       </Card>
 
