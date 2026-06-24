@@ -167,7 +167,7 @@ const LocationSection = () => {
             <div className="flex items-center gap-4 p-4 bg-primary/5 rounded-xl border border-primary/20">
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Цена</p>
-                <p className="text-2xl font-bold text-primary">1000 ₽/м³</p>
+                <p className="text-2xl font-bold text-primary">от 1000 ₽/м³</p>
               </div>
               <div className="flex-1 text-sm text-muted-foreground">
                 Ячейки от 0,5 м³ до 10 м³ с круглосуточным доступом и видеонаблюдением
