@@ -155,8 +155,10 @@ rentalsRouter.put('/:id/extend', async (req: Request, res: Response, next: NextF
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
-    const { months } = req.body;
+    const { months, paymentMethod } = req.body;
     if (!months || months < 1) throw new AppError('Укажите количество месяцев', 400);
+
+    const method = (paymentMethod || 'CASH').toString().toUpperCase();
 
     const [rows] = await conn.query('SELECT * FROM rentals WHERE id = ? FOR UPDATE', [req.params.id]);
     const rental = (rows as any[])[0];
@@ -176,21 +178,30 @@ rentalsRouter.put('/:id/extend', async (req: Request, res: Response, next: NextF
       [newEndDate, months, newTotal, req.params.id]
     );
 
+    // Создаём платёж за продление (по умолчанию наличными, статус 'paid')
+    const paymentId = uuidv4();
+    const description = `Продление аренды на ${months} мес.`;
+    await conn.query(
+      `INSERT INTO payments (id, rental_id, customer_id, cell_id, amount, description, duration_months, monthly_price, status, payment_method, paid_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'paid', ?, NOW())`,
+      [paymentId, req.params.id, rental.customer_id, rental.cell_id, addedAmount * 100, description, months, monthlyPrice, method]
+    );
+
     // Добавляем revenue_entries для новых месяцев (начиная со следующего месяца после старого end_date)
-    // Старт = первое число месяца, следующего за oldEnd (исключительно)
+    const extTs = Date.now();
     const start = new Date(oldEnd.getFullYear(), oldEnd.getMonth(), 1);
     for (let i = 0; i < Number(months); i++) {
       const entryMonth = new Date(start.getFullYear(), start.getMonth() + i, 1);
       const monthStr = entryMonth.toISOString().slice(0, 7) + '-01';
-      const entryId = `rev-${req.params.id}-ext-${Date.now()}-${i}`;
+      const entryId = `rev-${req.params.id}-ext-${extTs}-${i}`;
       await conn.query(
-        `INSERT INTO revenue_entries (id, rental_id, customer_id, cell_id, month, amount) VALUES (?, ?, ?, ?, ?, ?)`,
-        [entryId, req.params.id, rental.customer_id, rental.cell_id, monthStr, monthlyPrice]
+        `INSERT INTO revenue_entries (id, rental_id, customer_id, cell_id, month, amount, payment_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [entryId, req.params.id, rental.customer_id, rental.cell_id, monthStr, monthlyPrice, paymentId]
       );
     }
 
     await conn.commit();
-    res.json({ success: true, data: { endDate: newEndDate }, message: `Аренда продлена на ${months} мес.` });
+    res.json({ success: true, data: { endDate: newEndDate, paymentId }, message: `Аренда продлена на ${months} мес.` });
   } catch (error) {
     await conn.rollback();
     next(error);
