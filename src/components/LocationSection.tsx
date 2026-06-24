@@ -2,9 +2,9 @@ import { MapPin, Phone, Clock, Navigation, Car, Train } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import storageCellImage from '@/assets/storage-cell-1.jpg';
 
-// Точные координаты входа Mami (Алтайская 21, помещение 22-Н)
-const MAP_LAT = 59.82820;
-const MAP_LON = 30.37540;
+// Точные координаты входа (Алтайская 21, помещение 22-Н)
+const MAP_LAT = 59.848898;
+const MAP_LON = 30.327869;
 const MAP_POINT = `${MAP_LON},${MAP_LAT}`;
 const ROUTE_URL = `https://yandex.ru/maps/?rtext=~${MAP_LAT},${MAP_LON}&rtt=auto`;
 
