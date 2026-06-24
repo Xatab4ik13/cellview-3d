@@ -165,17 +165,24 @@ export default function RentalDetailModal({ open, onClose, rental, payments, onE
           <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { onClose(); onEdit(rental); }}>
             <Key className="h-3.5 w-3.5" />Редактировать
           </Button>
+          {!isCompleted && (
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { onClose(); onExtend(rental.id); }}>
+              <RefreshCw className="h-3.5 w-3.5" />Продлить на 1 мес
+            </Button>
+          )}
+          {!isCompleted && (
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+              if (confirm(`Перевести аренду ${rental.customerName} в статус "Завершена"?`)) { onClose(); onComplete(rental.id); }
+            }}>
+              <CheckCircle2 className="h-3.5 w-3.5" />Завершить
+            </Button>
+          )}
           {isActive && (
-            <>
-              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => { onClose(); onExtend(rental.id); }}>
-                <RefreshCw className="h-3.5 w-3.5" />Продлить на 1 мес
-              </Button>
-              <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => {
-                if (confirm(`Завершить аренду для ${rental.customerName}?`)) { onClose(); onRelease(rental.id); }
-              }}>
-                <Ban className="h-3.5 w-3.5" />Завершить
-              </Button>
-            </>
+            <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => {
+              if (confirm(`Просрочить аренду для ${rental.customerName}?`)) { onClose(); onRelease(rental.id); }
+            }}>
+              <Ban className="h-3.5 w-3.5" />Просрочить
+            </Button>
           )}
           <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive ml-auto" onClick={() => {
             if (confirm(`Удалить аренду? Это действие необратимо.`)) { onClose(); onDelete(rental.id); }
