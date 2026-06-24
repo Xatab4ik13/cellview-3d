@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Phone, Mail, MapPin, Clock, Send, CheckCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PhoneInput } from '@/components/ui/phone-input';
 import storageCellImage from '@/assets/storage-cell-1.jpg';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.kladovka78.ru';
@@ -143,7 +144,7 @@ const ContactsSection = () => {
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="phone" className="text-sm font-medium">Телефон *</label>
-                  <Input id="phone" name="phone" type="tel" placeholder="+7 (___) ___-__-__" required />
+                  <PhoneInput id="phone" name="phone" required />
                 </div>
               </div>
 

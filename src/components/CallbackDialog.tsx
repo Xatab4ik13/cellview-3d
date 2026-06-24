@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, CheckCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PhoneInput } from '@/components/ui/phone-input';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.kladovka78.ru';
 
@@ -80,7 +81,7 @@ export function CallbackDialog({ open, onOpenChange, source = 'Кнопка "З�
             </div>
             <div className="space-y-2">
               <label htmlFor="cb-phone" className="text-sm font-medium">Телефон *</label>
-              <Input id="cb-phone" name="phone" type="tel" placeholder="+7 (___) ___-__-__" required />
+              <PhoneInput id="cb-phone" name="phone" required />
             </div>
             {showSizeField && (
               <div className="space-y-2">
