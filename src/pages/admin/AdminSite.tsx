@@ -350,7 +350,8 @@ const AdminSite = () => {
             </div>
             <div className="grid gap-2">
               <Label>Файл документа</Label>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 min-w-0">
+
                 <input
                   id="doc-file-input"
                   type="file"
@@ -369,7 +370,7 @@ const AdminSite = () => {
                   {docForm.fileUrl ? 'Заменить файл' : 'Загрузить файл'}
                 </Button>
                 {docForm.fileUrl && (
-                  <div className="flex items-center gap-2 text-sm min-w-0">
+                  <div className="flex items-center gap-2 text-sm min-w-0 flex-1 basis-full sm:basis-auto">
                     <File className="w-4 h-4 text-muted-foreground shrink-0" />
                     <a href={docForm.fileUrl} target="_blank" rel="noreferrer" className="truncate text-primary hover:underline">
                       {docFileName || 'Открыть файл'}
