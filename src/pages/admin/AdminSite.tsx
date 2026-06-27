@@ -350,7 +350,8 @@ const AdminSite = () => {
             </div>
             <div className="grid gap-2">
               <Label>Файл документа</Label>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 min-w-0">
+
                 <input
                   id="doc-file-input"
                   type="file"
