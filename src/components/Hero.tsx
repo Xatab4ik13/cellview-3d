@@ -7,9 +7,9 @@ import storageHero2 from '@/assets/storage-hero-2.jpg';
 import storageHero3 from '@/assets/storage-hero-3.jpg';
 
 const sizeOptions = [
-  { label: 'Маленький', range: '0,5 - 1,2 м³' },
-  { label: 'Средний', range: '1,3 - 3,9 м³' },
-  { label: 'Большой', range: '4,0 - 10 м³' },
+  { label: 'Маленький', range: '0,5 - 1,2 м³', key: 'small' },
+  { label: 'Средний', range: '1,3 - 3,9 м³', key: 'medium' },
+  { label: 'Большой', range: '4,0 - 10 м³', key: 'large' },
 ];
 
 const locations = [
