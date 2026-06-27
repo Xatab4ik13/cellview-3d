@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useCells } from '@/hooks/useCells';
 import { StorageCell, FilterOptions } from '@/types/storage';
 import CellCardVariantB from './CellCardVariantB';
@@ -48,6 +49,23 @@ const CatalogSection = () => {
 
   const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
   const [volumeRange, setVolumeRange] = useState<[number, number] | null>(null);
+
+  const [searchParams] = useSearchParams();
+  const sizeParam = searchParams.get('size');
+  useEffect(() => {
+    if (!sizeParam) return;
+    const sizeMap: Record<string, [number, number]> = {
+      small: [0.5, 1.2],
+      medium: [1.3, 3.9],
+      large: [4.0, 10],
+    };
+    const range = sizeMap[sizeParam];
+    if (range) {
+      setVolumeRange(range);
+      setCurrentPage(1);
+    }
+  }, [sizeParam]);
+
 
   const effectivePriceRange = priceRange ?? [dataRanges.minPrice, dataRanges.maxPrice];
   const effectiveVolumeRange = volumeRange ?? [dataRanges.minVol, dataRanges.maxVol];
