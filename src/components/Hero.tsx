@@ -99,7 +99,7 @@ const Hero = () => {
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-3">
-                <Link to="/catalog" className="flex-1">
+                <Link to={selectedSize !== null ? `/catalog?size=${sizeOptions[selectedSize].key}` : '/catalog'} className="flex-1">
                   <Button variant="default" size="lg" className="w-full shadow-primary text-base font-bold">
                     Забронировать кладовку
                   </Button>
