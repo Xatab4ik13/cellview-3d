@@ -134,19 +134,78 @@ async function createRentalFromPayment(payment: PaymentDbRow): Promise<string | 
   }
 }
 
-async function activateRental(payment: PaymentDbRow): Promise<void> {
-  if (payment.rental_id) {
-    // Existing rental — just activate
-    await pool.query(
-      "UPDATE rentals SET status = 'active' WHERE id = ? AND status != 'active'",
-      [payment.rental_id]
+async function extendRentalFromPayment(payment: PaymentDbRow): Promise<void> {
+  if (!payment.rental_id) return;
+  const months = Number(payment.duration_months) || 1;
+  const monthlyPrice = Number(payment.monthly_price) || Math.round(payment.amount / 100 / months);
+  const addedAmount = Math.round(payment.amount / 100);
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [rows] = await conn.query('SELECT * FROM rentals WHERE id = ? FOR UPDATE', [payment.rental_id]);
+    const rental = (rows as any[])[0];
+    if (!rental) {
+      await conn.rollback();
+      return;
+    }
+
+    // Идемпотентность: если revenue_entries уже созданы для этого платежа — выходим
+    const [existing] = await conn.query(
+      'SELECT COUNT(*) AS cnt FROM revenue_entries WHERE payment_id = ?',
+      [payment.id]
     );
+    if (((existing as any[])[0]?.cnt || 0) > 0) {
+      await conn.commit();
+      return;
+    }
+
+    const oldEnd = new Date(rental.end_date);
+    const newEnd = new Date(oldEnd);
+    newEnd.setMonth(newEnd.getMonth() + months);
+    const newEndDate = newEnd.toISOString().split('T')[0];
+    const newTotal = Number(rental.total_amount || 0) + addedAmount;
+
+    await conn.query(
+      "UPDATE rentals SET end_date = ?, duration_months = duration_months + ?, total_amount = ?, status = 'active', expiry_notified_at = NULL WHERE id = ?",
+      [newEndDate, months, newTotal, payment.rental_id]
+    );
+
     if (payment.cell_id) {
-      await pool.query(
+      await conn.query(
         "UPDATE cells SET status = 'occupied', reserved_until = NULL WHERE id = ?",
         [payment.cell_id]
       );
     }
+
+    // revenue_entries за новые месяцы
+    const extTs = Date.now();
+    const start = new Date(oldEnd.getFullYear(), oldEnd.getMonth(), 1);
+    for (let i = 0; i < months; i++) {
+      const entryMonth = new Date(start.getFullYear(), start.getMonth() + i, 1);
+      const monthStr = entryMonth.toISOString().slice(0, 7) + '-01';
+      const entryId = `rev-${payment.rental_id}-ext-${extTs}-${i}`;
+      await conn.query(
+        `INSERT INTO revenue_entries (id, rental_id, customer_id, cell_id, month, amount, payment_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [entryId, payment.rental_id, payment.customer_id, payment.cell_id, monthStr, monthlyPrice, payment.id]
+      );
+    }
+
+    await conn.commit();
+    console.log(`Rental ${payment.rental_id} extended by ${months} mo. from payment ${payment.id}`);
+  } catch (err) {
+    await conn.rollback();
+    console.error('Error extending rental from payment:', err);
+  } finally {
+    conn.release();
+  }
+}
+
+async function activateRental(payment: PaymentDbRow): Promise<void> {
+  if (payment.rental_id) {
+    // Existing rental — продлеваем end_date и создаём revenue_entries
+    await extendRentalFromPayment(payment);
   } else {
     // No rental yet — create one
     await createRentalFromPayment(payment);
