@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useCells } from '@/hooks/useCells';
 import { StorageCell, FilterOptions } from '@/types/storage';
 import CellCardVariantB from './CellCardVariantB';
