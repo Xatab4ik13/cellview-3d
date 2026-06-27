@@ -41,8 +41,11 @@ documentUploadsRouter.post('/upload', upload.single('file'), (req: Request, res:
     const file = req.file as Express.Multer.File | undefined;
     if (!file) throw new AppError('Файл не загружен', 400);
 
+    // multer декодирует имя файла как latin1 — конвертируем в utf-8, чтобы кириллица отображалась корректно
+    const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+
     const url = `/uploads/docs/${file.filename}`;
-    const ext = path.extname(file.originalname).toLowerCase().replace('.', '').toUpperCase();
+    const ext = path.extname(originalName).toLowerCase().replace('.', '').toUpperCase();
     const baseUrl = `${req.protocol}://${req.get('host')}`;
 
     res.status(201).json({
@@ -51,7 +54,7 @@ documentUploadsRouter.post('/upload', upload.single('file'), (req: Request, res:
         url: `${baseUrl}${url}`,
         type: ext || 'FILE',
         size: file.size,
-        originalName: file.originalname,
+        originalName,
       },
     });
   } catch (error) {
