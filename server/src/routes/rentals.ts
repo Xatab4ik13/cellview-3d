@@ -3,6 +3,7 @@ import pool from '../config/database';
 import { AppError } from '../middleware/errorHandler';
 import { v4 as uuidv4 } from 'uuid';
 import { notifyAdminPayment } from '../config/adminNotify';
+import { addMonthsSafe } from '../utils/date';
 
 export const rentalsRouter = Router();
 
@@ -106,8 +107,7 @@ rentalsRouter.post('/', async (req: Request, res: Response, next: NextFunction) 
 
     // Вычислить дату окончания
     const start = new Date(startDate);
-    const end = new Date(start);
-    end.setMonth(end.getMonth() + months);
+    const end = addMonthsSafe(start, months);
     const endDate = end.toISOString().split('T')[0];
 
     const id = req.body.id || uuidv4();
@@ -166,8 +166,7 @@ rentalsRouter.put('/:id/extend', async (req: Request, res: Response, next: NextF
     if (!rental) throw new AppError('Аренда не найдена', 404);
 
     const oldEnd = new Date(rental.end_date);
-    const newEnd = new Date(oldEnd);
-    newEnd.setMonth(newEnd.getMonth() + Number(months));
+    const newEnd = addMonthsSafe(oldEnd, Number(months));
     const newEndDate = newEnd.toISOString().split('T')[0];
 
     const monthlyPrice = Number(rental.monthly_price) || 0;

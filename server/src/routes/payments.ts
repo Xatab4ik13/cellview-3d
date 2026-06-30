@@ -10,6 +10,7 @@ import {
   type RbsStatusResponse,
 } from '../vtbRbsApi';
 import { notifyAdminPayment } from '../config/adminNotify';
+import { addMonthsSafe } from '../utils/date';
 
 export const paymentsRouter = Router();
 
@@ -95,8 +96,7 @@ async function createRentalFromPayment(payment: PaymentDbRow): Promise<string | 
 
   const rentalId = uuidv4();
   const startDate = new Date().toISOString().split('T')[0];
-  const endDate = new Date();
-  endDate.setMonth(endDate.getMonth() + duration);
+  const endDate = addMonthsSafe(new Date(), duration);
   const endDateStr = endDate.toISOString().split('T')[0];
 
   const conn = await pool.getConnection();
@@ -128,7 +128,7 @@ async function createRentalFromPayment(payment: PaymentDbRow): Promise<string | 
   } catch (err) {
     await conn.rollback();
     console.error('Error creating rental from payment:', err);
-    return null;
+    throw err;
   } finally {
     conn.release();
   }
@@ -162,8 +162,7 @@ async function extendRentalFromPayment(payment: PaymentDbRow): Promise<void> {
     }
 
     const oldEnd = new Date(rental.end_date);
-    const newEnd = new Date(oldEnd);
-    newEnd.setMonth(newEnd.getMonth() + months);
+    const newEnd = addMonthsSafe(oldEnd, months);
     const newEndDate = newEnd.toISOString().split('T')[0];
     const newTotal = Number(rental.total_amount || 0) + addedAmount;
 
@@ -197,6 +196,7 @@ async function extendRentalFromPayment(payment: PaymentDbRow): Promise<void> {
   } catch (err) {
     await conn.rollback();
     console.error('Error extending rental from payment:', err);
+    throw err;
   } finally {
     conn.release();
   }
@@ -261,17 +261,20 @@ async function updatePaymentState(
     ? (payment.paid_at || paidAt || new Date())
     : payment.paid_at;
 
+  // Сначала активируем/продлеваем аренду — если упадёт, платёж НЕ помечается paid,
+  // и при следующем запросе статуса логика будет повторена.
+  if (nextStatus === 'paid' && payment.status !== 'paid') {
+    const payloadForActivation: PaymentDbRow = { ...payment, paid_at: resolvedPaidAt as Date };
+    await activateRental(payloadForActivation);
+    await notifyPaymentSuccess(payloadForActivation);
+  }
+
   await pool.query(
     `UPDATE payments
      SET status = ?, payment_method = ?, paid_at = ?, vtb_response = ?, updated_at = NOW()
      WHERE id = ?`,
     [nextStatus, paymentMethod ?? payment.payment_method ?? null, resolvedPaidAt, JSON.stringify(gatewayPayload), payment.id]
   );
-
-  if (nextStatus === 'paid' && payment.status !== 'paid') {
-    await activateRental(payment);
-    await notifyPaymentSuccess(payment);
-  }
 }
 
 // extractCallbackStatus removed — RBS uses callback URL with orderId, we poll status via getOrderStatusExtended
