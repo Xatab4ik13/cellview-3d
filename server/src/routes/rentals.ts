@@ -3,6 +3,7 @@ import pool from '../config/database';
 import { AppError } from '../middleware/errorHandler';
 import { v4 as uuidv4 } from 'uuid';
 import { notifyAdminPayment } from '../config/adminNotify';
+import { addMonthsSafe } from '../utils/date';
 
 export const rentalsRouter = Router();
 
