@@ -261,17 +261,20 @@ async function updatePaymentState(
     ? (payment.paid_at || paidAt || new Date())
     : payment.paid_at;
 
+  // Сначала активируем/продлеваем аренду — если упадёт, платёж НЕ помечается paid,
+  // и при следующем запросе статуса логика будет повторена.
+  if (nextStatus === 'paid' && payment.status !== 'paid') {
+    const payloadForActivation: PaymentDbRow = { ...payment, paid_at: resolvedPaidAt as Date };
+    await activateRental(payloadForActivation);
+    await notifyPaymentSuccess(payloadForActivation);
+  }
+
   await pool.query(
     `UPDATE payments
      SET status = ?, payment_method = ?, paid_at = ?, vtb_response = ?, updated_at = NOW()
      WHERE id = ?`,
     [nextStatus, paymentMethod ?? payment.payment_method ?? null, resolvedPaidAt, JSON.stringify(gatewayPayload), payment.id]
   );
-
-  if (nextStatus === 'paid' && payment.status !== 'paid') {
-    await activateRental(payment);
-    await notifyPaymentSuccess(payment);
-  }
 }
 
 // extractCallbackStatus removed — RBS uses callback URL with orderId, we poll status via getOrderStatusExtended
