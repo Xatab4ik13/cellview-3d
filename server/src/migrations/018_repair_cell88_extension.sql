@@ -2,10 +2,11 @@
 -- платёж ce04d2c9-... (cell 88, 1000 ₽, 1 мес.) был помечен paid,
 -- но end_date/total_amount аренды не обновились и revenue_entries не созданы.
 -- Идемпотентно: проверяем, что revenue_entry для этого платежа ещё нет.
+-- id revenue_entries — varchar(64), поэтому используем короткий MD5.
 
 INSERT INTO revenue_entries (id, rental_id, customer_id, cell_id, month, amount, payment_id)
 SELECT
-  CONCAT('rev-', p.rental_id, '-ext-repair-', p.id),
+  CONCAT('rev-repair-', MD5(p.id)),
   p.rental_id,
   p.customer_id,
   p.cell_id,
