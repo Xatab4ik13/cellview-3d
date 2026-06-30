@@ -162,8 +162,7 @@ async function extendRentalFromPayment(payment: PaymentDbRow): Promise<void> {
     }
 
     const oldEnd = new Date(rental.end_date);
-    const newEnd = new Date(oldEnd);
-    newEnd.setMonth(newEnd.getMonth() + months);
+    const newEnd = addMonthsSafe(oldEnd, months);
     const newEndDate = newEnd.toISOString().split('T')[0];
     const newTotal = Number(rental.total_amount || 0) + addedAmount;
 
