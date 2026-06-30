@@ -128,7 +128,7 @@ async function createRentalFromPayment(payment: PaymentDbRow): Promise<string | 
   } catch (err) {
     await conn.rollback();
     console.error('Error creating rental from payment:', err);
-    return null;
+    throw err;
   } finally {
     conn.release();
   }
