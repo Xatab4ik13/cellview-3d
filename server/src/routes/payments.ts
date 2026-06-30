@@ -96,8 +96,7 @@ async function createRentalFromPayment(payment: PaymentDbRow): Promise<string | 
 
   const rentalId = uuidv4();
   const startDate = new Date().toISOString().split('T')[0];
-  const endDate = new Date();
-  endDate.setMonth(endDate.getMonth() + duration);
+  const endDate = addMonthsSafe(new Date(), duration);
   const endDateStr = endDate.toISOString().split('T')[0];
 
   const conn = await pool.getConnection();
