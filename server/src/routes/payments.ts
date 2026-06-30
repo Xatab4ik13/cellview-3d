@@ -196,6 +196,7 @@ async function extendRentalFromPayment(payment: PaymentDbRow): Promise<void> {
   } catch (err) {
     await conn.rollback();
     console.error('Error extending rental from payment:', err);
+    throw err;
   } finally {
     conn.release();
   }
