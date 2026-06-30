@@ -166,8 +166,7 @@ rentalsRouter.put('/:id/extend', async (req: Request, res: Response, next: NextF
     if (!rental) throw new AppError('Аренда не найдена', 404);
 
     const oldEnd = new Date(rental.end_date);
-    const newEnd = new Date(oldEnd);
-    newEnd.setMonth(newEnd.getMonth() + Number(months));
+    const newEnd = addMonthsSafe(oldEnd, Number(months));
     const newEndDate = newEnd.toISOString().split('T')[0];
 
     const monthlyPrice = Number(rental.monthly_price) || 0;
