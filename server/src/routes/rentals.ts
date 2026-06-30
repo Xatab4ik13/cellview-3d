@@ -107,8 +107,7 @@ rentalsRouter.post('/', async (req: Request, res: Response, next: NextFunction) 
 
     // Вычислить дату окончания
     const start = new Date(startDate);
-    const end = new Date(start);
-    end.setMonth(end.getMonth() + months);
+    const end = addMonthsSafe(start, months);
     const endDate = end.toISOString().split('T')[0];
 
     const id = req.body.id || uuidv4();
