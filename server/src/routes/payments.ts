@@ -579,3 +579,37 @@ paymentsRouter.delete('/:id', async (req: Request, res: Response, next: NextFunc
     conn.release();
   }
 });
+
+// ===== Сверка «висящих» платежей с ВТБ =====
+// Клиент мог оплатить, но callback/возврат на сайт не сработал (закрыл вкладку, сбой сети).
+// Такие платежи остаются в статусе created/pending. Перед любой очисткой обязательно
+// опрашиваем шлюз: если заказ фактически оплачен — помечаем paid и продлеваем/активируем аренду.
+export async function reconcilePendingVtbPayments(): Promise<void> {
+  try {
+    const [rows] = await pool.query(
+      `SELECT * FROM payments
+       WHERE status IN ('created', 'pending')
+         AND vtb_order_id IS NOT NULL
+         AND created_at > NOW() - INTERVAL 90 DAY
+       ORDER BY created_at ASC
+       LIMIT 100`
+    );
+    const payments = rows as PaymentDbRow[];
+    if (!payments.length) return;
+
+    for (const payment of payments) {
+      try {
+        const statusResp = await rbsGetOrderStatus(payment.vtb_order_id as string);
+        const nextStatus = mapRbsStatus(statusResp.orderStatus ?? statusResp.OrderStatus);
+        if (nextStatus === payment.status) continue;
+        const paymentMethod = statusResp.cardAuthInfo?.pan ? 'CARD' : null;
+        await updatePaymentState(payment, nextStatus, statusResp, paymentMethod);
+        console.log(`[reconcile] платёж ${payment.id} (${payment.vtb_order_id}) -> ${nextStatus}`);
+      } catch (err) {
+        console.error(`[reconcile] не удалось сверить платёж ${payment.id}:`, err);
+      }
+    }
+  } catch (err) {
+    console.error('[reconcile] ошибка сверки платежей с ВТБ:', err);
+  }
+}
