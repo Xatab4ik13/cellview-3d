@@ -62,20 +62,38 @@ app.use(errorHandler);
 // ===== Авто-очистка просроченных платежей (старше 24 часов в статусах created/pending) =====
 async function cleanupStalePayments() {
   try {
+    // ВАЖНО: сначала сверяем все висящие платежи с ВТБ, чтобы не удалить фактически оплаченный заказ
+    await reconcilePendingVtbPayments();
+
     const [result] = await pool.query(
       `DELETE FROM payments
        WHERE status IN ('created', 'pending')
-         AND created_at < NOW() - INTERVAL 24 HOUR`
+         AND created_at < NOW() - INTERVAL 24 HOUR
+         AND vtb_order_id IS NULL`
     );
     const affected = (result as any).affectedRows || 0;
     if (affected > 0) {
       console.log(`[cleanup] удалено ${affected} просроченных неоплаченных платежей`);
     }
+
+    // Заказы, которые уходили в ВТБ, не удаляем — помечаем expired, чтобы сохранить историю
+    const [expired] = await pool.query(
+      `UPDATE payments
+       SET status = 'expired', updated_at = NOW()
+       WHERE status IN ('created', 'pending')
+         AND created_at < NOW() - INTERVAL 24 HOUR
+         AND vtb_order_id IS NOT NULL`
+    );
+    const expiredRows = (expired as any).affectedRows || 0;
+    if (expiredRows > 0) {
+      console.log(`[cleanup] помечено expired: ${expiredRows} платежей ВТБ`);
+    }
   } catch (err) {
     console.error('[cleanup] ошибка авто-очистки платежей:', err);
   }
 }
-// Запуск каждый час + один раз сразу при старте
+// Сверка с ВТБ каждые 10 минут + очистка каждый час
+setInterval(reconcilePendingVtbPayments, 10 * 60 * 1000);
 setInterval(cleanupStalePayments, 60 * 60 * 1000);
 setTimeout(cleanupStalePayments, 30 * 1000);
 
