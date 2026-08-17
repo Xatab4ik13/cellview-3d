@@ -67,6 +67,10 @@ const DEFAULT_SITE = {
   seoDescription: 'Надёжное хранение вещей от 1000₽/мес. Видеонаблюдение 24/7. Удобный доступ.',
   seoKeywords: 'склад, аренда ячейки, хранение вещей, Санкт-Петербург',
   heroTitle: 'Надёжное хранение вещей',
+  heroImages: [] as string[],
+  bannerImage: '',
+  bannerText: '',
+  bannerLink: '',
   heroSubtitle: 'Арендуйте складскую ячейку от 1000₽ в месяц с круглосуточным доступом',
   phone: '8 (911) 810-83-83',
   email: 'info@kladovka78.ru',
@@ -116,5 +120,23 @@ settingsRouter.put('/site-documents', async (req, res, next) => {
     const arr = Array.isArray(req.body) ? req.body : (req.body?.documents || []);
     await putJsonSetting('site_documents', arr);
     res.json({ success: true, data: arr });
+  } catch (error) { next(error); }
+});
+
+// GET /api/settings/contract-template
+settingsRouter.get('/contract-template', async (_req, res, next) => {
+  try {
+    const data = await getJsonSetting<any>('contract_template', null);
+    res.json({ success: true, data });
+  } catch (error) { next(error); }
+});
+
+// PUT /api/settings/contract-template — { url, name } или null
+settingsRouter.put('/contract-template', async (req, res, next) => {
+  try {
+    const body = req.body || {};
+    const value = body?.url ? { url: String(body.url), name: String(body.name || 'contract.docx') } : null;
+    await putJsonSetting('contract_template', value);
+    res.json({ success: true, data: value });
   } catch (error) { next(error); }
 });

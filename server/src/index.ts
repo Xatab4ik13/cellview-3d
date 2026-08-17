@@ -15,6 +15,8 @@ import { revenueRouter } from './routes/revenue';
 import { leadsRouter } from './routes/leads';
 import { settingsRouter } from './routes/settings';
 import { documentUploadsRouter } from './routes/documentUploads';
+import { mediaUploadsRouter } from './routes/mediaUploads';
+import { contractsRouter } from './routes/contracts';
 import pool from './config/database';
 import { notifyAdminRentalExpiring } from './config/adminNotify';
 
@@ -54,6 +56,8 @@ app.use('/api/payments', paymentsRouter);
 app.use('/api/revenue', revenueRouter);
 app.use('/api/leads', leadsRouter);
 app.use('/api/settings/site-documents', documentUploadsRouter);
+app.use('/api/settings/media', mediaUploadsRouter);
+app.use('/api/contracts', contractsRouter);
 app.use('/api/settings', settingsRouter);
 
 // Error handling
