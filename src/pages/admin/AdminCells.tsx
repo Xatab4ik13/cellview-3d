@@ -39,7 +39,7 @@ import {
   MoreHorizontal, Percent, Building2, UserRound, Timer, MessageSquare,
 } from 'lucide-react';
 import { calculatePrice, StorageCell, CellStatus, CELL_STATUS_LABELS, RESERVATION_HOURS } from '@/types/storage';
-import { useCells, useCreateCell, useUpdateCell, useDeleteCell } from '@/hooks/useCells';
+import { useCells, useCreateCell, useUpdateCell, useDeleteCell, useReserveCell, useCancelCellReservation } from '@/hooks/useCells';
 import { uploadCellPhotos, deleteCellPhoto, recalculateCellPrices } from '@/lib/api';
 import { useRentals, useCreateRental, useExtendRental, useReleaseRental } from '@/hooks/useRentals';
 import { useCustomers, useCreateCustomer } from '@/hooks/useCustomers';
@@ -213,7 +213,15 @@ const CellDetailPanel = ({
             >
               {CELL_STATUS_LABELS[cell.status]}
             </Badge>
-            {cell.status === 'reserved' && cell.reservedUntil && (
+            {cell.status === 'reserved' && cell.reservedMoveInDate && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                Заезд: {formatDate(cell.reservedMoveInDate)}
+                {cell.reservedCustomerName ? ` · ${cell.reservedCustomerName}` : ''}
+                {cell.reservedAmount ? ` · предоплата ${Number(cell.reservedAmount).toLocaleString('ru-RU')} ₽` : ''}
+              </span>
+            )}
+            {cell.status === 'reserved' && !cell.reservedMoveInDate && cell.reservedUntil && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Timer className="h-3 w-3" />
                 Осталось: {(() => {
@@ -475,6 +483,52 @@ const AdminCells = () => {
     startDate: new Date().toISOString().split('T')[0],
     customMonthlyPrice: '' as string, // ручная цена/мес (опционально, переопределяет базовую и скидку)
   });
+
+  // Reserve dialog (бронирование под будущий заезд)
+  const reserveMutation = useReserveCell();
+  const cancelReservationMutation = useCancelCellReservation();
+  const [isReserveDialogOpen, setIsReserveDialogOpen] = useState(false);
+  const [reservingCell, setReservingCell] = useState<StorageCell | null>(null);
+  const [reserveForm, setReserveForm] = useState({
+    customerId: '',
+    moveInDate: new Date().toISOString().split('T')[0],
+    amount: '',
+    note: '',
+    registerCashPayment: false,
+  });
+
+  const openReserveDialog = (cell: StorageCell) => {
+    setReservingCell(cell);
+    setReserveForm({
+      customerId: cell.reservedCustomerId || '',
+      moveInDate: (cell.reservedMoveInDate || new Date().toISOString()).split('T')[0],
+      amount: cell.reservedAmount ? String(cell.reservedAmount) : '',
+      note: cell.reservedNote || '',
+      registerCashPayment: false,
+    });
+    setIsReserveDialogOpen(true);
+  };
+
+  const handleReserveSubmit = () => {
+    if (!reservingCell) return;
+    if (!reserveForm.customerId) {
+      toast.error('Выберите клиента');
+      return;
+    }
+    reserveMutation.mutate({
+      id: reservingCell.id,
+      payload: {
+        customerId: reserveForm.customerId,
+        moveInDate: reserveForm.moveInDate,
+        reservedUntil: reserveForm.moveInDate,
+        amount: reserveForm.amount ? Number(reserveForm.amount) : undefined,
+        note: reserveForm.note || undefined,
+        registerCashPayment: reserveForm.registerCashPayment,
+      },
+    }, {
+      onSuccess: () => setIsReserveDialogOpen(false),
+    });
+  };
 
   // Release confirmation
   const [isReleaseDialogOpen, setIsReleaseDialogOpen] = useState(false);
@@ -1171,22 +1225,21 @@ const AdminCells = () => {
                             <Eye className="h-4 w-4 mr-2" />Подробнее
                           </DropdownMenuItem>
                           {cell.status === 'available' && (
-                            <DropdownMenuItem onClick={() => openAssignDialog(cell)}>
-                              <UserPlus className="h-4 w-4 mr-2" />Сдать ячейку
-                            </DropdownMenuItem>
+                            <>
+                              <DropdownMenuItem onClick={() => openAssignDialog(cell)}>
+                                <UserPlus className="h-4 w-4 mr-2" />Сдать ячейку
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openReserveDialog(cell)}>
+                                <Timer className="h-4 w-4 mr-2" />Забронировать
+                              </DropdownMenuItem>
+                            </>
                           )}
                           {cell.status === 'reserved' && (
                             <>
-                              <DropdownMenuItem onClick={() => {
-                                updateMutation.mutate({ 
-                                  id: cell.id, 
-                                  cell: { status: 'available' as CellStatus, reservedUntil: undefined } 
-                                }, {
-                                  onSuccess: () => {
-                                    toast.success(`Бронь ячейки №${cell.number} отменена`);
-                                  }
-                                });
-                              }}>
+                              <DropdownMenuItem onClick={() => openReserveDialog(cell)}>
+                                <Edit className="h-4 w-4 mr-2" />Изменить бронь
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => cancelReservationMutation.mutate(cell.id)}>
                                 <X className="h-4 w-4 mr-2" />Отменить бронь
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => openAssignDialog(cell)}>
@@ -1221,6 +1274,75 @@ const AdminCells = () => {
           </table>
         </div>
       </div>
+
+      {/* ========== Reserve Cell Dialog ========== */}
+      <Dialog modal open={isReserveDialogOpen} onOpenChange={setIsReserveDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Timer className="h-5 w-5 text-primary" />
+              Бронь ячейки №{reservingCell?.number}
+            </DialogTitle>
+            <DialogDescription>
+              Клиент заедет позже — ячейка будет закреплена за ним до даты заезда.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-2">
+              <Label>Клиент</Label>
+              <Select value={reserveForm.customerId} onValueChange={(v) => setReserveForm(p => ({ ...p, customerId: v }))}>
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Выберите клиента..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers.map(c => (
+                    <SelectItem key={c.id} value={c.id}>
+                      <div className="flex items-center gap-2">
+                        <span>{c.name}</span>
+                        <span className="text-xs text-muted-foreground">· {c.phone}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Дата заезда</Label>
+              <Input type="date" className="h-11" value={reserveForm.moveInDate}
+                onChange={(e) => setReserveForm(p => ({ ...p, moveInDate: e.target.value }))} />
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Сумма предоплаты, ₽ <span className="text-xs font-normal text-muted-foreground">(необязательно)</span></Label>
+              <Input type="number" min="0" className="h-11" placeholder="0" value={reserveForm.amount}
+                onChange={(e) => setReserveForm(p => ({ ...p, amount: e.target.value }))} />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Switch checked={reserveForm.registerCashPayment}
+                onCheckedChange={(c) => setReserveForm(p => ({ ...p, registerCashPayment: c }))} />
+              <Label className="cursor-pointer">Провести предоплату как оплату наличными</Label>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Примечание</Label>
+              <Textarea rows={2} value={reserveForm.note}
+                onChange={(e) => setReserveForm(p => ({ ...p, note: e.target.value }))}
+                placeholder="Например: оплатила бронь, заедет 28 июля" />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsReserveDialogOpen(false)}>Отмена</Button>
+            <Button onClick={handleReserveSubmit} disabled={reserveMutation.isPending} className="gap-2">
+              <Timer className="h-4 w-4" />
+              Забронировать
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ========== Assign Cell Dialog ========== */}
       <Dialog modal open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
