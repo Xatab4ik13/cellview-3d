@@ -16,6 +16,11 @@ cellsRouter.get('/', async (req: Request, res: Response, next: NextFunction) => 
         c.floor, c.tier, c.price_per_month as pricePerMonth,
         c.status, c.has_socket as hasSocket, c.has_shelves as hasShelves,
         c.reserved_until as reservedUntil,
+        c.reserved_customer_id as reservedCustomerId,
+        c.reserved_move_in_date as reservedMoveInDate,
+        c.reserved_amount as reservedAmount,
+        c.reserved_note as reservedNote,
+        (SELECT cu.name FROM customers cu WHERE cu.id = c.reserved_customer_id) as reservedCustomerName,
         c.description,
         (SELECT r.end_date FROM rentals r WHERE r.cell_id = c.id AND r.status = 'active' ORDER BY r.end_date DESC LIMIT 1) as rentalEndDate
       FROM cells c
@@ -77,7 +82,12 @@ cellsRouter.get('/:id', async (req: Request, res: Response, next: NextFunction) 
         id, number, width, height, depth, area, volume,
         floor, tier, price_per_month as pricePerMonth,
         status, has_socket as hasSocket, has_shelves as hasShelves,
-        reserved_until as reservedUntil, description
+        reserved_until as reservedUntil,
+        reserved_customer_id as reservedCustomerId,
+        reserved_move_in_date as reservedMoveInDate,
+        reserved_amount as reservedAmount,
+        reserved_note as reservedNote,
+        description
       FROM cells WHERE id = ?`,
       [req.params.id]
     );
