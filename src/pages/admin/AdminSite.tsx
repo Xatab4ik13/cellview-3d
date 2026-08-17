@@ -20,6 +20,7 @@ import { iconMap, type SiteDocument } from '@/data/siteDocuments';
 import {
   useSiteSettings, useSaveSiteSettings, DEFAULT_SITE_SETTINGS, SiteSettings,
   useSiteDocuments, useSaveSiteDocuments,
+  useContractTemplate, useSaveContractTemplate,
 } from '@/hooks/useSettings';
 
 const AdminSite = () => {
@@ -42,6 +43,12 @@ const AdminSite = () => {
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
   const [viewingDoc, setViewingDoc] = useState<SiteDocument | null>(null);
+
+  // Медиа (фото главного экрана, баннер) и шаблон договора
+  const { data: contractTpl } = useContractTemplate();
+  const saveContractTpl = useSaveContractTemplate();
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [uploadingTpl, setUploadingTpl] = useState(false);
 
   const handleSave = async () => {
     try {
@@ -87,6 +94,63 @@ const AdminSite = () => {
       toast.error(`Ошибка загрузки: ${e.message}`);
     } finally {
       setUploadingDoc(false);
+    }
+  };
+
+  const uploadMediaImage = async (file: File): Promise<string> => {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch(`${API_BASE}/api/settings/media/upload`, { method: 'POST', body: fd });
+    const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
+    return json.data.url as string;
+  };
+
+  const handleUploadHeroImages = async (files: FileList) => {
+    setUploadingMedia(true);
+    try {
+      const urls: string[] = [];
+      for (const file of Array.from(files)) urls.push(await uploadMediaImage(file));
+      setSiteData(prev => ({ ...prev, heroImages: [...(prev.heroImages || []), ...urls] }));
+      toast.success('Фото загружены — не забудьте нажать «Сохранить»');
+    } catch (e: any) {
+      toast.error(`Ошибка загрузки: ${e.message}`);
+    } finally {
+      setUploadingMedia(false);
+    }
+  };
+
+  const handleUploadBannerImage = async (file: File) => {
+    setUploadingMedia(true);
+    try {
+      const url = await uploadMediaImage(file);
+      setSiteData(prev => ({ ...prev, bannerImage: url }));
+      toast.success('Баннер загружен — не забудьте нажать «Сохранить»');
+    } catch (e: any) {
+      toast.error(`Ошибка загрузки: ${e.message}`);
+    } finally {
+      setUploadingMedia(false);
+    }
+  };
+
+  const handleUploadContractTemplate = async (file: File) => {
+    if (!file.name.toLowerCase().endsWith('.docx')) {
+      toast.error('Шаблон договора должен быть в формате .docx');
+      return;
+    }
+    setUploadingTpl(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`${API_BASE}/api/settings/site-documents/upload`, { method: 'POST', body: fd });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || `HTTP ${res.status}`);
+      await saveContractTpl.mutateAsync({ url: json.data.url, name: json.data.originalName || file.name });
+      toast.success('Шаблон договора загружен');
+    } catch (e: any) {
+      toast.error(`Ошибка загрузки: ${e.message}`);
+    } finally {
+      setUploadingTpl(false);
     }
   };
 
@@ -195,6 +259,7 @@ const AdminSite = () => {
           <TabsTrigger value="contacts" className="text-sm px-5 gap-2"><Phone className="w-4 h-4" />Контакты</TabsTrigger>
           <TabsTrigger value="seo" className="text-sm px-5 gap-2"><Search className="w-4 h-4" />SEO</TabsTrigger>
           <TabsTrigger value="pages" className="text-sm px-5 gap-2"><Layout className="w-4 h-4" />Страницы</TabsTrigger>
+          <TabsTrigger value="media" className="text-sm px-5 gap-2"><Image className="w-4 h-4" />Медиа</TabsTrigger>
           <TabsTrigger value="documents" className="text-sm px-5 gap-2"><FileText className="w-4 h-4" />Документы</TabsTrigger>
         </TabsList>
 
@@ -259,6 +324,97 @@ const AdminSite = () => {
                 />
               </div>
             ))}
+          </CardBlock>
+        </TabsContent>
+
+        {/* Media tab */}
+        <TabsContent value="media" className="space-y-6">
+          <CardBlock title="Фото главного экрана" icon={Image}>
+            <p className="text-sm text-muted-foreground">
+              Загруженные фото заменяют слайдер на главной странице. Если список пуст — используются стандартные фото.
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {(siteData.heroImages || []).map((url, idx) => (
+                <div key={url + idx} className="relative group rounded-xl overflow-hidden border border-border">
+                  <img src={url} alt={`Фото главного экрана ${idx + 1}`} className="w-full h-28 object-cover" />
+                  <button
+                    type="button"
+                    aria-label="Удалить фото"
+                    className="absolute top-1.5 right-1.5 bg-background/90 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => setSiteData(prev => ({ ...prev, heroImages: (prev.heroImages || []).filter((_, i) => i !== idx) }))}
+                  >
+                    <X className="w-4 h-4 text-destructive" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <label className="inline-flex">
+              <input type="file" accept="image/*" multiple className="hidden"
+                onChange={(e) => e.target.files?.length && handleUploadHeroImages(e.target.files)} />
+              <Button asChild variant="outline" className="gap-2 h-11" disabled={uploadingMedia}>
+                <span>{uploadingMedia ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}Загрузить фото</span>
+              </Button>
+            </label>
+          </CardBlock>
+
+          <CardBlock title="Рекламный баннер" icon={Image}>
+            <p className="text-sm text-muted-foreground">
+              Баннер показывается на главной странице под главным экраном. Оставьте поля пустыми, чтобы скрыть его.
+            </p>
+            {siteData.bannerImage && (
+              <div className="relative rounded-xl overflow-hidden border border-border">
+                <img src={siteData.bannerImage} alt="Рекламный баннер" className="w-full max-h-56 object-cover" />
+                <button
+                  type="button"
+                  aria-label="Удалить баннер"
+                  className="absolute top-2 right-2 bg-background/90 rounded-full p-1"
+                  onClick={() => setSiteData(prev => ({ ...prev, bannerImage: '' }))}
+                >
+                  <X className="w-4 h-4 text-destructive" />
+                </button>
+              </div>
+            )}
+            <label className="inline-flex">
+              <input type="file" accept="image/*" className="hidden"
+                onChange={(e) => e.target.files?.[0] && handleUploadBannerImage(e.target.files[0])} />
+              <Button asChild variant="outline" className="gap-2 h-11" disabled={uploadingMedia}>
+                <span>{uploadingMedia ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}Загрузить баннер</span>
+              </Button>
+            </label>
+            <Field label="Текст на баннере" value={siteData.bannerText || ''} onChange={update('bannerText')} />
+            <Field label="Ссылка при клике (необязательно)" value={siteData.bannerLink || ''} onChange={update('bannerLink')} />
+          </CardBlock>
+
+          <CardBlock title="Шаблон договора (.docx)" icon={FileText}>
+            <p className="text-sm text-muted-foreground">
+              Загрузите Word-файл договора с метками. Доступные метки:{' '}
+              <span className="font-mono text-xs">
+                {'{{номер_договора}} {{дата_договора}} {{номер_ячейки}} {{объём}} {{площадь}} {{ярус}} {{срок_месяцев}} {{дата_начала}} {{дата_окончания}} {{цена_за_месяц}} {{сумма}} {{фио}} {{телефон}} {{email}} {{паспорт_серия}} {{паспорт_номер}} {{адрес_регистрации}} {{организация}} {{инн}}'}
+              </span>
+            </p>
+            {contractTpl?.url ? (
+              <div className="flex items-center justify-between gap-3 py-3 border-y border-border">
+                <div className="flex items-center gap-3 min-w-0">
+                  <CheckCircle2 className="w-5 h-5 shrink-0" style={{ color: 'hsl(var(--status-active))' }} />
+                  <a href={contractTpl.url} target="_blank" rel="noreferrer" className="text-sm font-medium truncate hover:underline">
+                    {contractTpl.name}
+                  </a>
+                </div>
+                <Button variant="ghost" size="sm" className="text-destructive gap-1"
+                  onClick={() => saveContractTpl.mutate(null)}>
+                  <Trash2 className="w-4 h-4" />Удалить
+                </Button>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Шаблон не загружен — клиенты не смогут скачать договор.</p>
+            )}
+            <label className="inline-flex">
+              <input type="file" accept=".docx" className="hidden"
+                onChange={(e) => e.target.files?.[0] && handleUploadContractTemplate(e.target.files[0])} />
+              <Button asChild variant="outline" className="gap-2 h-11" disabled={uploadingTpl}>
+                <span>{uploadingTpl ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}Загрузить шаблон</span>
+              </Button>
+            </label>
           </CardBlock>
         </TabsContent>
 

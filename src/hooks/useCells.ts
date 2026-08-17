@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchCells, fetchCell, createCell, updateCell, deleteCell } from '@/lib/api';
+import { fetchCells, fetchCell, createCell, updateCell, deleteCell, reserveCell, cancelCellReservation, type ReserveCellPayload } from '@/lib/api';
 import { StorageCell } from '@/types/storage';
 import { toast } from 'sonner';
 
@@ -75,6 +75,41 @@ export function useDeleteCell() {
     },
     onError: (error: any) => {
       toast.error(`Ошибка при удалении: ${error.message}`);
+    },
+  });
+}
+
+/**
+ * Хук для бронирования ячейки (CRM).
+ */
+export function useReserveCell() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: ReserveCellPayload }) => reserveCell(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cells'] });
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      toast.success('Ячейка забронирована');
+    },
+    onError: (error: any) => {
+      toast.error(`Не удалось забронировать: ${error.message}`);
+    },
+  });
+}
+
+/**
+ * Хук для снятия брони с ячейки (CRM).
+ */
+export function useCancelCellReservation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => cancelCellReservation(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cells'] });
+      toast.success('Бронь снята');
+    },
+    onError: (error: any) => {
+      toast.error(`Не удалось снять бронь: ${error.message}`);
     },
   });
 }

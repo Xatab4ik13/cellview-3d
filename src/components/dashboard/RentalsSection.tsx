@@ -393,7 +393,7 @@ const RentalsSection = ({ pendingBooking, onClearBooking, onGoToProfile }: Renta
                   className="gap-2 font-semibold border-primary/30 hover:border-primary hover:bg-primary/5"
                   asChild
                 >
-                  <a href="/docs/standard-conditions.docx" download>
+                  <a href={`${import.meta.env.VITE_API_URL || 'https://api.kladovka78.ru'}/api/contracts/rental/${rental.id}`}>
                     <FileText className="w-4 h-4" />
                     Скачать договор
                   </a>

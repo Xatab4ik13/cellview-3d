@@ -1,0 +1,16 @@
+-- Бронирование ячеек: клиент, дата заезда, сумма брони, комментарий
+SET @c1 = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cells' AND COLUMN_NAME = 'reserved_customer_id');
+SET @s1 = IF(@c1 = 0, 'ALTER TABLE cells ADD COLUMN reserved_customer_id VARCHAR(36) NULL AFTER reserved_until', 'SELECT 1');
+PREPARE st1 FROM @s1; EXECUTE st1; DEALLOCATE PREPARE st1;
+
+SET @c2 = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cells' AND COLUMN_NAME = 'reserved_move_in_date');
+SET @s2 = IF(@c2 = 0, 'ALTER TABLE cells ADD COLUMN reserved_move_in_date DATE NULL AFTER reserved_customer_id', 'SELECT 1');
+PREPARE st2 FROM @s2; EXECUTE st2; DEALLOCATE PREPARE st2;
+
+SET @c3 = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cells' AND COLUMN_NAME = 'reserved_amount');
+SET @s3 = IF(@c3 = 0, 'ALTER TABLE cells ADD COLUMN reserved_amount INT NULL AFTER reserved_move_in_date', 'SELECT 1');
+PREPARE st3 FROM @s3; EXECUTE st3; DEALLOCATE PREPARE st3;
+
+SET @c4 = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cells' AND COLUMN_NAME = 'reserved_note');
+SET @s4 = IF(@c4 = 0, 'ALTER TABLE cells ADD COLUMN reserved_note TEXT NULL AFTER reserved_amount', 'SELECT 1');
+PREPARE st4 FROM @s4; EXECUTE st4; DEALLOCATE PREPARE st4;

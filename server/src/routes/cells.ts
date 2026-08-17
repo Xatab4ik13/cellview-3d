@@ -16,6 +16,11 @@ cellsRouter.get('/', async (req: Request, res: Response, next: NextFunction) => 
         c.floor, c.tier, c.price_per_month as pricePerMonth,
         c.status, c.has_socket as hasSocket, c.has_shelves as hasShelves,
         c.reserved_until as reservedUntil,
+        c.reserved_customer_id as reservedCustomerId,
+        c.reserved_move_in_date as reservedMoveInDate,
+        c.reserved_amount as reservedAmount,
+        c.reserved_note as reservedNote,
+        (SELECT cu.name FROM customers cu WHERE cu.id = c.reserved_customer_id) as reservedCustomerName,
         c.description,
         (SELECT r.end_date FROM rentals r WHERE r.cell_id = c.id AND r.status = 'active' ORDER BY r.end_date DESC LIMIT 1) as rentalEndDate
       FROM cells c
@@ -77,7 +82,12 @@ cellsRouter.get('/:id', async (req: Request, res: Response, next: NextFunction) 
         id, number, width, height, depth, area, volume,
         floor, tier, price_per_month as pricePerMonth,
         status, has_socket as hasSocket, has_shelves as hasShelves,
-        reserved_until as reservedUntil, description
+        reserved_until as reservedUntil,
+        reserved_customer_id as reservedCustomerId,
+        reserved_move_in_date as reservedMoveInDate,
+        reserved_amount as reservedAmount,
+        reserved_note as reservedNote,
+        description
       FROM cells WHERE id = ?`,
       [req.params.id]
     );
@@ -177,6 +187,77 @@ cellsRouter.delete('/:id', async (req: Request, res: Response, next: NextFunctio
     }
 
     res.json({ success: true, message: 'Ячейка удалена' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ===================== БРОНИРОВАНИЕ (CRM) =====================
+
+// POST /api/cells/:id/reserve — забронировать ячейку
+cellsRouter.post('/:id/reserve', async (req: Request, res: Response, next: NextFunction) => {
+  const conn = await pool.getConnection();
+  try {
+    const { customerId, moveInDate, reservedUntil, amount, note, registerCashPayment } = req.body || {};
+    if (!customerId) throw new AppError('Укажите клиента', 400);
+    if (!moveInDate) throw new AppError('Укажите дату заезда', 400);
+
+    await conn.beginTransaction();
+
+    const [cellRows] = await conn.query('SELECT id, number, status FROM cells WHERE id = ? LIMIT 1', [req.params.id]);
+    const cell = (cellRows as any[])[0];
+    if (!cell) throw new AppError('Ячейка не найдена', 404);
+    if (cell.status === 'occupied') throw new AppError('Ячейка занята — бронь невозможна', 400);
+
+    const amountRub = Number(amount) || 0;
+
+    await conn.query(
+      `UPDATE cells SET
+         status = 'reserved',
+         reserved_until = ?,
+         reserved_customer_id = ?,
+         reserved_move_in_date = ?,
+         reserved_amount = ?,
+         reserved_note = ?
+       WHERE id = ?`,
+      [reservedUntil || moveInDate, customerId, moveInDate, amountRub || null, note || null, req.params.id]
+    );
+
+    // Оплаченная бронь наличными — заводим платёж, чтобы попал в платежи и выручку
+    if (registerCashPayment && amountRub > 0) {
+      await conn.query(
+        `INSERT INTO payments (id, rental_id, customer_id, cell_id, amount, description, duration_months, monthly_price, status, payment_method, paid_at, created_at, updated_at)
+         VALUES (UUID(), NULL, ?, ?, ?, ?, NULL, NULL, 'paid', 'CASH', NOW(), NOW(), NOW())`,
+        [customerId, req.params.id, Math.round(amountRub * 100), `Бронь ячейки №${cell.number} (заезд ${moveInDate})`]
+      );
+    }
+
+    await conn.commit();
+    res.json({ success: true, message: 'Ячейка забронирована' });
+  } catch (error) {
+    await conn.rollback();
+    next(error);
+  } finally {
+    conn.release();
+  }
+});
+
+// DELETE /api/cells/:id/reserve — снять бронь
+cellsRouter.delete('/:id/reserve', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const [result] = await pool.query(
+      `UPDATE cells SET
+         status = CASE WHEN status = 'reserved' THEN 'available' ELSE status END,
+         reserved_until = NULL,
+         reserved_customer_id = NULL,
+         reserved_move_in_date = NULL,
+         reserved_amount = NULL,
+         reserved_note = NULL
+       WHERE id = ?`,
+      [req.params.id]
+    );
+    if ((result as any).affectedRows === 0) throw new AppError('Ячейка не найдена', 404);
+    res.json({ success: true, message: 'Бронь снята' });
   } catch (error) {
     next(error);
   }

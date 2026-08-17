@@ -14,6 +14,11 @@ export interface StorageCell {
   isAvailable: boolean;
   status: CellStatus;
   reservedUntil?: string; // ISO datetime when reservation expires
+  reservedCustomerId?: string | null;
+  reservedCustomerName?: string | null;
+  reservedMoveInDate?: string | null; // дата заезда клиента
+  reservedAmount?: number | null; // сумма оплаченной брони, ₽
+  reservedNote?: string | null;
   rentalEndDate?: string; // ISO date when active rental ends
   hasSocket: boolean;
   hasShelves: boolean;

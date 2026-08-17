@@ -68,6 +68,10 @@ export interface SiteSettings {
   seoKeywords: string;
   heroTitle: string;
   heroSubtitle: string;
+  heroImages: string[];
+  bannerImage: string;
+  bannerText: string;
+  bannerLink: string;
   phone: string;
   email: string;
   address: string;
@@ -87,6 +91,10 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   seoKeywords: 'склад, аренда ячейки, хранение вещей, Санкт-Петербург',
   heroTitle: 'Надёжное хранение вещей',
   heroSubtitle: 'Арендуйте складскую ячейку от 1000₽ в месяц с круглосуточным доступом',
+  heroImages: [],
+  bannerImage: '',
+  bannerText: '',
+  bannerLink: '',
   phone: '8 (911) 810-83-83',
   email: 'info@kladovka78.ru',
   address: 'Санкт-Петербург, ул. Алтайская, 21',
@@ -182,5 +190,50 @@ export function useSaveSiteDocuments() {
   return useMutation({
     mutationFn: saveSiteDocuments,
     onSuccess: (data) => qc.setQueryData(['settings', 'site-documents'], data),
+  });
+}
+
+// ============ Шаблон договора ============
+
+export interface ContractTemplate {
+  url: string;
+  name: string;
+}
+
+async function fetchContractTemplate(): Promise<ContractTemplate | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/settings/contract-template`);
+    const json = await res.json();
+    if (!json.success) return null;
+    return (json.data as ContractTemplate) || null;
+  } catch {
+    return null;
+  }
+}
+
+async function saveContractTemplate(tpl: ContractTemplate | null): Promise<ContractTemplate | null> {
+  const res = await fetch(`${API_BASE}/api/settings/contract-template`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(tpl ?? {}),
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.error || 'Не удалось сохранить шаблон');
+  return json.data ?? null;
+}
+
+export function useContractTemplate() {
+  return useQuery<ContractTemplate | null>({
+    queryKey: ['settings', 'contract-template'],
+    queryFn: fetchContractTemplate,
+    staleTime: 1000 * 60,
+  });
+}
+
+export function useSaveContractTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: saveContractTemplate,
+    onSuccess: (data) => qc.setQueryData(['settings', 'contract-template'], data),
   });
 }
