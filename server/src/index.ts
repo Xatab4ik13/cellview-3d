@@ -10,7 +10,7 @@ import { customersRouter } from './routes/customers';
 import { rentalsRouter } from './routes/rentals';
 import { photosRouter } from './routes/photos';
 import { authRouter } from './routes/auth';
-import { paymentsRouter } from './routes/payments';
+import { paymentsRouter, reconcilePendingVtbPayments } from './routes/payments';
 import { revenueRouter } from './routes/revenue';
 import { leadsRouter } from './routes/leads';
 import { settingsRouter } from './routes/settings';
