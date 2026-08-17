@@ -153,7 +153,7 @@ const Hero = () => {
               <div className="absolute bottom-6 left-6">
                 <div className="bg-primary/80 backdrop-blur-sm px-5 py-3 rounded-xl transition-all duration-500">
                   <p className="text-primary-foreground text-base lg:text-lg font-bold">
-                    {heroSlides[currentSlide].title}
+                    {heroSlides[currentSlide]?.title}
                   </p>
                 </div>
               </div>
