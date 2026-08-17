@@ -5,6 +5,7 @@ import { Shield, Clock, Video, Key } from 'lucide-react';
 import storageHero1 from '@/assets/storage-hero-1.jpg';
 import storageHero2 from '@/assets/storage-hero-2.jpg';
 import storageHero3 from '@/assets/storage-hero-3.jpg';
+import { useSiteSettings } from '@/hooks/useSettings';
 
 const sizeOptions = [
   { label: 'Маленький', range: '0,5 - 1,2 м³', key: 'small' },
@@ -16,7 +17,7 @@ const locations = [
   { city: 'Санкт-Петербург', count: '1 склад' },
 ];
 
-const heroSlides = [
+const defaultHeroSlides = [
   {
     image: storageHero1,
     title: 'Надёжная защита ваших вещей',
@@ -34,13 +35,23 @@ const heroSlides = [
 const Hero = () => {
   const [selectedSize, setSelectedSize] = useState<number | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const { data: site } = useSiteSettings();
+
+  // Фото из CRM имеют приоритет над стандартными
+  const heroSlides = (site?.heroImages && site.heroImages.length > 0)
+    ? site.heroImages.map((image, i) => ({ image, title: defaultHeroSlides[i % defaultHeroSlides.length].title }))
+    : defaultHeroSlides;
+
+  useEffect(() => {
+    setCurrentSlide(0);
+  }, [heroSlides.length]);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [heroSlides.length]);
 
   const features = [
     { icon: Shield, text: 'Безопасность' },
