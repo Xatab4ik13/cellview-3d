@@ -89,6 +89,28 @@ export async function deleteCell(id: string): Promise<void> {
   });
 }
 
+// ============ Бронирование ячеек ============
+
+export interface ReserveCellPayload {
+  customerId: string;
+  moveInDate: string;
+  reservedUntil?: string;
+  amount?: number;
+  note?: string;
+  registerCashPayment?: boolean;
+}
+
+export async function reserveCell(id: string, payload: ReserveCellPayload): Promise<void> {
+  await fetchApi(`/api/cells/${id}/reserve`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function cancelCellReservation(id: string): Promise<void> {
+  await fetchApi(`/api/cells/${id}/reserve`, { method: 'DELETE' });
+}
+
 // ============ Фото ячеек ============
 
 export async function uploadCellPhotos(cellId: string, files: File[]): Promise<{ url: string; sortOrder: number }[]> {
