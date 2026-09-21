@@ -113,6 +113,7 @@ const StoragePlanSection = () => {
   const { data: discountSettings } = useDiscounts();
   const planHostRef = useRef<HTMLDivElement | null>(null);
   const planApiRef = useRef<PlanWidgetApi | null>(null);
+  const statusesRef = useRef<Record<number, PlanStatus>>({});
   const [statuses, setStatuses] = useState<Record<number, PlanStatus>>({});
   const [cellDetails, setCellDetails] = useState<Record<number, PublicCellInfo>>({});
   const [modelCells, setModelCells] = useState<DisplayPlanCell[]>([]);
@@ -122,6 +123,10 @@ const StoragePlanSection = () => {
   const [levelFilter, setLevelFilter] = useState<LevelFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedDuration, setSelectedDuration] = useState<DurationOption>(1);
+
+  useEffect(() => {
+    statusesRef.current = statuses;
+  }, [statuses]);
 
   useEffect(() => {
     let isMounted = true;
@@ -195,7 +200,7 @@ const StoragePlanSection = () => {
           panel: false,
           legend: false,
           height: '640px',
-          statuses: Object.fromEntries(Object.entries(statuses).map(([number, status]) => [number, status])),
+          statuses: Object.fromEntries(Object.entries(statusesRef.current).map(([number, status]) => [number, status])),
           onSelect: (info: { cell?: string | number }) => {
             const number = Number(info.cell);
             if (Number.isFinite(number)) selectCell(number);
@@ -218,6 +223,7 @@ const StoragePlanSection = () => {
         planApiRef.current = api;
         api.setView('top');
         api.setCut(1.2);
+        api.setStatuses(Object.fromEntries(Object.entries(statusesRef.current).map(([number, status]) => [number, status])));
       } catch {
         if (!isDisposed) setPlanError('План не загрузился');
       }
