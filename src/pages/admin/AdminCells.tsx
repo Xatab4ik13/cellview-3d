@@ -811,6 +811,7 @@ const AdminCells = () => {
         if (photos.length > 0) {
           try {
             await uploadCellPhotos(cellId, photos);
+            await refetchCells();
             toast.success(`Ячейка №${cellNumber} создана, загружено ${photos.length} фото`);
           } catch (err) {
             toast.warning('Ячейка создана, но фото не загружены');
