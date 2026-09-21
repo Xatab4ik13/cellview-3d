@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>План кладовок — Кладовка78</title>
+<style>
+  html,body{margin:0;height:100%;background:#0f1115}
+  #plan{position:fixed;inset:0}
+</style>
+</head>
+<body>
+<!-- Страница для вставки через <iframe src="/plan/index.html">.
+     Параметры адреса: ?cell=57 — сразу показать ячейку, ?status=/api/cells-public — адрес занятости,
+     ?view=top|iso|south, ?numbers=0, ?panel=0 -->
+<div id="plan"></div>
+<script type="module">
+import {mount} from './kladovka78-plan.js';
+const p = new URLSearchParams(location.search);
+const api = await mount('#plan', {
+  model: p.get('model') || 'kladovka78-plan.glb',
+  statusUrl: p.get('status') || null,
+  view: p.get('view') || 'iso',
+  numbers: p.get('numbers') !== '0',
+  panel: p.get('panel') !== '0',
+  legend: p.get('legend') !== '0',
+  refreshMs: parseInt(p.get('refresh') || '0', 10),
+  onSelect: (info) => {
+    // отдаём выбор родительской странице: window.addEventListener('message', …)
+    parent.postMessage({type: 'kladovka78:cell', cell: info.cell, status: info.status}, '*');
+  },
+});
+if (p.get('cell')) api.focusCell(p.get('cell'));
+window.addEventListener('message', (e) => {
+  const d = e.data || {};
+  if (d.type === 'kladovka78:focus' && d.cell) api.focusCell(d.cell);
+  if (d.type === 'kladovka78:refresh') api.refresh();
+});
+</script>
+</body>
+</html>
