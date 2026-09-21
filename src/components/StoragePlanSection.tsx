@@ -15,6 +15,13 @@ const statusStyles: Record<PlanStatus, string> = {
   unknown: 'fill-muted-foreground stroke-muted-foreground',
 };
 
+const statusDotStyles: Record<PlanStatus, string> = {
+  available: 'bg-secondary-green',
+  reserved: 'bg-accent',
+  occupied: 'bg-destructive',
+  unknown: 'bg-muted-foreground',
+};
+
 const statusLabels: Record<PlanStatus, string> = {
   ...CELL_STATUS_LABELS,
   unknown: 'Нет данных',
@@ -146,7 +153,7 @@ const StoragePlanSection = () => {
                     }`}
                   >
                     {cell.number}
-                    <span className={`ml-1 inline-block h-2 w-2 rounded-full ${statusStyles[status].replace('fill-', 'bg-').split(' ')[0]}`} />
+                    <span className={`ml-1 inline-block h-2 w-2 rounded-full ${statusDotStyles[status]}`} />
                   </button>
                 );
               })}
@@ -155,7 +162,7 @@ const StoragePlanSection = () => {
             <div className="mt-5 space-y-2 text-sm text-muted-foreground">
               {(['available', 'reserved', 'occupied'] as PlanStatus[]).map((status) => (
                 <div key={status} className="flex items-center gap-2">
-                  <span className={`h-3 w-3 rounded-full ${statusStyles[status].replace('fill-', 'bg-').split(' ')[0]}`} />
+                  <span className={`h-3 w-3 rounded-full ${statusDotStyles[status]}`} />
                   <span>{statusLabels[status]}</span>
                 </div>
               ))}
@@ -206,7 +213,7 @@ const StoragePlanSection = () => {
               ))}
 
               {PLAN_WALLS.map(([x, y, width, height], index) => (
-                <rect key={`wall-${index}`} x={x} y={y} width={width} height={height} className="fill-muted-foreground/30" />
+                <rect key={`wall-${index}`} x={x} y={y} width={width} height={height} className="fill-muted-foreground opacity-30" />
               ))}
 
               <circle cx={PLAN_ENTRANCE.x} cy={PLAN_ENTRANCE.y} r="0.3" className="fill-accent stroke-foreground" strokeWidth="0.05" />
