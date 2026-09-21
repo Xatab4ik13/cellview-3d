@@ -158,9 +158,21 @@ async function syncCellStatuses() {
     );
     const rows = (fixed as any).affectedRows || 0;
     if (rows > 0) console.log(`[cell-sync] помечено занятыми: ${rows} ячеек`);
+
+    // Обратная сторона: ячейка помечена занятой, но активной аренды нет.
+    // Если есть бронь — переводим в «в брони», иначе освобождаем.
+    const [released] = await pool.query(
+      `UPDATE cells c
+       SET c.status = CASE WHEN c.reserved_customer_id IS NOT NULL THEN 'reserved' ELSE 'available' END
+       WHERE c.status = 'occupied'
+         AND NOT EXISTS (SELECT 1 FROM rentals r WHERE r.cell_id = c.id AND r.status = 'active')`
+    );
+    const releasedRows = (released as any).affectedRows || 0;
+    if (releasedRows > 0) console.log(`[cell-sync] освобождено/в брони: ${releasedRows} ячеек`);
   } catch (err) {
     console.error('[cell-sync] ошибка синхронизации статусов ячеек:', err);
   }
+
 }
 setInterval(syncCellStatuses, 30 * 60 * 1000);
 setTimeout(syncCellStatuses, 20 * 1000);
