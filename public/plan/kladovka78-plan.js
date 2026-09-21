@@ -429,7 +429,11 @@ float hashB(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.545
   function showInfo(m){
     if (!m || !m.userData.cell){ info.style.display = 'none'; return; }
     const i = cellInfo(m);
-    const sizeText = Array.isArray(i.size) ? i.size.join(' × ') : i.size;
+    const sizeText = Array.isArray(i.size)
+      ? i.size.join(' × ')
+      : (i.size && typeof i.size === 'object'
+        ? [i.size.width, i.size.depth, i.size.height].filter(Boolean).join(' × ')
+        : i.size);
     info.style.display = 'block';
     info.innerHTML = `<div class="k">Ячейка</div><div class="l">№ ${i.cell} — ${i.statusRu}</div>
       <div class="d">${[i.tier && ('ярус: ' + i.tier), sizeText && ('габарит: ' + sizeText + ' м')].filter(Boolean).join(' · ')}</div>`;
