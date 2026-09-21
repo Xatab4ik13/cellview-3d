@@ -285,24 +285,49 @@ async function updatePaymentState(
   paymentMethod?: string | null,
   paidAt?: Date | null
 ): Promise<void> {
-  const resolvedPaidAt = nextStatus === 'paid'
-    ? (payment.paid_at || paidAt || new Date())
-    : payment.paid_at;
+  // Межпроцессная блокировка по платежу: callback от ВТБ, опрос статуса из браузера
+  // и фоновая сверка могут прийти одновременно (а API ещё и в кластере из 2 процессов).
+  const lockConn = await pool.getConnection();
+  const lockName = `kladovka78:payment:${payment.id}`;
+  try {
+    const [lockRows] = await lockConn.query('SELECT GET_LOCK(?, 10) AS ok', [lockName]);
+    const gotLock = Number((lockRows as any[])[0]?.ok) === 1;
+    if (!gotLock) {
+      console.warn(`[payments] не удалось получить блокировку для платежа ${payment.id}, пропускаю`);
+      return;
+    }
 
-  // Сначала активируем/продлеваем аренду — если упадёт, платёж НЕ помечается paid,
-  // и при следующем запросе статуса логика будет повторена.
-  if (nextStatus === 'paid' && payment.status !== 'paid') {
-    const payloadForActivation: PaymentDbRow = { ...payment, paid_at: resolvedPaidAt as Date };
-    await activateRental(payloadForActivation);
-    await notifyPaymentSuccess(payloadForActivation);
+    // Перечитываем актуальное состояние платежа под блокировкой
+    const [freshRows] = await lockConn.query('SELECT * FROM payments WHERE id = ? LIMIT 1', [payment.id]);
+    const fresh = (freshRows as PaymentDbRow[])[0] || payment;
+
+    const resolvedPaidAt = nextStatus === 'paid'
+      ? (fresh.paid_at || paidAt || new Date())
+      : fresh.paid_at;
+
+    // Сначала активируем/продлеваем аренду — если упадёт, платёж НЕ помечается paid,
+    // и при следующем запросе статуса логика будет повторена.
+    if (nextStatus === 'paid' && fresh.status !== 'paid') {
+      const payloadForActivation: PaymentDbRow = { ...fresh, paid_at: resolvedPaidAt as Date };
+      await activateRental(payloadForActivation);
+      await notifyPaymentSuccess(payloadForActivation);
+    } else if (nextStatus === 'paid') {
+      // Уже обработан другим процессом — ничего не делаем
+      return;
+    }
+
+    await lockConn.query(
+      `UPDATE payments
+       SET status = ?, payment_method = ?, paid_at = ?, vtb_response = ?, updated_at = NOW()
+       WHERE id = ?`,
+      [nextStatus, paymentMethod ?? fresh.payment_method ?? null, resolvedPaidAt, JSON.stringify(gatewayPayload), payment.id]
+    );
+  } finally {
+    try {
+      await lockConn.query('SELECT RELEASE_LOCK(?)', [lockName]);
+    } catch { /* ignore */ }
+    lockConn.release();
   }
-
-  await pool.query(
-    `UPDATE payments
-     SET status = ?, payment_method = ?, paid_at = ?, vtb_response = ?, updated_at = NOW()
-     WHERE id = ?`,
-    [nextStatus, paymentMethod ?? payment.payment_method ?? null, resolvedPaidAt, JSON.stringify(gatewayPayload), payment.id]
-  );
 }
 
 // extractCallbackStatus removed — RBS uses callback URL with orderId, we poll status via getOrderStatusExtended
