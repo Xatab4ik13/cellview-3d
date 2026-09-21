@@ -250,26 +250,32 @@ const AdminRevenue = () => {
         <div>
           <h2 className="text-2xl font-bold">Выручка</h2>
           <p className="text-base text-muted-foreground mt-1">
-            Кассовый метод: учитываются деньги по дате поступления. Кликните месяц для деталей.
+            {mode === 'cash'
+              ? 'По поступлениям: деньги учитываются по дате оплаты. Кликните месяц для деталей.'
+              : 'По месяцам аренды: предоплата за несколько месяцев разбита по этим месяцам. Кликните месяц для деталей.'}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => setYear(y => y - 1)}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div className="text-xl font-bold min-w-[80px] text-center">{year}</div>
-          <Button variant="outline" size="icon" onClick={() => setYear(y => y + 1)}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <ModeSwitch />
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={() => setYear(y => y - 1)}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="text-xl font-bold min-w-[80px] text-center">{year}</div>
+            <Button variant="outline" size="icon" onClick={() => setYear(y => y + 1)}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {[
-          { label: `Поступило за ${year}`, value: yearTotal, color: 'var(--primary)', icon: TrendingUp, suffix: ' ₽' },
-          { label: 'Платежей за год', value: yearPayments, color: 'var(--status-active)', icon: Wallet, suffix: '' },
+          { label: mode === 'cash' ? `Поступило за ${year}` : `Аренда за ${year}`, value: yearTotal, color: 'var(--primary)', icon: TrendingUp, suffix: ' ₽' },
+          { label: mode === 'cash' ? 'Платежей за год' : 'Начислений за год', value: yearPayments, color: 'var(--status-active)', icon: Wallet, suffix: '' },
           { label: `Текущий месяц (${fmtMonth(currentYm)})`, value: yearMap.get(currentYm)?.total || 0, color: 'var(--status-pending)', icon: Users, suffix: ' ₽' },
         ].map((s, i) => (
+
           <motion.div
             key={s.label}
             initial={{ opacity: 0, y: 12 }}
