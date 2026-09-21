@@ -190,8 +190,8 @@ async function syncCellStatuses() {
   }
 
 }
-setInterval(syncCellStatuses, 30 * 60 * 1000);
-setTimeout(syncCellStatuses, 20 * 1000);
+scheduleJob(syncCellStatuses, 30 * 60 * 1000, 20 * 1000);
+
 
 app.listen(PORT, () => {
   console.log(`🚀 Kladovka78 API running on port ${PORT}`);
