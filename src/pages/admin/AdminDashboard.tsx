@@ -92,6 +92,33 @@ const AdminDashboard = () => {
     };
   });
 
+  // Кубометры: всего и сдано
+  const round1 = (v: number) => Math.round(v * 10) / 10;
+  const volumeByCell = new Map(cells.map(c => [c.id, Number(c.volume) || 0]));
+  const totalVolume = round1(cells.reduce((s, c) => s + (Number(c.volume) || 0), 0));
+  const rentedVolume = round1(
+    cells.filter(c => c.status === 'occupied').reduce((s, c) => s + (Number(c.volume) || 0), 0)
+  );
+  const volumeShare = totalVolume > 0 ? Math.round((rentedVolume / totalVolume) * 100) : 0;
+
+  const volumeByMonth = Array.from({ length: 6 }, (_, i) => {
+    const month = subMonths(new Date(), 5 - i);
+    const monthStart = startOfMonth(month);
+    const monthEnd = startOfMonth(subMonths(new Date(), 4 - i));
+    const rented = rentals.reduce((sum, r) => {
+      if (r.status === 'cancelled') return sum;
+      const start = parseISO(r.startDate);
+      const end = parseISO(r.endDate);
+      const overlaps = start < monthEnd && end >= monthStart;
+      return overlaps ? sum + (volumeByCell.get(r.cellId) || 0) : sum;
+    }, 0);
+    return {
+      name: format(month, 'MMM', { locale: ru }),
+      rented: round1(rented),
+      total: totalVolume,
+    };
+  });
+
   // Occupancy pie chart
   const occupancyData = [
     { name: 'Занято', value: occupiedCells, color: COLORS.occupied },
@@ -218,6 +245,37 @@ const AdminDashboard = () => {
           </div>
         </CrmCard>
       </div>
+
+      {/* Кубометры */}
+      <CrmCard>
+        <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
+          <div>
+            <h3 className="text-base font-semibold">Сданные кубометры</h3>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Всего {totalVolume.toLocaleString('ru-RU')} м³ · сдано {rentedVolume.toLocaleString('ru-RU')} м³ ({volumeShare}%)
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="text-3xl font-bold">{rentedVolume.toLocaleString('ru-RU')} м³</div>
+            <p className="text-sm text-muted-foreground">из {totalVolume.toLocaleString('ru-RU')} м³</p>
+          </div>
+        </div>
+        <div className="h-[220px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={volumeByMonth}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+              <YAxis tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={(v) => `${v} м³`} />
+              <Tooltip
+                formatter={(value: number, name: string) => [`${Number(value).toLocaleString('ru-RU')} м³`, name]}
+                contentStyle={{ borderRadius: 8, border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))' }}
+              />
+              <Bar name="Сдано" dataKey="rented" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              <Bar name="Всего" dataKey="total" fill="hsl(var(--muted-foreground))" fillOpacity={0.25} radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </CrmCard>
 
       <div className="grid gap-5 md:grid-cols-2">
         {/* Debtors */}
