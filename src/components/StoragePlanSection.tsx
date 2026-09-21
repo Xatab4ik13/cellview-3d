@@ -225,7 +225,7 @@ const StoragePlanSection = () => {
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
-          <div className="rounded-2xl border-2 border-border bg-card p-5 shadow-card">
+          <div className="order-2 rounded-2xl border-2 border-border bg-card p-5 shadow-card xl:order-1">
             <label className="text-sm font-bold text-foreground" htmlFor="plan-cell-search">
               Номер ячейки
             </label>
@@ -414,13 +414,13 @@ const StoragePlanSection = () => {
             </Button>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border-2 border-border bg-card p-2 shadow-card sm:p-3">
+          <div className="order-1 overflow-x-auto rounded-2xl border-2 border-border bg-card p-2 shadow-card sm:p-3 xl:order-2">
             <svg
               viewBox={viewBox}
               role="img"
               aria-label="Карта кладовок сверху"
               preserveAspectRatio="xMidYMid meet"
-              className="aspect-[43/14] w-full min-w-[760px] rounded-xl bg-muted sm:min-w-[980px]"
+              className="aspect-[43/14] w-full min-w-[720px] rounded-xl bg-muted sm:min-w-[980px]"
             >
               <defs>
                 <marker id="plan-route-arrow" markerWidth="0.8" markerHeight="0.8" refX="0.72" refY="0.4" orient="auto" markerUnits="strokeWidth">
