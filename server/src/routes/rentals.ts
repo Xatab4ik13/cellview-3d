@@ -186,10 +186,18 @@ rentalsRouter.put('/:id/extend', async (req: Request, res: Response, next: NextF
     const addedAmount = monthlyPrice * Number(months);
     const newTotal = Number(rental.total_amount || 0) + addedAmount;
 
+    // Продление возвращает аренду в активный статус (была просрочена/завершена)
     await conn.query(
-      'UPDATE rentals SET end_date = ?, duration_months = duration_months + ?, total_amount = ?, expiry_notified_at = NULL WHERE id = ?',
+      "UPDATE rentals SET end_date = ?, duration_months = duration_months + ?, total_amount = ?, status = 'active', expiry_notified_at = NULL WHERE id = ?",
       [newEndDate, months, newTotal, req.params.id]
     );
+
+    if (rental.cell_id) {
+      await conn.query(
+        "UPDATE cells SET status = 'occupied', reserved_until = NULL WHERE id = ?",
+        [rental.cell_id]
+      );
+    }
 
     // Создаём платёж за продление (по умолчанию наличными, статус 'paid')
     const paymentId = uuidv4();
