@@ -30,6 +30,10 @@ type PublicCellInfo = {
   hasShelves?: boolean;
 };
 
+type DisplayPlanCell = PlanCellPoint & {
+  generated?: boolean;
+};
+
 const statusStyles: Record<PlanStatus, string> = {
   available: 'fill-secondary-green/25 stroke-secondary-green',
   reserved: 'fill-accent/35 stroke-accent',
@@ -112,6 +116,26 @@ const formatMeters = (value?: number) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed.toLocaleString('ru-RU') : '—';
 };
 
+const getCellNumber = (cell: PublicCellInfo) => {
+  const number = Number(cell.number ?? cell.cell);
+  return Number.isFinite(number) ? number : null;
+};
+
+const getPublicRows = (json: unknown): PublicCellInfo[] => {
+  const value = json as { data?: unknown };
+  if (Array.isArray(value?.data)) return value.data as PublicCellInfo[];
+  return Array.isArray(json) ? json as PublicCellInfo[] : [];
+};
+
+const generatedPoint = (number: number, index: number, info?: PublicCellInfo): DisplayPlanCell => ({
+  number,
+  x: 1.2 + (index % 22) * 1.85,
+  y: 14.25 + Math.floor(index / 22) * 1.1,
+  orientation: 'h',
+  tier: Number(info?.tier) || 1,
+  generated: true,
+});
+
 const StoragePlanSection = () => {
   const navigate = useNavigate();
   const { data: discountSettings } = useDiscounts();
@@ -128,16 +152,24 @@ const StoragePlanSection = () => {
 
     const loadStatuses = async () => {
       try {
-        const response = await fetch(`${API_BASE}/api/cells/public-status`);
-        const json = await response.json();
-        const rows = (Array.isArray(json?.data) ? json.data : []) as PublicCellInfo[];
+        let rows: PublicCellInfo[] = [];
+        const urls = [`${API_BASE}/api/cells/public-status`, `${API_BASE}/api/cells`];
+
+        for (const url of urls) {
+          const response = await fetch(url);
+          if (!response.ok) continue;
+          const json = await response.json();
+          rows = getPublicRows(json);
+          if (rows.length > 0) break;
+        }
+
         const nextStatuses: Record<number, PlanStatus> = {};
         const nextDetails: Record<number, PublicCellInfo> = {};
         rows.forEach((row) => {
-          const number = Number(row.cell ?? row.number);
-          if (Number.isFinite(number)) {
+          const number = getCellNumber(row);
+          if (number !== null) {
             nextStatuses[number] = normalizeStatus(row.status);
-            nextDetails[number] = row;
+            nextDetails[number] = { ...row, number };
           }
         });
         if (isMounted) {
@@ -161,28 +193,66 @@ const StoragePlanSection = () => {
     };
   }, []);
 
-  const cellsByNumber = useMemo(() => new Map(PLAN_CELLS.map((cell) => [cell.number, cell])), []);
+  const planCells = useMemo<DisplayPlanCell[]>(() => {
+    const baseCells = new Map(PLAN_CELLS.map((cell) => [cell.number, cell]));
+    const numbersFromApi = Object.values(cellDetails)
+      .map(getCellNumber)
+      .filter((number): number is number => number !== null)
+      .sort((a, b) => a - b);
+
+    if (numbersFromApi.length === 0) return PLAN_CELLS;
+
+    let generatedIndex = 0;
+    return Array.from(new Set(numbersFromApi)).map((number) => {
+      const baseCell = baseCells.get(number);
+      if (baseCell) return baseCell;
+      const point = generatedPoint(number, generatedIndex, cellDetails[number]);
+      generatedIndex += 1;
+      return point;
+    });
+  }, [cellDetails]);
+
+  const planBounds = useMemo(() => {
+    const generatedCells = planCells.filter((cell) => cell.generated);
+    if (generatedCells.length === 0) return PLAN_BOUNDS;
+
+    const maxGeneratedY = Math.max(...generatedCells.map((cell) => cell.y));
+    return { ...PLAN_BOUNDS, maxY: Math.max(PLAN_BOUNDS.maxY, maxGeneratedY + 0.8) };
+  }, [planCells]);
+
+  const cellsByNumber = useMemo(() => new Map(planCells.map((cell) => [cell.number, cell])), [planCells]);
   const selectedCell = selectedNumber ? cellsByNumber.get(selectedNumber) || null : null;
   const selectedInfo = selectedNumber ? cellDetails[selectedNumber] : undefined;
   const selectedStatus = selectedNumber ? statuses[selectedNumber] || 'unknown' : 'unknown';
-  const viewBox = `${PLAN_BOUNDS.minX} ${PLAN_BOUNDS.minY} ${PLAN_BOUNDS.maxX - PLAN_BOUNDS.minX} ${PLAN_BOUNDS.maxY - PLAN_BOUNDS.minY}`;
+  const fullViewBox = `${planBounds.minX} ${planBounds.minY} ${planBounds.maxX - planBounds.minX} ${planBounds.maxY - planBounds.minY}`;
 
   const visibleCells = useMemo(() => {
     const number = Number(query.replace(/\D/g, ''));
-    return PLAN_CELLS.filter((cell) => {
+    return planCells.filter((cell) => {
       const status = statuses[cell.number] || 'unknown';
       const matchQuery = !query || (Number.isFinite(number) && String(cell.number).includes(String(number)));
       const matchLevel = levelFilter === 'all' || String(cell.tier) === levelFilter;
       const matchStatus = statusFilter === 'all' || status === statusFilter;
       return matchQuery && matchLevel && matchStatus;
     });
-  }, [query, levelFilter, statusFilter, statuses]);
+  }, [planCells, query, levelFilter, statusFilter, statuses]);
 
   const filteredNumbers = useMemo(() => new Set(visibleCells.map((cell) => cell.number)), [visibleCells]);
   const selectedIsVisible = selectedCell ? filteredNumbers.has(selectedCell.number) : false;
   const selectedPoint = selectedCell && selectedIsVisible ? getDisplayPoint(selectedCell, levelFilter) : null;
   const routePoints = selectedCell && selectedIsVisible ? getRoutePoints(selectedCell, levelFilter) : [];
   const routeParts = routeSegments(routePoints);
+  const viewBox = useMemo(() => {
+    if (!selectedPoint || routePoints.length === 0) return fullViewBox;
+
+    const xs = routePoints.map((point) => point.x);
+    const ys = routePoints.map((point) => point.y);
+    const minX = Math.max(planBounds.minX, Math.min(...xs) - 2.2);
+    const maxX = Math.min(planBounds.maxX, Math.max(...xs) + 2.2);
+    const minY = Math.max(planBounds.minY, Math.min(...ys) - 1.6);
+    const maxY = Math.min(planBounds.maxY, Math.max(...ys) + 1.6);
+    return `${minX} ${minY} ${Math.max(maxX - minX, 15)} ${Math.max(maxY - minY, 6)}`;
+  }, [fullViewBox, planBounds, routePoints, selectedPoint]);
   const selectedVolume = Number(selectedInfo?.volume) || 0;
   const selectedMonthlyPrice = Number(selectedInfo?.pricePerMonth) || (selectedVolume > 0 ? calculatePrice(selectedVolume) : 0);
   const selectedDiscount = discountSettings?.[selectedDuration] ?? 0;
@@ -191,7 +261,6 @@ const StoragePlanSection = () => {
 
   const selectCell = (number: number) => {
     setSelectedNumber(number);
-    setQuery(String(number));
     setSelectedDuration(1);
   };
 
@@ -276,7 +345,11 @@ const StoragePlanSection = () => {
                       variant={statusFilter === option.value ? 'default' : 'outline'}
                       size="sm"
                       className="justify-start px-2 text-xs"
-                      onClick={() => setStatusFilter(option.value)}
+                      onClick={() => {
+                        setStatusFilter(option.value);
+                        setQuery('');
+                        setSelectedNumber(null);
+                      }}
                     >
                       {option.value !== 'all' && <span className={`h-2.5 w-2.5 rounded-sm ${statusDotStyles[option.value]}`} />}
                       {option.label}
@@ -308,7 +381,7 @@ const StoragePlanSection = () => {
                 );
               })}
               {visibleCells.length === 0 && (
-                <div className="col-span-5 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+                  <div className="col-span-5 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
                   Ничего не найдено
                 </div>
               )}
@@ -420,7 +493,7 @@ const StoragePlanSection = () => {
               role="img"
               aria-label="Карта кладовок сверху"
               preserveAspectRatio="xMidYMid meet"
-              className="aspect-[43/14] w-full rounded-xl bg-muted sm:min-w-[980px]"
+              className="aspect-[43/14] w-full rounded-xl bg-muted"
             >
               <defs>
                 <marker id="plan-route-arrow" markerWidth="0.8" markerHeight="0.8" refX="0.72" refY="0.4" orient="auto" markerUnits="strokeWidth">
@@ -471,8 +544,8 @@ const StoragePlanSection = () => {
                 const point = getDisplayPoint(cell, levelFilter);
                 const status = statuses[cell.number] || 'unknown';
                 const isSelected = selectedNumber === cell.number;
-                const markerWidth = levelFilter === 'all' ? 0.54 : 0.7;
-                const markerHeight = levelFilter === 'all' ? 0.44 : 0.5;
+                const markerWidth = levelFilter === 'all' ? 0.86 : 1.08;
+                const markerHeight = levelFilter === 'all' ? 0.62 : 0.78;
                 return (
                   <g
                     key={cell.number}
@@ -492,13 +565,13 @@ const StoragePlanSection = () => {
                       height={markerHeight}
                       rx="0.08"
                       className={`${statusStyles[status]} ${isSelected ? 'stroke-foreground' : ''}`}
-                      strokeWidth={isSelected ? '0.12' : '0.04'}
+                      strokeWidth={isSelected ? '0.14' : '0.06'}
                     />
                     <text
                       x={point.x}
-                      y={point.y + 0.11}
+                      y={point.y + (levelFilter === 'all' ? 0.13 : 0.16)}
                       textAnchor="middle"
-                      className={`pointer-events-none text-[0.28px] font-extrabold ${isSelected ? 'fill-primary-foreground' : 'fill-foreground'}`}
+                      className={`pointer-events-none ${levelFilter === 'all' ? 'text-[0.34px]' : 'text-[0.43px]'} font-extrabold ${isSelected ? 'fill-primary-foreground' : 'fill-foreground'}`}
                     >
                       {cell.number}
                     </text>
