@@ -398,7 +398,9 @@ export async function deletePayment(id: string, force = false): Promise<void> {
   await fetchApi(`/api/payments/${id}${qs}`, { method: 'DELETE' });
 }
 
-// ============ Выручка (revenue) — кассовый метод ============
+// ============ Выручка (revenue) — кассовый метод и начисления ============
+
+export type RevenueMode = 'cash' | 'accrual';
 
 export interface RevenueEntry {
   month: string;   // YYYY-MM
@@ -407,13 +409,14 @@ export interface RevenueEntry {
   customers: number;
 }
 
-export async function fetchRevenue(from?: string, to?: string): Promise<RevenueEntry[]> {
+export async function fetchRevenue(from?: string, to?: string, mode: RevenueMode = 'cash'): Promise<RevenueEntry[]> {
   const params = new URLSearchParams();
   if (from) params.set('from', from);
   if (to) params.set('to', to);
-  const qs = params.toString();
-  return fetchApi<RevenueEntry[]>(`/api/revenue${qs ? `?${qs}` : ''}`);
+  params.set('mode', mode);
+  return fetchApi<RevenueEntry[]>(`/api/revenue?${params.toString()}`);
 }
+
 
 export interface RevenuePayment {
   id: string;
@@ -429,11 +432,12 @@ export interface RevenuePayment {
   cellNumber: number | null;
 }
 
-export async function fetchRevenueByMonth(month: string): Promise<{
+export async function fetchRevenueByMonth(month: string, mode: RevenueMode = 'cash'): Promise<{
   month: string; total: number; count: number; customers: number; entries: RevenuePayment[];
 }> {
-  return fetchApi(`/api/revenue/by-month/${month}`);
+  return fetchApi(`/api/revenue/by-month/${month}?mode=${mode}`);
 }
+
 
 export interface RevenueForecastEntry {
   rentalId: string;

@@ -3,16 +3,51 @@ import pool from '../config/database';
 
 export const revenueRouter = Router();
 
-// Кассовый метод: выручка = оплаченные платежи в месяце оплаты (paid_at).
-// Суммы в payments.amount хранятся в копейках, переводим в рубли.
+// Две системы учёта:
+//  - cash (кассовый метод): выручка = оплаченные платежи в месяце оплаты (paid_at),
+//    суммы в payments.amount в копейках;
+//  - accrual (начисления): предоплата разбивается по месяцам аренды (revenue_entries.month),
+//    суммы в revenue_entries.amount в рублях.
 
-// GET /api/revenue?from=YYYY-MM&to=YYYY-MM
+function isAccrual(mode: unknown): boolean {
+  return String(mode || 'cash') === 'accrual';
+}
+
+// GET /api/revenue?from=YYYY-MM&to=YYYY-MM&mode=cash|accrual
 // Агрегаты по месяцам: total (руб), payments (кол-во), customers (уникальные)
 revenueRouter.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { from, to } = req.query as { from?: string; to?: string };
+    const { from, to, mode } = req.query as { from?: string; to?: string; mode?: string };
 
     const params: any[] = [];
+
+    if (isAccrual(mode)) {
+      let where = 'WHERE 1=1';
+      if (from) {
+        where += ' AND e.month >= ?';
+        params.push(`${from}-01`);
+      }
+      if (to) {
+        where += ' AND e.month < DATE_ADD(?, INTERVAL 1 MONTH)';
+        params.push(`${to}-01`);
+      }
+
+      const [rows] = await pool.query(
+        `SELECT
+           DATE_FORMAT(e.month, '%Y-%m')             AS month,
+           ROUND(SUM(e.amount))                     AS total,
+           COUNT(*)                                 AS payments,
+           COUNT(DISTINCT e.customer_id)            AS customers
+         FROM revenue_entries e
+         ${where}
+         GROUP BY DATE_FORMAT(e.month, '%Y-%m')
+         ORDER BY month ASC`,
+        params
+      );
+
+      return res.json({ success: true, data: rows });
+    }
+
     let where = "WHERE p.status = 'paid' AND p.paid_at IS NOT NULL";
 
     if (from) {
@@ -43,6 +78,7 @@ revenueRouter.get('/', async (req: Request, res: Response, next: NextFunction) =
   }
 });
 
+
 // GET /api/revenue/by-month/:month  (YYYY-MM)
 // Список платежей этого месяца + сумма
 revenueRouter.get('/by-month/:month', async (req: Request, res: Response, next: NextFunction) => {
@@ -51,6 +87,44 @@ revenueRouter.get('/by-month/:month', async (req: Request, res: Response, next: 
     if (!/^\d{4}-\d{2}$/.test(month)) {
       return res.status(400).json({ success: false, message: 'Формат месяца: YYYY-MM' });
     }
+
+    if (isAccrual((req.query as any).mode)) {
+      const [accrualRows] = await pool.query(
+        `SELECT
+           e.id                AS id,
+           p.paid_at           AS paidAt,
+           ROUND(e.amount)     AS amount,
+           p.payment_method    AS paymentMethod,
+           p.description       AS description,
+           e.rental_id         AS rentalId,
+           r.duration_months   AS durationMonths,
+           c.id                AS customerId,
+           c.name              AS customerName,
+           c.phone             AS customerPhone,
+           cl.number           AS cellNumber
+         FROM revenue_entries e
+         LEFT JOIN payments  p  ON p.id  = e.payment_id
+         LEFT JOIN rentals   r  ON r.id  = e.rental_id
+         LEFT JOIN customers c  ON c.id  = e.customer_id
+         LEFT JOIN cells     cl ON cl.id = e.cell_id
+         WHERE DATE_FORMAT(e.month, '%Y-%m') = ?
+         ORDER BY cl.number ASC`,
+        [month]
+      );
+      const list = accrualRows as any[];
+      const accrualTotal = list.reduce((s, e) => s + Number(e.amount || 0), 0);
+      return res.json({
+        success: true,
+        data: {
+          month,
+          total: accrualTotal,
+          count: list.length,
+          customers: new Set(list.map(e => e.customerId)).size,
+          entries: list,
+        },
+      });
+    }
+
 
     const [rows] = await pool.query(
       `SELECT

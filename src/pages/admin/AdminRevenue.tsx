@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, TrendingUp, Wallet, Repeat, ArrowLeft, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { fetchRevenue, fetchRevenueByMonth, fetchRevenueForecast } from '@/lib/api';
+import { fetchRevenue, fetchRevenueByMonth, fetchRevenueForecast, type RevenueMode } from '@/lib/api';
 import AnimatedCounter from '@/components/crm/AnimatedCounter';
 
 const MONTH_NAMES = [
@@ -45,18 +45,19 @@ const AdminRevenue = () => {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [mode, setMode] = useState<RevenueMode>('cash');
 
   const from = `${year}-01`;
   const to = `${year}-12`;
 
   const { data: monthly = [], isLoading } = useQuery({
-    queryKey: ['revenue', from, to],
-    queryFn: () => fetchRevenue(from, to),
+    queryKey: ['revenue', from, to, mode],
+    queryFn: () => fetchRevenue(from, to, mode),
   });
 
   const { data: detail } = useQuery({
-    queryKey: ['revenue-by-month', selectedMonth],
-    queryFn: () => fetchRevenueByMonth(selectedMonth!),
+    queryKey: ['revenue-by-month', selectedMonth, mode],
+    queryFn: () => fetchRevenueByMonth(selectedMonth!, mode),
     enabled: !!selectedMonth,
   });
 
@@ -65,6 +66,24 @@ const AdminRevenue = () => {
     queryFn: () => fetchRevenueForecast(selectedMonth!),
     enabled: !!selectedMonth,
   });
+
+  const ModeSwitch = () => (
+    <div className="inline-flex rounded-lg border border-border overflow-hidden">
+      <button
+        className={`px-3 py-2 text-sm font-medium transition-colors ${mode === 'cash' ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted/50'}`}
+        onClick={() => setMode('cash')}
+      >
+        По поступлениям
+      </button>
+      <button
+        className={`px-3 py-2 text-sm font-medium transition-colors ${mode === 'accrual' ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted/50'}`}
+        onClick={() => setMode('accrual')}
+      >
+        По месяцам аренды
+      </button>
+    </div>
+  );
+
 
   const yearMap = useMemo(() => {
     const map = new Map<string, { total: number; payments: number; customers: number }>();
@@ -98,28 +117,35 @@ const AdminRevenue = () => {
 
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <Button variant="outline" size="sm" onClick={() => setSelectedMonth(null)} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             К сводке
           </Button>
-          <div>
+          <div className="flex-1">
             <h2 className="text-2xl font-bold">{fmtMonth(selectedMonth)}</h2>
             <p className="text-base text-muted-foreground mt-1">
-              Поступления денег и прогноз продлений
+              {mode === 'cash'
+                ? 'Поступления денег и прогноз продлений'
+                : 'Аренда, отнесённая к этому месяцу (предоплата разбита по месяцам)'}
             </p>
           </div>
+          <ModeSwitch />
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-xl border border-border bg-card p-5">
-            <div className="text-sm text-muted-foreground mb-1">Поступило за месяц</div>
+            <div className="text-sm text-muted-foreground mb-1">
+              {mode === 'cash' ? 'Поступило за месяц' : 'Аренда за месяц'}
+            </div>
             <div className="text-2xl font-bold text-primary">{fmtRub(total)}</div>
           </div>
+
           <div className="rounded-xl border border-border bg-card p-5">
-            <div className="text-sm text-muted-foreground mb-1">Платежей</div>
+            <div className="text-sm text-muted-foreground mb-1">{mode === 'cash' ? 'Платежей' : 'Начислений'}</div>
             <div className="text-2xl font-bold">{count}</div>
           </div>
+
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="text-sm text-muted-foreground mb-1">Клиентов</div>
             <div className="text-2xl font-bold">{customers}</div>
@@ -133,8 +159,11 @@ const AdminRevenue = () => {
         </div>
 
         <div className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="px-4 py-3 bg-muted/40 font-semibold">Платежи</div>
+          <div className="px-4 py-3 bg-muted/40 font-semibold">
+            {mode === 'cash' ? 'Платежи' : 'Аренда, отнесённая к этому месяцу'}
+          </div>
           <table className="w-full text-sm">
+
             <thead className="bg-muted/20">
               <tr>
                 <th className="text-left px-4 py-2 font-medium text-muted-foreground">Дата</th>
@@ -221,26 +250,32 @@ const AdminRevenue = () => {
         <div>
           <h2 className="text-2xl font-bold">Выручка</h2>
           <p className="text-base text-muted-foreground mt-1">
-            Кассовый метод: учитываются деньги по дате поступления. Кликните месяц для деталей.
+            {mode === 'cash'
+              ? 'По поступлениям: деньги учитываются по дате оплаты. Кликните месяц для деталей.'
+              : 'По месяцам аренды: предоплата за несколько месяцев разбита по этим месяцам. Кликните месяц для деталей.'}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={() => setYear(y => y - 1)}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div className="text-xl font-bold min-w-[80px] text-center">{year}</div>
-          <Button variant="outline" size="icon" onClick={() => setYear(y => y + 1)}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <ModeSwitch />
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={() => setYear(y => y - 1)}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="text-xl font-bold min-w-[80px] text-center">{year}</div>
+            <Button variant="outline" size="icon" onClick={() => setYear(y => y + 1)}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {[
-          { label: `Поступило за ${year}`, value: yearTotal, color: 'var(--primary)', icon: TrendingUp, suffix: ' ₽' },
-          { label: 'Платежей за год', value: yearPayments, color: 'var(--status-active)', icon: Wallet, suffix: '' },
+          { label: mode === 'cash' ? `Поступило за ${year}` : `Аренда за ${year}`, value: yearTotal, color: 'var(--primary)', icon: TrendingUp, suffix: ' ₽' },
+          { label: mode === 'cash' ? 'Платежей за год' : 'Начислений за год', value: yearPayments, color: 'var(--status-active)', icon: Wallet, suffix: '' },
           { label: `Текущий месяц (${fmtMonth(currentYm)})`, value: yearMap.get(currentYm)?.total || 0, color: 'var(--status-pending)', icon: Users, suffix: ' ₽' },
         ].map((s, i) => (
+
           <motion.div
             key={s.label}
             initial={{ opacity: 0, y: 12 }}
@@ -268,9 +303,10 @@ const AdminRevenue = () => {
           <thead className="bg-muted/20">
             <tr>
               <th className="text-left px-4 py-2 font-medium text-muted-foreground">Месяц</th>
-              <th className="text-right px-4 py-2 font-medium text-muted-foreground">Платежей</th>
+              <th className="text-right px-4 py-2 font-medium text-muted-foreground">{mode === 'cash' ? 'Платежей' : 'Начислений'}</th>
               <th className="text-right px-4 py-2 font-medium text-muted-foreground">Клиентов</th>
-              <th className="text-right px-4 py-2 font-medium text-muted-foreground">Поступило</th>
+              <th className="text-right px-4 py-2 font-medium text-muted-foreground">{mode === 'cash' ? 'Поступило' : 'Аренда'}</th>
+
               <th className="px-4 py-2"></th>
             </tr>
           </thead>
