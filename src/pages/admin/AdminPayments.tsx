@@ -64,12 +64,39 @@ const AdminPayments = () => {
     } catch { return dateStr; }
   };
 
+  const handleExport = () => {
+    if (filtered.length === 0) {
+      toast.error('Нет данных для выгрузки');
+      return;
+    }
+    exportRowsToExcel(
+      filtered.map(p => ({
+        'ID': p.id,
+        'Клиент': p.customerName || '',
+        'Сумма, ₽': p.amount,
+        'Описание': p.description || '',
+        'Способ оплаты': p.paymentMethod || '',
+        'Дата': formatDate(p.createdAt),
+        'Статус': statusConfig[p.status]?.label || p.status,
+      })),
+      'Платежи',
+      'Платежи',
+    );
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Платежи</h2>
-        <p className="text-base text-muted-foreground mt-1">Финансовые операции и история</p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="text-2xl font-bold">Платежи</h2>
+          <p className="text-base text-muted-foreground mt-1">Финансовые операции и история</p>
+        </div>
+        <Button variant="outline" className="gap-2 h-11 text-base" onClick={handleExport}>
+          <FileDown className="w-5 h-5" />
+          Выгрузить в Excel
+        </Button>
       </div>
+
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
