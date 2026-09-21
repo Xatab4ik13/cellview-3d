@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Navigation, RotateCcw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { PLAN_AREAS, PLAN_BOUNDS, PLAN_CELLS, PLAN_ENTRANCE, PLAN_MAIN_CORRIDOR_Y, type PlanCellPoint } from '@/data/storagePlanMap';
+import { PLAN_AREAS, PLAN_BOUNDS, PLAN_CELLS, PLAN_ENTRANCE, PLAN_MAIN_CORRIDOR_Y, PLAN_WALLS, type PlanCellPoint } from '@/data/storagePlanMap';
 import { CELL_STATUS_LABELS, type CellStatus } from '@/types/storage';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.kladovka78.ru';
@@ -74,12 +74,12 @@ const StoragePlanSection = () => {
       try {
         const response = await fetch(`${API_BASE}/api/cells/public-status`);
         const json = await response.json();
-        const rows = Array.isArray(json?.data) ? json.data : [];
-        const nextStatuses = rows.reduce<Record<number, PlanStatus>>((acc, row) => {
+        const rows = (Array.isArray(json?.data) ? json.data : []) as Array<{ cell?: string | number; number?: string | number; status?: unknown }>;
+        const nextStatuses: Record<number, PlanStatus> = {};
+        rows.forEach((row) => {
           const number = Number(row.cell ?? row.number);
-          if (Number.isFinite(number)) acc[number] = normalizeStatus(row.status);
-          return acc;
-        }, {});
+          if (Number.isFinite(number)) nextStatuses[number] = normalizeStatus(row.status);
+        });
         if (isMounted) setStatuses(nextStatuses);
       } catch {
         if (isMounted) setStatuses({});
