@@ -142,9 +142,10 @@ const AdminRevenue = () => {
           </div>
 
           <div className="rounded-xl border border-border bg-card p-5">
-            <div className="text-sm text-muted-foreground mb-1">Платежей</div>
+            <div className="text-sm text-muted-foreground mb-1">{mode === 'cash' ? 'Платежей' : 'Начислений'}</div>
             <div className="text-2xl font-bold">{count}</div>
           </div>
+
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="text-sm text-muted-foreground mb-1">Клиентов</div>
             <div className="text-2xl font-bold">{customers}</div>
