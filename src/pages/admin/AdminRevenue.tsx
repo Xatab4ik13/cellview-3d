@@ -45,18 +45,19 @@ const AdminRevenue = () => {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [mode, setMode] = useState<RevenueMode>('cash');
 
   const from = `${year}-01`;
   const to = `${year}-12`;
 
   const { data: monthly = [], isLoading } = useQuery({
-    queryKey: ['revenue', from, to],
-    queryFn: () => fetchRevenue(from, to),
+    queryKey: ['revenue', from, to, mode],
+    queryFn: () => fetchRevenue(from, to, mode),
   });
 
   const { data: detail } = useQuery({
-    queryKey: ['revenue-by-month', selectedMonth],
-    queryFn: () => fetchRevenueByMonth(selectedMonth!),
+    queryKey: ['revenue-by-month', selectedMonth, mode],
+    queryFn: () => fetchRevenueByMonth(selectedMonth!, mode),
     enabled: !!selectedMonth,
   });
 
@@ -65,6 +66,24 @@ const AdminRevenue = () => {
     queryFn: () => fetchRevenueForecast(selectedMonth!),
     enabled: !!selectedMonth,
   });
+
+  const ModeSwitch = () => (
+    <div className="inline-flex rounded-lg border border-border overflow-hidden">
+      <button
+        className={`px-3 py-2 text-sm font-medium transition-colors ${mode === 'cash' ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted/50'}`}
+        onClick={() => setMode('cash')}
+      >
+        По поступлениям
+      </button>
+      <button
+        className={`px-3 py-2 text-sm font-medium transition-colors ${mode === 'accrual' ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-muted/50'}`}
+        onClick={() => setMode('accrual')}
+      >
+        По месяцам аренды
+      </button>
+    </div>
+  );
+
 
   const yearMap = useMemo(() => {
     const map = new Map<string, { total: number; payments: number; customers: number }>();
