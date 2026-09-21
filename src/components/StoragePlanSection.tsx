@@ -226,14 +226,11 @@ const StoragePlanSection = () => {
     planFrameRef.current?.contentWindow?.postMessage({ type: 'kladovka78:focus', cell: number }, window.location.origin);
   };
 
-  useEffect(() => {
+  const syncPlanFrame = () => {
     planFrameRef.current?.contentWindow?.postMessage({
       type: 'kladovka78:statuses',
       statuses: Object.fromEntries(Object.entries(statuses).map(([number, status]) => [number, status])),
     }, window.location.origin);
-  }, [statuses]);
-
-  useEffect(() => {
     planFrameRef.current?.contentWindow?.postMessage({
       type: 'kladovka78:filter',
       filter: {
@@ -242,6 +239,14 @@ const StoragePlanSection = () => {
         tiers: levelFilter === 'all' ? undefined : [levelFilter],
       },
     }, window.location.origin);
+  };
+
+  useEffect(() => {
+    syncPlanFrame();
+  }, [statuses]);
+
+  useEffect(() => {
+    syncPlanFrame();
   }, [levelFilter, statusFilter, visibleCells]);
 
   const goToBooking = () => {
@@ -473,6 +478,7 @@ const StoragePlanSection = () => {
               title="Карта кладовок сверху"
               aria-label="Карта кладовок сверху"
               src="/plan/index.html?view=top&panel=0&legend=0&numbers=1&refresh=0"
+              onLoad={syncPlanFrame}
               className="h-[520px] w-full rounded-xl bg-muted md:h-[640px]"
             />
           </div>
