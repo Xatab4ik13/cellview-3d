@@ -96,10 +96,19 @@ async function cleanupStalePayments() {
     console.error('[cleanup] ошибка авто-очистки платежей:', err);
   }
 }
+// В кластере PM2 фоновые задачи должны выполняться только в одном процессе,
+// иначе письма и уведомления отправляются по два раза.
+const IS_SCHEDULER_INSTANCE = Number(process.env.NODE_APP_INSTANCE || 0) === 0;
+function scheduleJob(fn: () => void | Promise<void>, intervalMs: number, firstDelayMs: number) {
+  if (!IS_SCHEDULER_INSTANCE) return;
+  setInterval(fn, intervalMs);
+  setTimeout(fn, firstDelayMs);
+}
+
 // Сверка с ВТБ каждые 10 минут + очистка каждый час
-setInterval(reconcilePendingVtbPayments, 10 * 60 * 1000);
-setInterval(cleanupStalePayments, 60 * 60 * 1000);
-setTimeout(cleanupStalePayments, 30 * 1000);
+if (IS_SCHEDULER_INSTANCE) setInterval(reconcilePendingVtbPayments, 10 * 60 * 1000);
+scheduleJob(cleanupStalePayments, 60 * 60 * 1000, 30 * 1000);
+
 
 // ===== Уведомления админу за 7 дней до окончания аренды =====
 const EXPIRY_NOTIFY_DAYS = Number(process.env.RENTAL_EXPIRY_NOTIFY_DAYS || 7);
