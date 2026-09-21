@@ -432,11 +432,12 @@ export interface RevenuePayment {
   cellNumber: number | null;
 }
 
-export async function fetchRevenueByMonth(month: string): Promise<{
+export async function fetchRevenueByMonth(month: string, mode: RevenueMode = 'cash'): Promise<{
   month: string; total: number; count: number; customers: number; entries: RevenuePayment[];
 }> {
-  return fetchApi(`/api/revenue/by-month/${month}`);
+  return fetchApi(`/api/revenue/by-month/${month}?mode=${mode}`);
 }
+
 
 export interface RevenueForecastEntry {
   rentalId: string;
