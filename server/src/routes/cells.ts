@@ -71,15 +71,44 @@ cellsRouter.put('/recalculate-prices', async (req: Request, res: Response, next:
   }
 });
 
-// GET /api/cells/public-status — только номер и статус (для публичного плана)
+// GET /api/cells/public-status — безопасные публичные данные для плана
 cellsRouter.get('/public-status', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const [rows] = await pool.query(
-      'SELECT number AS cell, status FROM cells ORDER BY number ASC'
+      `SELECT
+        id,
+        number AS cell,
+        number,
+        status,
+        width,
+        height,
+        depth,
+        area,
+        volume,
+        tier,
+        price_per_month AS pricePerMonth,
+        has_socket AS hasSocket,
+        has_shelves AS hasShelves
+       FROM cells
+       ORDER BY number ASC`
     );
     res.json({
       success: true,
-      data: (rows as any[]).map(r => ({ cell: Number(r.cell), status: r.status })),
+      data: (rows as any[]).map(r => ({
+        id: r.id,
+        cell: Number(r.cell),
+        number: Number(r.number),
+        status: r.status,
+        width: Number(r.width),
+        height: Number(r.height),
+        depth: Number(r.depth),
+        area: Number(r.area),
+        volume: Number(r.volume),
+        tier: Number(r.tier),
+        pricePerMonth: Number(r.pricePerMonth),
+        hasSocket: !!r.hasSocket,
+        hasShelves: !!r.hasShelves,
+      })),
     });
   } catch (error) {
     next(error);
