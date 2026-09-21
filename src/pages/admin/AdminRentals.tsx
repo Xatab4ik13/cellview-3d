@@ -16,6 +16,9 @@ import { ru } from 'date-fns/locale';
 import { RentalData } from '@/lib/api';
 import RentalFormDialog from '@/components/admin/RentalFormDialog';
 import RentalDetailModal from '@/components/admin/RentalDetailModal';
+import { exportRowsToExcel } from '@/lib/exportExcel';
+import { toast } from 'sonner';
+
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   active: { label: 'Активна', color: 'var(--status-active)' },
