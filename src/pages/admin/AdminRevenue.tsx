@@ -159,8 +159,11 @@ const AdminRevenue = () => {
         </div>
 
         <div className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="px-4 py-3 bg-muted/40 font-semibold">Платежи</div>
+          <div className="px-4 py-3 bg-muted/40 font-semibold">
+            {mode === 'cash' ? 'Платежи' : 'Аренда, отнесённая к этому месяцу'}
+          </div>
           <table className="w-full text-sm">
+
             <thead className="bg-muted/20">
               <tr>
                 <th className="text-left px-4 py-2 font-medium text-muted-foreground">Дата</th>
