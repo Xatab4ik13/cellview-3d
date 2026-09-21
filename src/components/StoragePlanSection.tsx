@@ -142,11 +142,13 @@ const StoragePlanSection = () => {
               {visibleCells.slice(0, 60).map((cell) => {
                 const status = statuses[cell.number] || 'unknown';
                 return (
-                  <button
+                  <Button
                     key={cell.number}
                     type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => selectCell(cell.number)}
-                    className={`h-10 rounded-lg border-2 text-sm font-bold transition-colors ${
+                    className={`h-10 min-w-0 border-2 px-2 text-sm font-bold ${
                       selectedNumber === cell.number
                         ? 'border-primary bg-primary text-primary-foreground'
                         : 'border-border bg-background text-foreground hover:border-primary'
@@ -154,7 +156,7 @@ const StoragePlanSection = () => {
                   >
                     {cell.number}
                     <span className={`ml-1 inline-block h-2 w-2 rounded-full ${statusDotStyles[status]}`} />
-                  </button>
+                  </Button>
                 );
               })}
             </div>
