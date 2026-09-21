@@ -147,6 +147,24 @@ async function notifyExpiringRentals() {
 setInterval(notifyExpiringRentals, 24 * 60 * 60 * 1000);
 setTimeout(notifyExpiringRentals, 60 * 1000);
 
+// ===== Синхронизация статусов ячеек с активными арендами =====
+async function syncCellStatuses() {
+  try {
+    const [fixed] = await pool.query(
+      `UPDATE cells c
+       JOIN rentals r ON r.cell_id = c.id AND r.status = 'active'
+       SET c.status = 'occupied', c.reserved_until = NULL
+       WHERE c.status <> 'occupied'`
+    );
+    const rows = (fixed as any).affectedRows || 0;
+    if (rows > 0) console.log(`[cell-sync] помечено занятыми: ${rows} ячеек`);
+  } catch (err) {
+    console.error('[cell-sync] ошибка синхронизации статусов ячеек:', err);
+  }
+}
+setInterval(syncCellStatuses, 30 * 60 * 1000);
+setTimeout(syncCellStatuses, 20 * 1000);
+
 app.listen(PORT, () => {
   console.log(`🚀 Kladovka78 API running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
