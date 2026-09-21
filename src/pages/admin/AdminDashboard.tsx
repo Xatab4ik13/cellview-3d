@@ -92,6 +92,33 @@ const AdminDashboard = () => {
     };
   });
 
+  // Кубометры: всего и сдано
+  const round1 = (v: number) => Math.round(v * 10) / 10;
+  const volumeByCell = new Map(cells.map(c => [c.id, Number(c.volume) || 0]));
+  const totalVolume = round1(cells.reduce((s, c) => s + (Number(c.volume) || 0), 0));
+  const rentedVolume = round1(
+    cells.filter(c => c.status === 'occupied').reduce((s, c) => s + (Number(c.volume) || 0), 0)
+  );
+  const volumeShare = totalVolume > 0 ? Math.round((rentedVolume / totalVolume) * 100) : 0;
+
+  const volumeByMonth = Array.from({ length: 6 }, (_, i) => {
+    const month = subMonths(new Date(), 5 - i);
+    const monthStart = startOfMonth(month);
+    const monthEnd = startOfMonth(subMonths(new Date(), 4 - i));
+    const rented = rentals.reduce((sum, r) => {
+      if (r.status === 'cancelled') return sum;
+      const start = parseISO(r.startDate);
+      const end = parseISO(r.endDate);
+      const overlaps = start < monthEnd && end >= monthStart;
+      return overlaps ? sum + (volumeByCell.get(r.cellId) || 0) : sum;
+    }, 0);
+    return {
+      name: format(month, 'MMM', { locale: ru }),
+      rented: round1(rented),
+      total: totalVolume,
+    };
+  });
+
   // Occupancy pie chart
   const occupancyData = [
     { name: 'Занято', value: occupiedCells, color: COLORS.occupied },
