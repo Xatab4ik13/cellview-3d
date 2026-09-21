@@ -11,8 +11,7 @@ const StoragePlanSection = () => {
 
     (async () => {
       try {
-        const url = '/plan/kladovka78-plan.js';
-        const mod: any = await import(/* @vite-ignore */ url);
+        const mod: any = await loadPlanModule();
         if (cancelled || !containerRef.current) return;
         api = await mod.mount(containerRef.current, {
           model: '/plan/kladovka78-plan.glb',
