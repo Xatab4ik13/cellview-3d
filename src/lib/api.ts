@@ -239,6 +239,8 @@ export async function createRental(data: {
   totalAmount?: number;
   autoRenew?: boolean;
   notes?: string;
+  paymentMethod?: string;
+  skipPayment?: boolean;
 }): Promise<{ id: string; endDate: string }> {
   return fetchApi<{ id: string; endDate: string }>('/api/rentals', {
     method: 'POST',

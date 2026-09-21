@@ -127,6 +127,19 @@ rentalsRouter.post('/', async (req: Request, res: Response, next: NextFunction) 
     const monthlyAmount = Math.floor(finalTotal / months);
     const remainder = finalTotal - monthlyAmount * months;
 
+    // Платёж за оформление (кассовый метод: выручка считается по платежам).
+    // Можно отключить флагом skipPayment, если деньги уже проведены отдельным платежом.
+    let paymentId: string | null = null;
+    if (!req.body.skipPayment) {
+      const method = (req.body.paymentMethod || 'CASH').toString().toUpperCase();
+      paymentId = uuidv4();
+      await conn.query(
+        `INSERT INTO payments (id, rental_id, customer_id, cell_id, amount, description, duration_months, monthly_price, status, payment_method, paid_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'paid', ?, NOW())`,
+        [paymentId, id, customerId, cellId, finalTotal * 100, `Оплата аренды на ${months} мес.`, months, pricePerMonth, method]
+      );
+    }
+
     for (let i = 0; i < months; i++) {
       const entryMonth = new Date(start);
       entryMonth.setMonth(entryMonth.getMonth() + i);
@@ -135,8 +148,8 @@ rentalsRouter.post('/', async (req: Request, res: Response, next: NextFunction) 
       const entryId = `rev-${id}-${i}`;
 
       await conn.query(
-        `INSERT INTO revenue_entries (id, rental_id, customer_id, cell_id, month, amount) VALUES (?, ?, ?, ?, ?, ?)`,
-        [entryId, id, customerId, cellId, monthStr, amount]
+        `INSERT INTO revenue_entries (id, rental_id, customer_id, cell_id, month, amount, payment_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [entryId, id, customerId, cellId, monthStr, amount, paymentId]
       );
     }
 
