@@ -15,6 +15,8 @@ import { motion } from 'framer-motion';
 import AnimatedCounter from '@/components/crm/AnimatedCounter';
 import { fetchPayments, deletePayment, PaymentData } from '@/lib/api';
 import { toast } from 'sonner';
+import { exportRowsToExcel } from '@/lib/exportExcel';
+
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   paid: { label: 'Оплачен', color: 'var(--status-active)', icon: CheckCircle },
