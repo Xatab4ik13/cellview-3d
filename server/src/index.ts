@@ -96,10 +96,19 @@ async function cleanupStalePayments() {
     console.error('[cleanup] ошибка авто-очистки платежей:', err);
   }
 }
+// В кластере PM2 фоновые задачи должны выполняться только в одном процессе,
+// иначе письма и уведомления отправляются по два раза.
+const IS_SCHEDULER_INSTANCE = Number(process.env.NODE_APP_INSTANCE || 0) === 0;
+function scheduleJob(fn: () => void | Promise<void>, intervalMs: number, firstDelayMs: number) {
+  if (!IS_SCHEDULER_INSTANCE) return;
+  setInterval(fn, intervalMs);
+  setTimeout(fn, firstDelayMs);
+}
+
 // Сверка с ВТБ каждые 10 минут + очистка каждый час
-setInterval(reconcilePendingVtbPayments, 10 * 60 * 1000);
-setInterval(cleanupStalePayments, 60 * 60 * 1000);
-setTimeout(cleanupStalePayments, 30 * 1000);
+if (IS_SCHEDULER_INSTANCE) setInterval(reconcilePendingVtbPayments, 10 * 60 * 1000);
+scheduleJob(cleanupStalePayments, 60 * 60 * 1000, 30 * 1000);
+
 
 // ===== Уведомления админу за 7 дней до окончания аренды =====
 const EXPIRY_NOTIFY_DAYS = Number(process.env.RENTAL_EXPIRY_NOTIFY_DAYS || 7);
@@ -125,6 +134,14 @@ async function notifyExpiringRentals() {
     console.log(`[expiry-notify] ${list.length} аренд истекают в ближайшие ${EXPIRY_NOTIFY_DAYS} дн.`);
     for (const r of list) {
       try {
+        // «Занимаем» аренду до отправки: если другой процесс уже отметил её,
+        // affectedRows = 0 и письмо не дублируется.
+        const [claim] = await pool.query(
+          'UPDATE rentals SET expiry_notified_at = NOW() WHERE id = ? AND expiry_notified_at IS NULL',
+          [r.id]
+        );
+        if (((claim as any).affectedRows || 0) === 0) continue;
+
         const endDateStr = new Date(r.end_date).toLocaleDateString('ru-RU');
         await notifyAdminRentalExpiring({
           customerName: r.customer_name,
@@ -134,7 +151,6 @@ async function notifyExpiringRentals() {
           daysLeft: Number(r.days_left) || 0,
           rentalId: r.id,
         });
-        await pool.query('UPDATE rentals SET expiry_notified_at = NOW() WHERE id = ?', [r.id]);
       } catch (err) {
         console.error('[expiry-notify] не удалось уведомить по аренде', r.id, err);
       }
@@ -143,9 +159,9 @@ async function notifyExpiringRentals() {
     console.error('[expiry-notify] ошибка проверки:', err);
   }
 }
-// Запуск раз в сутки + один раз через минуту после старта
-setInterval(notifyExpiringRentals, 24 * 60 * 60 * 1000);
-setTimeout(notifyExpiringRentals, 60 * 1000);
+// Запуск раз в сутки + один раз через минуту после старта (только в одном процессе)
+scheduleJob(notifyExpiringRentals, 24 * 60 * 60 * 1000, 60 * 1000);
+
 
 // ===== Синхронизация статусов ячеек с активными арендами =====
 async function syncCellStatuses() {
@@ -174,8 +190,8 @@ async function syncCellStatuses() {
   }
 
 }
-setInterval(syncCellStatuses, 30 * 60 * 1000);
-setTimeout(syncCellStatuses, 20 * 1000);
+scheduleJob(syncCellStatuses, 30 * 60 * 1000, 20 * 1000);
+
 
 app.listen(PORT, () => {
   console.log(`🚀 Kladovka78 API running on port ${PORT}`);
