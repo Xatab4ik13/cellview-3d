@@ -134,6 +134,14 @@ async function notifyExpiringRentals() {
     console.log(`[expiry-notify] ${list.length} аренд истекают в ближайшие ${EXPIRY_NOTIFY_DAYS} дн.`);
     for (const r of list) {
       try {
+        // «Занимаем» аренду до отправки: если другой процесс уже отметил её,
+        // affectedRows = 0 и письмо не дублируется.
+        const [claim] = await pool.query(
+          'UPDATE rentals SET expiry_notified_at = NOW() WHERE id = ? AND expiry_notified_at IS NULL',
+          [r.id]
+        );
+        if (((claim as any).affectedRows || 0) === 0) continue;
+
         const endDateStr = new Date(r.end_date).toLocaleDateString('ru-RU');
         await notifyAdminRentalExpiring({
           customerName: r.customer_name,
@@ -143,7 +151,6 @@ async function notifyExpiringRentals() {
           daysLeft: Number(r.days_left) || 0,
           rentalId: r.id,
         });
-        await pool.query('UPDATE rentals SET expiry_notified_at = NOW() WHERE id = ?', [r.id]);
       } catch (err) {
         console.error('[expiry-notify] не удалось уведомить по аренде', r.id, err);
       }
@@ -152,9 +159,9 @@ async function notifyExpiringRentals() {
     console.error('[expiry-notify] ошибка проверки:', err);
   }
 }
-// Запуск раз в сутки + один раз через минуту после старта
-setInterval(notifyExpiringRentals, 24 * 60 * 60 * 1000);
-setTimeout(notifyExpiringRentals, 60 * 1000);
+// Запуск раз в сутки + один раз через минуту после старта (только в одном процессе)
+scheduleJob(notifyExpiringRentals, 24 * 60 * 60 * 1000, 60 * 1000);
+
 
 // ===== Синхронизация статусов ячеек с активными арендами =====
 async function syncCellStatuses() {
