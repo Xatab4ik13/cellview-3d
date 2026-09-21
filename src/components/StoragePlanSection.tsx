@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Box, CheckCircle2, Filter, Layers, Navigation, Ruler, RotateCcw, Search, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PLAN_AREAS, PLAN_BOUNDS, PLAN_CELLS, PLAN_ENTRANCE, PLAN_MAIN_CORRIDOR_Y, PLAN_WALLS, type PlanCellPoint } from '@/data/storagePlanMap';
 import { calculatePrice, CELL_STATUS_LABELS, type CellStatus } from '@/types/storage';
 import { useDiscounts } from '@/hooks/useSettings';
 
@@ -30,15 +29,10 @@ type PublicCellInfo = {
   hasShelves?: boolean;
 };
 
-type DisplayPlanCell = PlanCellPoint & {
+type DisplayPlanCell = {
+  number: number;
+  tier: number;
   generated?: boolean;
-};
-
-const statusStyles: Record<PlanStatus, string> = {
-  available: 'fill-secondary-green/25 stroke-secondary-green',
-  reserved: 'fill-accent/35 stroke-accent',
-  occupied: 'fill-destructive/25 stroke-destructive',
-  unknown: 'fill-muted-foreground/25 stroke-muted-foreground',
 };
 
 const statusDotStyles: Record<PlanStatus, string> = {
@@ -68,22 +62,6 @@ const levelOptions: Array<{ value: LevelFilter; label: string }> = [
 
 const durationOptions: DurationOption[] = [1, 3, 6, 12];
 
-const areaStyles = [
-  'fill-primary/5 stroke-primary/20',
-  'fill-accent/10 stroke-accent/30',
-  'fill-secondary-green/10 stroke-secondary-green/30',
-  'fill-secondary stroke-border',
-];
-
-const planCorridors = [
-  [6.75, 5.95, 35.25, 0.85, 'Центральный проход'],
-  [9.65, 6.55, 31.1, 1.0, 'Проход'],
-  [9.65, 8.95, 31.1, 1.0, 'Проход'],
-  [9.65, 11.25, 31.1, 1.0, 'Проход'],
-  [17.1, 4.95, 1.45, 3.95, 'Проход'],
-  [0.1, 6.55, 9.25, 3.1, 'Проход'],
-] as const;
-
 const normalizeStatus = (status: unknown): PlanStatus => {
   const value = String(status || '').toLowerCase();
   if (value === 'available' || value.includes('свобод')) return 'available';
@@ -91,34 +69,6 @@ const normalizeStatus = (status: unknown): PlanStatus => {
   if (value === 'occupied' || value.includes('занят')) return 'occupied';
   return 'unknown';
 };
-
-const getDisplayPoint = (cell: PlanCellPoint, levelFilter: LevelFilter) => {
-  const offset = levelFilter === 'all' ? (cell.tier === 2 ? -0.9 : cell.tier === 1 ? 0.9 : 0) : 0;
-  return cell.orientation === 'v'
-    ? { x: cell.x + offset, y: cell.y }
-    : { x: cell.x, y: cell.y + offset };
-};
-
-const getRoutePoints = (cell: PlanCellPoint, levelFilter: LevelFilter) => {
-  const target = getDisplayPoint(cell, levelFilter);
-  const routeY = target.y < PLAN_MAIN_CORRIDOR_Y ? target.y : PLAN_MAIN_CORRIDOR_Y;
-
-  return [
-    PLAN_ENTRANCE,
-    { x: PLAN_ENTRANCE.x, y: routeY },
-    { x: target.x, y: routeY },
-    target,
-  ].filter((point, index, points) => index === 0 || point.x !== points[index - 1].x || point.y !== points[index - 1].y);
-};
-
-const routeSegments = (points: Array<{ x: number; y: number }>) => points.slice(1).map((point, index) => ({
-  from: points[index],
-  to: point,
-}));
-
-const selectedArrowPath = (point: { x: number; y: number }) => (
-  `M ${point.x} ${point.y - 0.88} L ${point.x - 0.36} ${point.y - 0.38} L ${point.x - 0.14} ${point.y - 0.38} L ${point.x - 0.14} ${point.y - 0.06} L ${point.x + 0.14} ${point.y - 0.06} L ${point.x + 0.14} ${point.y - 0.38} L ${point.x + 0.36} ${point.y - 0.38} Z`
-);
 
 const formatMeters = (value?: number) => {
   const parsed = Number(value);
@@ -136,15 +86,6 @@ const getPublicRows = (json: unknown): PublicCellInfo[] => {
   return Array.isArray(json) ? json as PublicCellInfo[] : [];
 };
 
-const generatedPoint = (number: number, index: number, info?: PublicCellInfo): DisplayPlanCell => ({
-  number,
-  x: 1.2 + (index % 22) * 1.85,
-  y: 14.25 + Math.floor(index / 22) * 1.1,
-  orientation: 'h',
-  tier: Number(info?.tier) || 1,
-  generated: true,
-});
-
 const hasAnyStatus = (statuses: Record<number, PlanStatus>) => Object.keys(statuses).length > 0;
 
 const getCellStatus = (number: number, statuses: Record<number, PlanStatus>): PlanStatus => (
@@ -154,8 +95,10 @@ const getCellStatus = (number: number, statuses: Record<number, PlanStatus>): Pl
 const StoragePlanSection = () => {
   const navigate = useNavigate();
   const { data: discountSettings } = useDiscounts();
+  const planFrameRef = useRef<HTMLIFrameElement | null>(null);
   const [statuses, setStatuses] = useState<Record<number, PlanStatus>>({});
   const [cellDetails, setCellDetails] = useState<Record<number, PublicCellInfo>>({});
+  const [modelCells, setModelCells] = useState<DisplayPlanCell[]>([]);
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
   const [query, setQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState<LevelFilter>('all');
@@ -215,38 +158,51 @@ const StoragePlanSection = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      const data = event.data as { type?: string; cell?: string | number; cells?: Array<{ cell?: string | number; tier?: string }> };
+      if (data.type === 'kladovka78:cell') {
+        const number = Number(data.cell);
+        if (Number.isFinite(number)) {
+          setSelectedNumber(number);
+          setSelectedDuration(1);
+        }
+      }
+      if (data.type === 'kladovka78:ready') {
+        const cells = (data.cells || [])
+          .map((cell) => ({
+            number: Number(cell.cell),
+            tier: String(cell.tier || '').includes('верх') ? 2 : 1,
+          }))
+          .filter((cell): cell is DisplayPlanCell => Number.isFinite(cell.number));
+        setModelCells(cells);
+      }
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, []);
+
   const planCells = useMemo<DisplayPlanCell[]>(() => {
-    const baseCells = new Map(PLAN_CELLS.map((cell) => [cell.number, cell]));
+    const baseCells = new Map(modelCells.map((cell) => [cell.number, cell]));
     const numbersFromApi = Object.values(cellDetails)
       .map(getCellNumber)
       .filter((number): number is number => number !== null)
       .sort((a, b) => a - b);
 
-    if (numbersFromApi.length === 0) return PLAN_CELLS;
+    if (numbersFromApi.length === 0) return modelCells;
 
-    let generatedIndex = 0;
     return Array.from(new Set(numbersFromApi)).map((number) => {
       const baseCell = baseCells.get(number);
       if (baseCell) return baseCell;
-      const point = generatedPoint(number, generatedIndex, cellDetails[number]);
-      generatedIndex += 1;
-      return point;
+      return { number, tier: Number(cellDetails[number]?.tier) || 1, generated: true };
     });
-  }, [cellDetails]);
-
-  const planBounds = useMemo(() => {
-    const generatedCells = planCells.filter((cell) => cell.generated);
-    if (generatedCells.length === 0) return PLAN_BOUNDS;
-
-    const maxGeneratedY = Math.max(...generatedCells.map((cell) => cell.y));
-    return { ...PLAN_BOUNDS, maxY: Math.max(PLAN_BOUNDS.maxY, maxGeneratedY + 0.8) };
-  }, [planCells]);
+  }, [cellDetails, modelCells]);
 
   const cellsByNumber = useMemo(() => new Map(planCells.map((cell) => [cell.number, cell])), [planCells]);
   const selectedCell = selectedNumber ? cellsByNumber.get(selectedNumber) || null : null;
   const selectedInfo = selectedNumber ? cellDetails[selectedNumber] : undefined;
   const selectedStatus = selectedNumber ? getCellStatus(selectedNumber, statuses) : 'unknown';
-  const fullViewBox = `${planBounds.minX} ${planBounds.minY} ${planBounds.maxX - planBounds.minX} ${planBounds.maxY - planBounds.minY}`;
 
   const visibleCells = useMemo(() => {
     const number = Number(query.replace(/\D/g, ''));
@@ -258,40 +214,6 @@ const StoragePlanSection = () => {
       return matchQuery && matchLevel && matchStatus;
     });
   }, [planCells, query, levelFilter, statusFilter, statuses]);
-
-  const filteredNumbers = useMemo(() => new Set(visibleCells.map((cell) => cell.number)), [visibleCells]);
-  const selectedIsVisible = selectedCell ? filteredNumbers.has(selectedCell.number) : false;
-  const selectedPoint = selectedCell && selectedIsVisible ? getDisplayPoint(selectedCell, levelFilter) : null;
-  const routePoints = selectedCell && selectedIsVisible ? getRoutePoints(selectedCell, levelFilter) : [];
-  const routeParts = routeSegments(routePoints);
-  const viewBox = useMemo(() => {
-    if (!selectedPoint || routePoints.length === 0) return fullViewBox;
-
-    const xs = routePoints.map((point) => point.x);
-    const ys = routePoints.map((point) => point.y);
-    const minX = Math.max(planBounds.minX, Math.min(...xs) - 2.2);
-    const maxX = Math.min(planBounds.maxX, Math.max(...xs) + 2.2);
-    const minY = Math.max(planBounds.minY, Math.min(...ys) - 1.6);
-    const maxY = Math.min(planBounds.maxY, Math.max(...ys) + 1.6);
-    return `${minX} ${minY} ${Math.max(maxX - minX, 15)} ${Math.max(maxY - minY, 6)}`;
-  }, [fullViewBox, planBounds, routePoints, selectedPoint]);
-
-  const mapViewBox = useMemo(() => {
-    if (selectedPoint && routePoints.length > 0) return viewBox;
-    if ((query || statusFilter !== 'all' || levelFilter !== 'all') && visibleCells.length > 0) {
-      const points = visibleCells.map((cell) => getDisplayPoint(cell, levelFilter));
-      const xs = points.map((point) => point.x);
-      const ys = points.map((point) => point.y);
-      const minX = Math.max(planBounds.minX, Math.min(...xs) - 2.4);
-      const maxX = Math.min(planBounds.maxX, Math.max(...xs) + 2.4);
-      const minY = Math.max(planBounds.minY, Math.min(...ys) - 1.8);
-      const maxY = Math.min(planBounds.maxY, Math.max(...ys) + 1.8);
-      return `${minX} ${minY} ${Math.max(maxX - minX, 14)} ${Math.max(maxY - minY, 5.2)}`;
-    }
-    return fullViewBox;
-  }, [fullViewBox, levelFilter, planBounds, query, routePoints.length, selectedPoint, statusFilter, viewBox, visibleCells]);
-
-  const generatedCells = useMemo(() => planCells.filter((cell) => cell.generated), [planCells]);
   const selectedVolume = Number(selectedInfo?.volume) || 0;
   const selectedMonthlyPrice = Number(selectedInfo?.pricePerMonth) || (selectedVolume > 0 ? calculatePrice(selectedVolume) : 0);
   const selectedDiscount = discountSettings?.[selectedDuration] ?? 0;
@@ -301,7 +223,31 @@ const StoragePlanSection = () => {
   const selectCell = (number: number) => {
     setSelectedNumber(number);
     setSelectedDuration(1);
+    planFrameRef.current?.contentWindow?.postMessage({ type: 'kladovka78:focus', cell: number }, window.location.origin);
   };
+
+  const syncPlanFrame = () => {
+    planFrameRef.current?.contentWindow?.postMessage({
+      type: 'kladovka78:statuses',
+      statuses: Object.fromEntries(Object.entries(statuses).map(([number, status]) => [number, status])),
+    }, window.location.origin);
+    planFrameRef.current?.contentWindow?.postMessage({
+      type: 'kladovka78:filter',
+      filter: {
+        cells: visibleCells.filter((cell) => !cell.generated).map((cell) => cell.number),
+        statuses: statusFilter === 'all' ? undefined : [statusFilter],
+        tiers: levelFilter === 'all' ? undefined : [levelFilter],
+      },
+    }, window.location.origin);
+  };
+
+  useEffect(() => {
+    syncPlanFrame();
+  }, [statuses]);
+
+  useEffect(() => {
+    syncPlanFrame();
+  }, [levelFilter, statusFilter, visibleCells]);
 
   const goToBooking = () => {
     if (!selectedCell || selectedStatus !== 'available') return;
@@ -526,116 +472,15 @@ const StoragePlanSection = () => {
             </Button>
           </div>
 
-          <div className="order-1 overflow-x-auto rounded-2xl border-2 border-border bg-card p-2 shadow-card sm:p-3 xl:order-2">
-            <svg
-              viewBox={mapViewBox}
-              role="img"
+          <div className="order-1 overflow-hidden rounded-2xl border-2 border-border bg-card p-2 shadow-card sm:p-3 xl:order-2">
+            <iframe
+              ref={planFrameRef}
+              title="Карта кладовок сверху"
               aria-label="Карта кладовок сверху"
-              preserveAspectRatio="xMidYMid meet"
-              className="aspect-[43/14] w-full min-w-[980px] rounded-xl bg-muted xl:min-w-[1120px]"
-            >
-              <defs>
-                <marker id="plan-route-arrow" markerWidth="0.8" markerHeight="0.8" refX="0.72" refY="0.4" orient="auto" markerUnits="strokeWidth">
-                  <path d="M 0 0 L 0.8 0.4 L 0 0.8 z" className="fill-primary" />
-                </marker>
-              </defs>
-
-              {PLAN_AREAS.map(([x, y, width, height], index) => (
-                <rect key={`area-${index}`} x={x} y={y} width={width} height={height} rx="0.12" className={areaStyles[index % areaStyles.length]} strokeWidth="0.04" />
-              ))}
-
-              {generatedCells.length > 0 && (
-                <g>
-                  <rect x="0.25" y="13.7" width="41" height={Math.max(1.6, Math.ceil(generatedCells.length / 22) * 1.1 + 0.7)} rx="0.18" className="fill-secondary stroke-border" strokeWidth="0.06" />
-                  <text x="1.05" y="14.15" className="fill-muted-foreground text-[0.42px] font-extrabold uppercase">
-                    Добавленные ячейки
-                  </text>
-                </g>
-              )}
-
-              {planCorridors.map(([x, y, width, height, label], index) => (
-                <g key={`corridor-${index}`}>
-                  <rect x={x} y={y} width={width} height={height} rx="0.18" className="fill-background/90 stroke-primary/30" strokeWidth="0.06" />
-                  <text x={x + width / 2} y={y + height / 2 + 0.13} textAnchor="middle" className="pointer-events-none fill-muted-foreground text-[0.34px] font-extrabold uppercase">
-                    {label}
-                  </text>
-                </g>
-              ))}
-
-              {PLAN_WALLS.map(([x, y, width, height], index) => (
-                <rect key={`wall-${index}`} x={x} y={y} width={width} height={height} className="fill-foreground opacity-20" />
-              ))}
-
-              <path
-                d={`M ${PLAN_ENTRANCE.x} ${PLAN_ENTRANCE.y + 0.52} L ${PLAN_ENTRANCE.x - 0.38} ${PLAN_ENTRANCE.y - 0.2} L ${PLAN_ENTRANCE.x + 0.38} ${PLAN_ENTRANCE.y - 0.2} Z`}
-                className="fill-accent stroke-foreground"
-                strokeWidth="0.05"
-              />
-              <text x={PLAN_ENTRANCE.x} y={PLAN_ENTRANCE.y - 0.42} textAnchor="middle" className="fill-foreground text-[0.44px] font-extrabold">
-                ВХОД
-              </text>
-
-              {routeParts.map((part, index) => (
-                <line
-                  key={`route-${index}`}
-                  x1={part.from.x}
-                  y1={part.from.y}
-                  x2={part.to.x}
-                  y2={part.to.y}
-                  className="stroke-primary"
-                  strokeWidth="0.16"
-                  strokeLinecap="round"
-                  markerEnd="url(#plan-route-arrow)"
-                />
-              ))}
-
-              {selectedPoint && (
-                <path
-                  d={selectedArrowPath(selectedPoint)}
-                  className="fill-primary stroke-primary-foreground"
-                  strokeWidth="0.05"
-                />
-              )}
-
-              {visibleCells.map((cell) => {
-                const point = getDisplayPoint(cell, levelFilter);
-                const status = getCellStatus(cell.number, statuses);
-                const isSelected = selectedNumber === cell.number;
-                const markerWidth = levelFilter === 'all' ? 0.74 : 1.16;
-                const markerHeight = levelFilter === 'all' ? 0.54 : 0.84;
-                return (
-                  <g
-                    key={cell.number}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Ячейка ${cell.number}`}
-                    className="cursor-pointer outline-none"
-                    onClick={() => selectCell(cell.number)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') selectCell(cell.number);
-                    }}
-                  >
-                    <rect
-                      x={point.x - markerWidth / 2}
-                      y={point.y - markerHeight / 2}
-                      width={markerWidth}
-                      height={markerHeight}
-                      rx="0.08"
-                      className={`${statusStyles[status]} ${isSelected ? 'stroke-foreground' : ''}`}
-                      strokeWidth={isSelected ? '0.14' : '0.06'}
-                    />
-                    <text
-                      x={point.x}
-                      y={point.y + (levelFilter === 'all' ? 0.12 : 0.17)}
-                      textAnchor="middle"
-                      className={`pointer-events-none ${levelFilter === 'all' ? 'text-[0.34px]' : 'text-[0.48px]'} font-extrabold ${isSelected ? 'fill-primary-foreground' : 'fill-foreground'}`}
-                    >
-                      {cell.number}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
+              src="/plan/index.html?view=top&panel=0&legend=0&numbers=1&refresh=0"
+              onLoad={syncPlanFrame}
+              className="h-[520px] w-full rounded-xl bg-muted md:h-[640px]"
+            />
           </div>
         </div>
       </div>
