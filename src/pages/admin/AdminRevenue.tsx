@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, TrendingUp, Wallet, Repeat, ArrowLeft, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { fetchRevenue, fetchRevenueByMonth, fetchRevenueForecast } from '@/lib/api';
+import { fetchRevenue, fetchRevenueByMonth, fetchRevenueForecast, type RevenueMode } from '@/lib/api';
 import AnimatedCounter from '@/components/crm/AnimatedCounter';
 
 const MONTH_NAMES = [
