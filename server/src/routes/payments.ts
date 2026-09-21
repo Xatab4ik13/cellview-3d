@@ -103,6 +103,20 @@ async function createRentalFromPayment(payment: PaymentDbRow): Promise<string | 
   try {
     await conn.beginTransaction();
 
+    // Блокируем строку платежа — защита от гонки (callback + опрос статуса + сверка,
+    // к тому же API работает в кластере из 2 процессов). Иначе создаются дубли аренды.
+    const [lockedRows] = await conn.query('SELECT * FROM payments WHERE id = ? FOR UPDATE', [payment.id]);
+    const locked = (lockedRows as any[])[0];
+    if (!locked) {
+      await conn.rollback();
+      return null;
+    }
+    if (locked.rental_id) {
+      // Аренда уже создана другим процессом
+      await conn.commit();
+      return locked.rental_id as string;
+    }
+
     // Create rental
     await conn.query(
       `INSERT INTO rentals (id, cell_id, customer_id, start_date, end_date, duration_months, monthly_price, discount_percent, total_amount, auto_renew, status)
@@ -121,6 +135,20 @@ async function createRentalFromPayment(payment: PaymentDbRow): Promise<string | 
       'UPDATE payments SET rental_id = ? WHERE id = ?',
       [rentalId, payment.id]
     );
+
+    // revenue_entries — помесячная разбивка оплаченной суммы
+    const monthlyAmount = Math.floor(amountRubles / duration);
+    const remainder = amountRubles - monthlyAmount * duration;
+    const startMonth = new Date(startDate);
+    for (let i = 0; i < duration; i++) {
+      const entryMonth = new Date(startMonth.getFullYear(), startMonth.getMonth() + i, 1);
+      const monthStr = entryMonth.toISOString().slice(0, 7) + '-01';
+      const amount = i === 0 ? monthlyAmount + remainder : monthlyAmount;
+      await conn.query(
+        `INSERT INTO revenue_entries (id, rental_id, customer_id, cell_id, month, amount, payment_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [`rev-${rentalId}-${i}`, rentalId, payment.customer_id, payment.cell_id, monthStr, amount, payment.id]
+      );
+    }
 
     await conn.commit();
     console.log(`Rental ${rentalId} created from payment ${payment.id}`);
