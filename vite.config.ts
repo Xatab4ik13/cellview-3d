@@ -8,6 +8,13 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      "/api": {
+        target: "https://api.kladovka78.ru",
+        changeOrigin: true,
+        secure: true,
+      },
+    },
     hmr: {
       overlay: false,
     },
