@@ -117,24 +117,30 @@ const AdminRevenue = () => {
 
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <Button variant="outline" size="sm" onClick={() => setSelectedMonth(null)} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             К сводке
           </Button>
-          <div>
+          <div className="flex-1">
             <h2 className="text-2xl font-bold">{fmtMonth(selectedMonth)}</h2>
             <p className="text-base text-muted-foreground mt-1">
-              Поступления денег и прогноз продлений
+              {mode === 'cash'
+                ? 'Поступления денег и прогноз продлений'
+                : 'Аренда, отнесённая к этому месяцу (предоплата разбита по месяцам)'}
             </p>
           </div>
+          <ModeSwitch />
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-xl border border-border bg-card p-5">
-            <div className="text-sm text-muted-foreground mb-1">Поступило за месяц</div>
+            <div className="text-sm text-muted-foreground mb-1">
+              {mode === 'cash' ? 'Поступило за месяц' : 'Аренда за месяц'}
+            </div>
             <div className="text-2xl font-bold text-primary">{fmtRub(total)}</div>
           </div>
+
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="text-sm text-muted-foreground mb-1">Платежей</div>
             <div className="text-2xl font-bold">{count}</div>
