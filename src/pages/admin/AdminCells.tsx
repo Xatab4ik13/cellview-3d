@@ -811,6 +811,7 @@ const AdminCells = () => {
         if (photos.length > 0) {
           try {
             await uploadCellPhotos(cellId, photos);
+            await refetchCells();
             toast.success(`Ячейка №${cellNumber} создана, загружено ${photos.length} фото`);
           } catch (err) {
             toast.warning('Ячейка создана, но фото не загружены');
@@ -897,6 +898,9 @@ const AdminCells = () => {
             console.error('Photo upload failed:', err);
             toast.warning(`Ячейка обновлена, но фото не загружены: ${err?.message || 'ошибка сети'}`);
           }
+        }
+        if (deletedPhotoUrls.length > 0 || editNewFiles.length > 0) {
+          await refetchCells();
         }
         setIsEditDialogOpen(false);
         setEditingCell(null);
