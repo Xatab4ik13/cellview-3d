@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, MoreHorizontal, Edit, Ban, RefreshCw, Plus, Loader2, Trash2, Banknote, CheckCircle2 } from 'lucide-react';
+import { Search, MoreHorizontal, Edit, Ban, RefreshCw, Plus, Loader2, Trash2, Banknote, CheckCircle2, FileDown } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -16,6 +16,9 @@ import { ru } from 'date-fns/locale';
 import { RentalData } from '@/lib/api';
 import RentalFormDialog from '@/components/admin/RentalFormDialog';
 import RentalDetailModal from '@/components/admin/RentalDetailModal';
+import { exportRowsToExcel } from '@/lib/exportExcel';
+import { toast } from 'sonner';
+
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   active: { label: 'Активна', color: 'var(--status-active)' },
@@ -129,6 +132,31 @@ const AdminRentals = () => {
     );
   }
 
+  const handleExport = () => {
+    if (filtered.length === 0) {
+      toast.error('Нет данных для выгрузки');
+      return;
+    }
+    exportRowsToExcel(
+      filtered.map(r => ({
+        'Ячейка': r.cellNumber ?? '',
+        'Клиент': r.customerName || '',
+        'Телефон': r.customerPhone || '',
+        'Email': r.customerEmail || '',
+        'Начало': formatDate(r.startDate),
+        'Окончание': formatDate(r.endDate),
+        'Месяцев': r.months,
+        'Цена за месяц, ₽': r.pricePerMonth,
+        'Скидка, %': r.discount || 0,
+        'Сумма, ₽': r.totalAmount,
+        'Статус': statusConfig[r.displayStatus]?.label || r.status,
+        'Примечание': r.notes || '',
+      })),
+      'Аренды',
+      'Аренды',
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -136,11 +164,18 @@ const AdminRentals = () => {
           <h2 className="text-2xl font-bold">Аренды</h2>
           <p className="text-base text-muted-foreground mt-1">Управление договорами аренды</p>
         </div>
-        <Button className="gap-2 h-11 text-base" onClick={openCreate}>
-          <Plus className="w-5 h-5" />
-          Новая аренда (наличные)
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" className="gap-2 h-11 text-base" onClick={handleExport}>
+            <FileDown className="w-5 h-5" />
+            Выгрузить в Excel
+          </Button>
+          <Button className="gap-2 h-11 text-base" onClick={openCreate}>
+            <Plus className="w-5 h-5" />
+            Новая аренда (наличные)
+          </Button>
+        </div>
       </div>
+
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">

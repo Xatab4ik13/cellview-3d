@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Search, CheckCircle, Clock, XCircle, ArrowUpRight, ArrowDownRight, Loader2, AlertCircle, Trash2 } from 'lucide-react';
+import { Search, CheckCircle, Clock, XCircle, ArrowUpRight, ArrowDownRight, Loader2, AlertCircle, Trash2, FileDown } from 'lucide-react';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -15,6 +15,8 @@ import { motion } from 'framer-motion';
 import AnimatedCounter from '@/components/crm/AnimatedCounter';
 import { fetchPayments, deletePayment, PaymentData } from '@/lib/api';
 import { toast } from 'sonner';
+import { exportRowsToExcel } from '@/lib/exportExcel';
+
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   paid: { label: 'Оплачен', color: 'var(--status-active)', icon: CheckCircle },
@@ -64,12 +66,39 @@ const AdminPayments = () => {
     } catch { return dateStr; }
   };
 
+  const handleExport = () => {
+    if (filtered.length === 0) {
+      toast.error('Нет данных для выгрузки');
+      return;
+    }
+    exportRowsToExcel(
+      filtered.map(p => ({
+        'ID': p.id,
+        'Клиент': p.customerName || '',
+        'Сумма, ₽': p.amount,
+        'Описание': p.description || '',
+        'Способ оплаты': p.paymentMethod || '',
+        'Дата': formatDate(p.createdAt),
+        'Статус': statusConfig[p.status]?.label || p.status,
+      })),
+      'Платежи',
+      'Платежи',
+    );
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Платежи</h2>
-        <p className="text-base text-muted-foreground mt-1">Финансовые операции и история</p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="text-2xl font-bold">Платежи</h2>
+          <p className="text-base text-muted-foreground mt-1">Финансовые операции и история</p>
+        </div>
+        <Button variant="outline" className="gap-2 h-11 text-base" onClick={handleExport}>
+          <FileDown className="w-5 h-5" />
+          Выгрузить в Excel
+        </Button>
       </div>
+
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
