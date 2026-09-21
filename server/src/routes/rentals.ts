@@ -105,6 +105,16 @@ rentalsRouter.post('/', async (req: Request, res: Response, next: NextFunction) 
     if (!cell) throw new AppError('Ячейка не найдена', 404);
     if (cell.status === 'occupied') throw new AppError('Ячейка уже занята', 400);
 
+    // Дополнительная защита от дублей: активная аренда на эту ячейку уже существует
+    const [activeRows] = await conn.query(
+      "SELECT id FROM rentals WHERE cell_id = ? AND status = 'active' LIMIT 1",
+      [cellId]
+    );
+    if ((activeRows as any[]).length > 0) {
+      throw new AppError('По этой ячейке уже есть активная аренда', 400);
+    }
+
+
     // Вычислить дату окончания
     const start = new Date(startDate);
     const end = addMonthsSafe(start, months);
