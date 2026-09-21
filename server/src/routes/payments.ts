@@ -117,6 +117,22 @@ async function createRentalFromPayment(payment: PaymentDbRow): Promise<string | 
       return locked.rental_id as string;
     }
 
+    // Если по этой ячейке у того же клиента уже есть активная аренда — не создаём вторую,
+    // просто привязываем платёж к существующей (иначе в списке появляются дубли).
+    const [existingRows] = await conn.query(
+      "SELECT id FROM rentals WHERE cell_id = ? AND customer_id = ? AND status = 'active' LIMIT 1",
+      [payment.cell_id, payment.customer_id]
+    );
+    const existing = (existingRows as any[])[0];
+    if (existing) {
+      await conn.query('UPDATE payments SET rental_id = ? WHERE id = ?', [existing.id, payment.id]);
+      await conn.query("UPDATE cells SET status = 'occupied', reserved_until = NULL WHERE id = ?", [payment.cell_id]);
+      await conn.commit();
+      return existing.id as string;
+    }
+
+
+
     // Create rental
     await conn.query(
       `INSERT INTO rentals (id, cell_id, customer_id, start_date, end_date, duration_months, monthly_price, discount_percent, total_amount, auto_renew, status)
