@@ -18,7 +18,7 @@ const StoragePlanSection = () => {
           style={{ height: '70vh', minHeight: 420 }}
         >
           <iframe
-            src={`/plan/index.html?status=${statusUrl}&refresh=60000`}
+            src={`/plan/index.html?status=${statusUrl}&refresh=60000&view=top&panel=0`}
             title="План кладовок"
             loading="lazy"
             className="w-full h-full border-0"

@@ -27,7 +27,7 @@ const p = new URLSearchParams(location.search);
 const api = await mount('#plan', {
   model: p.get('model') || 'kladovka78-plan.glb',
   statusUrl: p.get('status') || null,
-  view: p.get('view') || 'iso',
+  view: p.get('view') || 'top',
   numbers: p.get('numbers') !== '0',
   panel: p.get('panel') !== '0',
   legend: p.get('legend') !== '0',
