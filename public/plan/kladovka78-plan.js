@@ -463,7 +463,7 @@ float hashB(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.545
     const p = new THREE.Vector3();
     new THREE.Box3().setFromObject(m).getCenter(p);
     orbit.target.copy(p);
-    camera.position.set(p.x - 4.5, p.y + 7.5, p.z + 6);
+    camera.position.set(p.x, p.y + 40, p.z + 0.01);
     orbit.update();
     showInfo(m);
     return true;
