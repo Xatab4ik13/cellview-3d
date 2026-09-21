@@ -899,6 +899,9 @@ const AdminCells = () => {
             toast.warning(`Ячейка обновлена, но фото не загружены: ${err?.message || 'ошибка сети'}`);
           }
         }
+        if (deletedPhotoUrls.length > 0 || editNewFiles.length > 0) {
+          await refetchCells();
+        }
         setIsEditDialogOpen(false);
         setEditingCell(null);
         setEditNewFiles([]);
