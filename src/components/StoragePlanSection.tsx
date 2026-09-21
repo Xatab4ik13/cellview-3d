@@ -19,6 +19,7 @@ type PlanWidgetApi = {
   setCut: (value: number) => void;
   setStatuses: (statuses: Record<string, PlanStatus>) => void;
   setFilter?: (filter: { cells?: number[]; statuses?: PlanStatus[]; tiers?: string[] }) => void;
+  listCells?: () => Array<{ cell?: string | number; tier?: string }>;
   destroy: () => void;
 };
 
@@ -188,7 +189,8 @@ const StoragePlanSection = () => {
       if (!planHostRef.current) return;
 
       try {
-        const module = await import(/* @vite-ignore */ '/plan/kladovka78-plan.js');
+        const planModulePath = '/plan/kladovka78-plan.js';
+        const module = await import(/* @vite-ignore */ planModulePath);
         if (isDisposed || !planHostRef.current) return;
 
         const api = await module.mount(planHostRef.current, {
