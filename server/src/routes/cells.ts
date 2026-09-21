@@ -71,6 +71,21 @@ cellsRouter.put('/recalculate-prices', async (req: Request, res: Response, next:
   }
 });
 
+// GET /api/cells/public-status — только номер и статус (для публичного плана)
+cellsRouter.get('/public-status', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT number AS cell, status FROM cells ORDER BY number ASC'
+    );
+    res.json({
+      success: true,
+      data: (rows as any[]).map(r => ({ cell: Number(r.cell), status: r.status })),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // GET /api/cells/:id — одна ячейка
 cellsRouter.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
