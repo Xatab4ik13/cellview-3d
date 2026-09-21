@@ -13,16 +13,6 @@ type LevelFilter = 'all' | '1' | '2';
 type StatusFilter = 'all' | PlanStatus;
 type DurationOption = 1 | 3 | 6 | 12;
 
-type PlanWidgetApi = {
-  focusCell: (cell: number | string) => boolean;
-  setView: (view: 'top' | 'iso' | 'south') => void;
-  setCut: (value: number) => void;
-  setStatuses: (statuses: Record<string, PlanStatus>) => void;
-  setFilter?: (filter: { cells?: number[]; statuses?: PlanStatus[]; tiers?: string[] }) => void;
-  listCells?: () => Array<{ cell?: string | number; tier?: string }>;
-  destroy: () => void;
-};
-
 type PublicCellInfo = {
   id?: string;
   cell?: number;
@@ -43,13 +33,6 @@ type DisplayPlanCell = {
   number: number;
   tier: number;
   generated?: boolean;
-};
-
-const statusStyles: Record<PlanStatus, string> = {
-  available: 'fill-secondary-green/25 stroke-secondary-green',
-  reserved: 'fill-accent/35 stroke-accent',
-  occupied: 'fill-destructive/25 stroke-destructive',
-  unknown: 'fill-muted-foreground/25 stroke-muted-foreground',
 };
 
 const statusDotStyles: Record<PlanStatus, string> = {
@@ -112,22 +95,15 @@ const getCellStatus = (number: number, statuses: Record<number, PlanStatus>): Pl
 const StoragePlanSection = () => {
   const navigate = useNavigate();
   const { data: discountSettings } = useDiscounts();
-  const planHostRef = useRef<HTMLDivElement | null>(null);
-  const planApiRef = useRef<PlanWidgetApi | null>(null);
-  const statusesRef = useRef<Record<number, PlanStatus>>({});
+  const planFrameRef = useRef<HTMLIFrameElement | null>(null);
   const [statuses, setStatuses] = useState<Record<number, PlanStatus>>({});
   const [cellDetails, setCellDetails] = useState<Record<number, PublicCellInfo>>({});
   const [modelCells, setModelCells] = useState<DisplayPlanCell[]>([]);
-  const [planError, setPlanError] = useState('');
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
   const [query, setQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState<LevelFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selectedDuration, setSelectedDuration] = useState<DurationOption>(1);
-
-  useEffect(() => {
-    statusesRef.current = statuses;
-  }, [statuses]);
 
   useEffect(() => {
     let isMounted = true;
@@ -183,61 +159,28 @@ const StoragePlanSection = () => {
   }, []);
 
   useEffect(() => {
-    let isDisposed = false;
-
-    const mountPlan = async () => {
-      if (!planHostRef.current) return;
-
-      try {
-        const planModulePath = '/plan/kladovka78-plan.js';
-        const module = await import(/* @vite-ignore */ planModulePath);
-        if (isDisposed || !planHostRef.current) return;
-
-        const api = await module.mount(planHostRef.current, {
-          model: '/plan/kladovka78-plan.glb',
-          threeBase: '/plan/three/',
-          view: 'top',
-          cut: 1.2,
-          numbers: true,
-          panel: false,
-          legend: false,
-          height: '640px',
-          statuses: Object.fromEntries(Object.entries(statusesRef.current).map(([number, status]) => [number, status])),
-          onSelect: (info: { cell?: string | number }) => {
-            const number = Number(info.cell);
-            if (Number.isFinite(number)) selectCell(number);
-          },
-          onReady: (readyApi: PlanWidgetApi) => {
-            const cells = readyApi
-              .listCells?.()
-              ?.map((cell: { cell?: string | number; tier?: string }) => ({
-                number: Number(cell.cell),
-                tier: String(cell.tier || '').includes('верх') ? 2 : 1,
-              }))
-              .filter((cell: DisplayPlanCell) => Number.isFinite(cell.number)) || [];
-            setModelCells(cells);
-          },
-        });
-        if (isDisposed) {
-          api.destroy();
-          return;
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      const data = event.data as { type?: string; cell?: string | number; cells?: Array<{ cell?: string | number; tier?: string }> };
+      if (data.type === 'kladovka78:cell') {
+        const number = Number(data.cell);
+        if (Number.isFinite(number)) {
+          setSelectedNumber(number);
+          setSelectedDuration(1);
         }
-        planApiRef.current = api;
-        api.setView('top');
-        api.setCut(1.2);
-        api.setStatuses(Object.fromEntries(Object.entries(statusesRef.current).map(([number, status]) => [number, status])));
-      } catch {
-        if (!isDisposed) setPlanError('План не загрузился');
+      }
+      if (data.type === 'kladovka78:ready') {
+        const cells = (data.cells || [])
+          .map((cell) => ({
+            number: Number(cell.cell),
+            tier: String(cell.tier || '').includes('верх') ? 2 : 1,
+          }))
+          .filter((cell): cell is DisplayPlanCell => Number.isFinite(cell.number));
+        setModelCells(cells);
       }
     };
-
-    mountPlan();
-
-    return () => {
-      isDisposed = true;
-      planApiRef.current?.destroy();
-      planApiRef.current = null;
-    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
   }, []);
 
   const planCells = useMemo<DisplayPlanCell[]>(() => {
@@ -280,19 +223,25 @@ const StoragePlanSection = () => {
   const selectCell = (number: number) => {
     setSelectedNumber(number);
     setSelectedDuration(1);
-    planApiRef.current?.focusCell(number);
+    planFrameRef.current?.contentWindow?.postMessage({ type: 'kladovka78:focus', cell: number }, window.location.origin);
   };
 
   useEffect(() => {
-    planApiRef.current?.setStatuses(Object.fromEntries(Object.entries(statuses).map(([number, status]) => [number, status])));
+    planFrameRef.current?.contentWindow?.postMessage({
+      type: 'kladovka78:statuses',
+      statuses: Object.fromEntries(Object.entries(statuses).map(([number, status]) => [number, status])),
+    }, window.location.origin);
   }, [statuses]);
 
   useEffect(() => {
-    planApiRef.current?.setFilter?.({
-      cells: visibleCells.filter((cell) => !cell.generated).map((cell) => cell.number),
-      statuses: statusFilter === 'all' ? undefined : [statusFilter],
-      tiers: levelFilter === 'all' ? undefined : [levelFilter],
-    });
+    planFrameRef.current?.contentWindow?.postMessage({
+      type: 'kladovka78:filter',
+      filter: {
+        cells: visibleCells.filter((cell) => !cell.generated).map((cell) => cell.number),
+        statuses: statusFilter === 'all' ? undefined : [statusFilter],
+        tiers: levelFilter === 'all' ? undefined : [levelFilter],
+      },
+    }, window.location.origin);
   }, [levelFilter, statusFilter, visibleCells]);
 
   const goToBooking = () => {
@@ -519,17 +468,13 @@ const StoragePlanSection = () => {
           </div>
 
           <div className="order-1 overflow-hidden rounded-2xl border-2 border-border bg-card p-2 shadow-card sm:p-3 xl:order-2">
-            <div
-              ref={planHostRef}
-              role="img"
+            <iframe
+              ref={planFrameRef}
+              title="Карта кладовок сверху"
               aria-label="Карта кладовок сверху"
+              src="/plan/index.html?view=top&panel=0&legend=0&numbers=1&refresh=0"
               className="h-[520px] w-full rounded-xl bg-muted md:h-[640px]"
             />
-            {planError && (
-              <div className="mt-3 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-                {planError}
-              </div>
-            )}
           </div>
         </div>
       </div>
