@@ -303,9 +303,10 @@ const AdminRevenue = () => {
           <thead className="bg-muted/20">
             <tr>
               <th className="text-left px-4 py-2 font-medium text-muted-foreground">Месяц</th>
-              <th className="text-right px-4 py-2 font-medium text-muted-foreground">Платежей</th>
+              <th className="text-right px-4 py-2 font-medium text-muted-foreground">{mode === 'cash' ? 'Платежей' : 'Начислений'}</th>
               <th className="text-right px-4 py-2 font-medium text-muted-foreground">Клиентов</th>
-              <th className="text-right px-4 py-2 font-medium text-muted-foreground">Поступило</th>
+              <th className="text-right px-4 py-2 font-medium text-muted-foreground">{mode === 'cash' ? 'Поступило' : 'Аренда'}</th>
+
               <th className="px-4 py-2"></th>
             </tr>
           </thead>
