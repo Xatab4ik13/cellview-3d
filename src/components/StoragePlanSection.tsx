@@ -168,14 +168,21 @@ const StoragePlanSection = () => {
     const loadStatuses = async () => {
       try {
         let rows: PublicCellInfo[] = [];
-        const urls = [`${API_BASE}/api/cells/public-status`, `${API_BASE}/api/cells`];
+        const urls = [
+          `${API_BASE}/api/cells/public-status`,
+          ...(import.meta.env.DEV ? [`${API_BASE}/api/cells`] : []),
+        ];
 
         for (const url of urls) {
-          const response = await fetch(url);
-          if (!response.ok) continue;
-          const json = await response.json();
-          rows = getPublicRows(json);
-          if (rows.length > 0) break;
+          try {
+            const response = await fetch(url);
+            if (!response.ok) continue;
+            const json = await response.json();
+            rows = getPublicRows(json);
+            if (rows.length > 0) break;
+          } catch {
+            continue;
+          }
         }
 
         const nextStatuses: Record<number, PlanStatus> = {};
@@ -268,6 +275,23 @@ const StoragePlanSection = () => {
     const maxY = Math.min(planBounds.maxY, Math.max(...ys) + 1.6);
     return `${minX} ${minY} ${Math.max(maxX - minX, 15)} ${Math.max(maxY - minY, 6)}`;
   }, [fullViewBox, planBounds, routePoints, selectedPoint]);
+
+  const mapViewBox = useMemo(() => {
+    if (selectedPoint && routePoints.length > 0) return viewBox;
+    if ((query || statusFilter !== 'all' || levelFilter !== 'all') && visibleCells.length > 0) {
+      const points = visibleCells.map((cell) => getDisplayPoint(cell, levelFilter));
+      const xs = points.map((point) => point.x);
+      const ys = points.map((point) => point.y);
+      const minX = Math.max(planBounds.minX, Math.min(...xs) - 2.4);
+      const maxX = Math.min(planBounds.maxX, Math.max(...xs) + 2.4);
+      const minY = Math.max(planBounds.minY, Math.min(...ys) - 1.8);
+      const maxY = Math.min(planBounds.maxY, Math.max(...ys) + 1.8);
+      return `${minX} ${minY} ${Math.max(maxX - minX, 14)} ${Math.max(maxY - minY, 5.2)}`;
+    }
+    return fullViewBox;
+  }, [fullViewBox, levelFilter, planBounds, query, routePoints.length, selectedPoint, statusFilter, viewBox, visibleCells]);
+
+  const generatedCells = useMemo(() => planCells.filter((cell) => cell.generated), [planCells]);
   const selectedVolume = Number(selectedInfo?.volume) || 0;
   const selectedMonthlyPrice = Number(selectedInfo?.pricePerMonth) || (selectedVolume > 0 ? calculatePrice(selectedVolume) : 0);
   const selectedDiscount = discountSettings?.[selectedDuration] ?? 0;
@@ -504,7 +528,7 @@ const StoragePlanSection = () => {
 
           <div className="order-1 overflow-x-auto rounded-2xl border-2 border-border bg-card p-2 shadow-card sm:p-3 xl:order-2">
             <svg
-              viewBox={viewBox}
+              viewBox={mapViewBox}
               role="img"
               aria-label="Карта кладовок сверху"
               preserveAspectRatio="xMidYMid meet"
@@ -519,6 +543,15 @@ const StoragePlanSection = () => {
               {PLAN_AREAS.map(([x, y, width, height], index) => (
                 <rect key={`area-${index}`} x={x} y={y} width={width} height={height} rx="0.12" className={areaStyles[index % areaStyles.length]} strokeWidth="0.04" />
               ))}
+
+              {generatedCells.length > 0 && (
+                <g>
+                  <rect x="0.25" y="13.7" width="41" height={Math.max(1.6, Math.ceil(generatedCells.length / 22) * 1.1 + 0.7)} rx="0.18" className="fill-secondary stroke-border" strokeWidth="0.06" />
+                  <text x="1.05" y="14.15" className="fill-muted-foreground text-[0.42px] font-extrabold uppercase">
+                    Добавленные ячейки
+                  </text>
+                </g>
+              )}
 
               {planCorridors.map(([x, y, width, height, label], index) => (
                 <g key={`corridor-${index}`}>
