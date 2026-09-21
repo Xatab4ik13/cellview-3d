@@ -2,6 +2,26 @@ import { useEffect, useRef } from 'react';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.kladovka78.ru';
 
+const PLAN_URL = '/plan/kladovka78-plan.js';
+
+// Загружаем виджет из статики (public), минуя обработку сборщика
+let planModulePromise: Promise<any> | null = null;
+function loadPlanModule(): Promise<any> {
+  if (planModulePromise) return planModulePromise;
+  planModulePromise = new Promise((resolve, reject) => {
+    const w = window as any;
+    w.__kladovka78PlanResolve = resolve;
+    w.__kladovka78PlanReject = reject;
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.textContent = `import(${JSON.stringify(
+      new URL(PLAN_URL, window.location.origin).href
+    )}).then(m => window.__kladovka78PlanResolve(m)).catch(e => window.__kladovka78PlanReject(e));`;
+    document.head.appendChild(script);
+  });
+  return planModulePromise;
+}
+
 const StoragePlanSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
