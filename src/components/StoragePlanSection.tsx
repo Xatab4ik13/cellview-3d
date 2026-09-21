@@ -7,7 +7,7 @@ import { PLAN_AREAS, PLAN_BOUNDS, PLAN_CELLS, PLAN_ENTRANCE, PLAN_MAIN_CORRIDOR_
 import { calculatePrice, CELL_STATUS_LABELS, type CellStatus } from '@/types/storage';
 import { useDiscounts } from '@/hooks/useSettings';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://api.kladovka78.ru';
+const API_BASE = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || 'https://api.kladovka78.ru');
 
 type PlanStatus = CellStatus | 'unknown';
 type LevelFilter = 'all' | '1' | '2';
@@ -75,6 +75,15 @@ const areaStyles = [
   'fill-secondary stroke-border',
 ];
 
+const planCorridors = [
+  [6.75, 5.95, 35.25, 0.85, 'Центральный проход'],
+  [9.65, 6.55, 31.1, 1.0, 'Проход'],
+  [9.65, 8.95, 31.1, 1.0, 'Проход'],
+  [9.65, 11.25, 31.1, 1.0, 'Проход'],
+  [17.1, 4.95, 1.45, 3.95, 'Проход'],
+  [0.1, 6.55, 9.25, 3.1, 'Проход'],
+] as const;
+
 const normalizeStatus = (status: unknown): PlanStatus => {
   const value = String(status || '').toLowerCase();
   if (value === 'available' || value.includes('свобод')) return 'available';
@@ -135,6 +144,12 @@ const generatedPoint = (number: number, index: number, info?: PublicCellInfo): D
   tier: Number(info?.tier) || 1,
   generated: true,
 });
+
+const hasAnyStatus = (statuses: Record<number, PlanStatus>) => Object.keys(statuses).length > 0;
+
+const getCellStatus = (number: number, statuses: Record<number, PlanStatus>): PlanStatus => (
+  statuses[number] || (hasAnyStatus(statuses) ? 'unknown' : 'available')
+);
 
 const StoragePlanSection = () => {
   const navigate = useNavigate();
@@ -223,13 +238,13 @@ const StoragePlanSection = () => {
   const cellsByNumber = useMemo(() => new Map(planCells.map((cell) => [cell.number, cell])), [planCells]);
   const selectedCell = selectedNumber ? cellsByNumber.get(selectedNumber) || null : null;
   const selectedInfo = selectedNumber ? cellDetails[selectedNumber] : undefined;
-  const selectedStatus = selectedNumber ? statuses[selectedNumber] || 'unknown' : 'unknown';
+  const selectedStatus = selectedNumber ? getCellStatus(selectedNumber, statuses) : 'unknown';
   const fullViewBox = `${planBounds.minX} ${planBounds.minY} ${planBounds.maxX - planBounds.minX} ${planBounds.maxY - planBounds.minY}`;
 
   const visibleCells = useMemo(() => {
     const number = Number(query.replace(/\D/g, ''));
     return planCells.filter((cell) => {
-      const status = statuses[cell.number] || 'unknown';
+      const status = getCellStatus(cell.number, statuses);
       const matchQuery = !query || (Number.isFinite(number) && String(cell.number).includes(String(number)));
       const matchLevel = levelFilter === 'all' || String(cell.tier) === levelFilter;
       const matchStatus = statusFilter === 'all' || status === statusFilter;
@@ -361,7 +376,7 @@ const StoragePlanSection = () => {
 
             <div className="mt-4 grid max-h-48 grid-cols-5 gap-2 overflow-auto pr-1 sm:grid-cols-6 xl:grid-cols-5">
               {visibleCells.map((cell) => {
-                const status = statuses[cell.number] || 'unknown';
+                const status = getCellStatus(cell.number, statuses);
                 return (
                   <Button
                     key={cell.number}
@@ -381,7 +396,7 @@ const StoragePlanSection = () => {
                 );
               })}
               {visibleCells.length === 0 && (
-                  <div className="col-span-5 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+                <div className="col-span-5 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
                   Ничего не найдено
                 </div>
               )}
@@ -487,13 +502,13 @@ const StoragePlanSection = () => {
             </Button>
           </div>
 
-          <div className="order-1 overflow-hidden rounded-2xl border-2 border-border bg-card p-2 shadow-card sm:overflow-x-auto sm:p-3 xl:order-2">
+          <div className="order-1 overflow-x-auto rounded-2xl border-2 border-border bg-card p-2 shadow-card sm:p-3 xl:order-2">
             <svg
               viewBox={viewBox}
               role="img"
               aria-label="Карта кладовок сверху"
               preserveAspectRatio="xMidYMid meet"
-              className="aspect-[43/14] w-full rounded-xl bg-muted"
+              className="aspect-[43/14] w-full min-w-[980px] rounded-xl bg-muted xl:min-w-[1120px]"
             >
               <defs>
                 <marker id="plan-route-arrow" markerWidth="0.8" markerHeight="0.8" refX="0.72" refY="0.4" orient="auto" markerUnits="strokeWidth">
@@ -503,6 +518,15 @@ const StoragePlanSection = () => {
 
               {PLAN_AREAS.map(([x, y, width, height], index) => (
                 <rect key={`area-${index}`} x={x} y={y} width={width} height={height} rx="0.12" className={areaStyles[index % areaStyles.length]} strokeWidth="0.04" />
+              ))}
+
+              {planCorridors.map(([x, y, width, height, label], index) => (
+                <g key={`corridor-${index}`}>
+                  <rect x={x} y={y} width={width} height={height} rx="0.18" className="fill-background/90 stroke-primary/30" strokeWidth="0.06" />
+                  <text x={x + width / 2} y={y + height / 2 + 0.13} textAnchor="middle" className="pointer-events-none fill-muted-foreground text-[0.34px] font-extrabold uppercase">
+                    {label}
+                  </text>
+                </g>
               ))}
 
               {PLAN_WALLS.map(([x, y, width, height], index) => (
@@ -542,10 +566,10 @@ const StoragePlanSection = () => {
 
               {visibleCells.map((cell) => {
                 const point = getDisplayPoint(cell, levelFilter);
-                const status = statuses[cell.number] || 'unknown';
+                const status = getCellStatus(cell.number, statuses);
                 const isSelected = selectedNumber === cell.number;
-                const markerWidth = levelFilter === 'all' ? 0.86 : 1.08;
-                const markerHeight = levelFilter === 'all' ? 0.62 : 0.78;
+                const markerWidth = levelFilter === 'all' ? 0.74 : 1.16;
+                const markerHeight = levelFilter === 'all' ? 0.54 : 0.84;
                 return (
                   <g
                     key={cell.number}
@@ -569,9 +593,9 @@ const StoragePlanSection = () => {
                     />
                     <text
                       x={point.x}
-                      y={point.y + (levelFilter === 'all' ? 0.13 : 0.16)}
+                      y={point.y + (levelFilter === 'all' ? 0.12 : 0.17)}
                       textAnchor="middle"
-                      className={`pointer-events-none ${levelFilter === 'all' ? 'text-[0.34px]' : 'text-[0.43px]'} font-extrabold ${isSelected ? 'fill-primary-foreground' : 'fill-foreground'}`}
+                      className={`pointer-events-none ${levelFilter === 'all' ? 'text-[0.34px]' : 'text-[0.48px]'} font-extrabold ${isSelected ? 'fill-primary-foreground' : 'fill-foreground'}`}
                     >
                       {cell.number}
                     </text>

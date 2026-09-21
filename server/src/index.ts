@@ -28,6 +28,10 @@ if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0') {
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const corsOrigins = (process.env.CORS_ORIGIN || 'https://kladovka78.ru')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
 
 // Security & parsing
 app.use(helmet({
@@ -35,7 +39,13 @@ app.use(helmet({
   crossOriginOpenerPolicy: { policy: 'unsafe-none' },
 }));
 app.use(cors({
-  origin: (process.env.CORS_ORIGIN || 'https://kladovka78.ru').split(',').map(s => s.trim()),
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (corsOrigins.includes(origin)) return callback(null, true);
+    if (/^https:\/\/.*\.lovable\.app$/.test(origin)) return callback(null, true);
+    if (/^http:\/\/localhost:\d+$/.test(origin)) return callback(null, true);
+    return callback(null, false);
+  },
   credentials: true,
 }));
 app.use(express.json());
