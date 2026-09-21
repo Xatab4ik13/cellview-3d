@@ -429,9 +429,10 @@ float hashB(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.545
   function showInfo(m){
     if (!m || !m.userData.cell){ info.style.display = 'none'; return; }
     const i = cellInfo(m);
+    const sizeText = Array.isArray(i.size) ? i.size.join(' × ') : i.size;
     info.style.display = 'block';
     info.innerHTML = `<div class="k">Ячейка</div><div class="l">№ ${i.cell} — ${i.statusRu}</div>
-      <div class="d">${[i.tier && ('ярус: ' + i.tier), i.size && ('габарит: ' + i.size.join(' × ') + ' м')].filter(Boolean).join(' · ')}</div>`;
+      <div class="d">${[i.tier && ('ярус: ' + i.tier), sizeText && ('габарит: ' + sizeText + ' м')].filter(Boolean).join(' · ')}</div>`;
     if (typeof o.onSelect === 'function') o.onSelect(i);
   }
   const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
