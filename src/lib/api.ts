@@ -113,9 +113,34 @@ export async function cancelCellReservation(id: string): Promise<void> {
 
 // ============ Фото ячеек ============
 
+// Фото с телефона бывают очень тяжёлыми (и в формате HEIC) — уменьшаем и переводим в JPEG
+async function prepareImageForUpload(file: File): Promise<File> {
+  const needsConvert = file.size > 2 * 1024 * 1024 || /heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name);
+  if (!needsConvert) return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const maxSide = 1920;
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return file;
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close?.();
+    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+    if (!blob) return file;
+    const name = file.name.replace(/\.[^.]+$/, '') || 'photo';
+    return new File([blob], `${name}.jpg`, { type: 'image/jpeg' });
+  } catch {
+    return file;
+  }
+}
+
 export async function uploadCellPhotos(cellId: string, files: File[]): Promise<{ url: string; sortOrder: number }[]> {
   const formData = new FormData();
-  files.forEach(file => formData.append('photos', file));
+  const prepared = await Promise.all(files.map(prepareImageForUpload));
+  prepared.forEach(file => formData.append('photos', file));
 
   const res = await fetch(`${API_BASE}/api/cells/${cellId}/photos`, {
     method: 'POST',
