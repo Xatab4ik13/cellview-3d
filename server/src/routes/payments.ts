@@ -127,6 +127,31 @@ async function createRentalFromPayment(payment: PaymentDbRow): Promise<string | 
     if (existing) {
       await conn.query('UPDATE payments SET rental_id = ? WHERE id = ?', [existing.id, payment.id]);
       await conn.query("UPDATE cells SET status = 'occupied', reserved_until = NULL WHERE id = ?", [payment.cell_id]);
+
+      // Помесячная разбивка оплаты — раньше в этой ветке не создавалась,
+      // из-за чего предоплата не попадала в выручку по месяцам аренды.
+      const [existingEntries] = await conn.query(
+        'SELECT COUNT(*) AS cnt FROM revenue_entries WHERE payment_id = ?',
+        [payment.id]
+      );
+      if (((existingEntries as any[])[0]?.cnt || 0) === 0) {
+        const [rentalRows] = await conn.query('SELECT start_date FROM rentals WHERE id = ? LIMIT 1', [existing.id]);
+        const rentalStart = (rentalRows as any[])[0]?.start_date
+          ? new Date((rentalRows as any[])[0].start_date)
+          : new Date();
+        const monthlyAmount = Math.floor(amountRubles / duration);
+        const remainder = amountRubles - monthlyAmount * duration;
+        for (let i = 0; i < duration; i++) {
+          const entryMonth = new Date(rentalStart.getFullYear(), rentalStart.getMonth() + i, 1);
+          const monthStr = `${entryMonth.getFullYear()}-${String(entryMonth.getMonth() + 1).padStart(2, '0')}-01`;
+          const amount = i === 0 ? monthlyAmount + remainder : monthlyAmount;
+          await conn.query(
+            `INSERT INTO revenue_entries (id, rental_id, customer_id, cell_id, month, amount, payment_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [`rev-${existing.id}-link-${i}`, existing.id, payment.customer_id, payment.cell_id, monthStr, amount, payment.id]
+          );
+        }
+      }
+
       await conn.commit();
       return existing.id as string;
     }
