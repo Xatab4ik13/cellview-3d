@@ -206,8 +206,12 @@ async function createRentalFromPayment(payment: PaymentDbRow): Promise<string | 
 async function extendRentalFromPayment(payment: PaymentDbRow): Promise<void> {
   if (!payment.rental_id) return;
   const months = Number(payment.duration_months) || 1;
-  const monthlyPrice = Number(payment.monthly_price) || Math.round(payment.amount / 100 / months);
   const addedAmount = Math.round(payment.amount / 100);
+  const fallbackMonthly = Math.round(addedAmount / months);
+  const storedMonthly = Number(payment.monthly_price) || 0;
+  // Защита от данных, где monthly_price записан в копейках: он не может превышать всю сумму платежа
+  const monthlyPrice = storedMonthly > 0 && storedMonthly <= addedAmount ? storedMonthly : fallbackMonthly;
+
 
   const conn = await pool.getConnection();
   try {
