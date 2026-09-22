@@ -16,29 +16,50 @@ if (!fs.existsSync(CELLS_DIR)) {
 }
 
 // Multer config
+const MIME_EXT: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/jpg': '.jpg',
+  'image/pjpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+  'image/heic': '.heic',
+  'image/heif': '.heif',
+  'image/heic-sequence': '.heic',
+  'image/heif-sequence': '.heif',
+};
+
+const ALLOWED_EXT = ['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'];
+
+const resolveExt = (file: Express.Multer.File) => {
+  const ext = path.extname(file.originalname || '').toLowerCase();
+  if (ALLOWED_EXT.includes(ext)) return ext;
+  return MIME_EXT[(file.mimetype || '').toLowerCase()] || '';
+};
+
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, CELLS_DIR),
   filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
+    const ext = resolveExt(file) || '.jpg';
     const uniqueName = `cell-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
     cb(null, uniqueName);
   },
 });
 
 const fileFilter = (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowed = ['.jpg', '.jpeg', '.png', '.webp'];
-  const ext = path.extname(file.originalname).toLowerCase();
-  if (allowed.includes(ext)) {
+  // Телефоны (iPhone) часто присылают HEIC или файл без расширения —
+  // поэтому проверяем и расширение, и MIME-тип.
+  const mime = (file.mimetype || '').toLowerCase();
+  if (resolveExt(file) || mime.startsWith('image/')) {
     cb(null, true);
   } else {
-    cb(new AppError('Допустимые форматы: JPG, PNG, WebP', 400));
+    cb(new AppError('Допустимые форматы: JPG, PNG, WebP, HEIC', 400));
   }
 };
 
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25 MB — фото с телефона бывают тяжёлыми
 });
 
 // POST /api/cells/:cellId/photos — загрузить фото (до 5 за раз)
