@@ -21,6 +21,8 @@ const fillByStatus: Record<Status, string> = {
 
 const CELL_LONG = 1.0;
 const CELL_SHORT = 0.9;
+// Door openings in the thick walls: short (0.85–1.25 m) pieces of a 0.49 m wall.
+const isDoor = (w: number, h: number) => Math.min(w, h) >= 0.4 && Math.max(w, h) >= 0.85 && Math.max(w, h) <= 1.25;
 
 const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getStatus, onSelect }: Props) => {
   const { minX, minY, maxX, maxY } = PLAN_BOUNDS;
@@ -61,7 +63,11 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
       for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) blocked[r * cols + c] = v;
     };
     const PAD = 0.15;
-    PLAN_WALLS.forEach(([x, y, w2, h2]) => mark(x - PAD, y - PAD, x + w2 + PAD, y + h2 + PAD, 1));
+    PLAN_WALLS.forEach(([x, y, w2, h2]) => {
+      if (isDoor(w2, h2)) return;
+      const pad = Math.min(w2, h2) < 0.12 ? 0 : PAD;
+      mark(x - pad, y - pad, x + w2 + pad, y + h2 + pad, 1);
+    });
     PLAN_CELLS.forEach((c) => {
       const isV = c.orientation === 'v';
       const fw = (isV ? CELL_LONG : CELL_SHORT) / 2, fh = (isV ? CELL_SHORT : CELL_LONG) / 2;
@@ -180,7 +186,7 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
       <rect x={0} y={0} width={vbW} height={vbH} fill={`url(#plan-grid-${tier})`} />
 
       {PLAN_WALLS.map(([x, y, rw, rh], i) => (
-        <rect key={i} {...rect(x, y, rw, rh)} className={Math.min(rw, rh) < 0.12 ? 'fill-foreground/15' : 'fill-foreground/40'} />
+        <rect key={i} {...rect(x, y, rw, rh)} className={isDoor(rw, rh) ? 'fill-accent/40' : Math.min(rw, rh) < 0.12 ? 'fill-foreground/15' : 'fill-foreground/40'} />
       ))}
 
       {route && (
