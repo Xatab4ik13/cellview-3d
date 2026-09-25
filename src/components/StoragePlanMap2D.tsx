@@ -13,7 +13,7 @@ type Props = {
 };
 
 const fillByStatus: Record<Status, string> = {
-  available: 'fill-emerald-500',
+  available: 'fill-secondary-green',
   reserved: 'fill-accent',
   occupied: 'fill-destructive',
   unknown: 'fill-muted-foreground',
