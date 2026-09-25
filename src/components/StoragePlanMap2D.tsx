@@ -36,6 +36,74 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
   const cells = useMemo(() => PLAN_CELLS.filter((c) => c.tier === tier), [tier]);
   const selected = PLAN_CELLS.find((c) => c.number === selectedNumber) || null;
 
+  // Drawn cell rects: slightly inset from the real footprint, then relaxed so
+  // neighbours whose real pitch is tighter than MIN_GAP are pushed apart —
+  // every aisle between lockers stays visible and readable on screen.
+  const rects = useMemo(() => {
+    const INSET = 0.16;
+    const MIN_GAP = 0.38;
+    type R = { x1: number; y1: number; x2: number; y2: number; fw: number; fh: number; cx: number; cy: number };
+    const list: R[] = cells.map((c) => {
+      const isV = c.orientation === 'v';
+      const fw = isV ? CELL_LONG : CELL_SHORT;
+      const fh = isV ? CELL_SHORT : CELL_LONG;
+      return {
+        x1: c.x - fw / 2 + INSET,
+        y1: c.y - fh / 2 + INSET,
+        x2: c.x + fw / 2 - INSET,
+        y2: c.y + fh / 2 - INSET,
+        fw,
+        fh,
+        cx: c.x,
+        cy: c.y,
+      };
+    });
+    // Pull one edge of a cell toward its centre by `amount`, never shrinking
+    // it below 55% of its real footprint. Returns the applied distance.
+    const shrink = (r: R, axis: 'x' | 'y', side: 1 | -1, amount: number) => {
+      const full = axis === 'x' ? r.fw : r.fh;
+      const len = axis === 'x' ? r.x2 - r.x1 : r.y2 - r.y1;
+      const use = Math.min(Math.max(0, amount), Math.max(0, len - full * 0.55));
+      if (axis === 'x') {
+        if (side === 1) r.x2 -= use;
+        else r.x1 += use;
+      } else if (side === 1) r.y2 -= use;
+      else r.y1 += use;
+      return use;
+    };
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        const a = list[i];
+        const b = list[j];
+        // Neighbours in the same row share their centre Y: widen the gap
+        // between them horizontally.
+        if (Math.abs(a.cy - b.cy) < 0.05) {
+          const left = a.cx <= b.cx ? a : b;
+          const right = left === a ? b : a;
+          const gap = right.x1 - left.x2;
+          if (gap < MIN_GAP) {
+            const need = MIN_GAP - gap;
+            const useL = shrink(left, 'x', 1, need / 2);
+            shrink(right, 'x', -1, need - useL);
+          }
+        }
+        // Neighbours in the same column share their centre X: widen the gap
+        // between them vertically.
+        if (Math.abs(a.cx - b.cx) < 0.05) {
+          const top = a.cy <= b.cy ? a : b;
+          const bottom = top === a ? b : a;
+          const gap = bottom.y1 - top.y2;
+          if (gap < MIN_GAP) {
+            const need = MIN_GAP - gap;
+            const useT = shrink(top, 'y', 1, need / 2);
+            shrink(bottom, 'y', -1, need - useT);
+          }
+        }
+      }
+    }
+    return list;
+  }, [cells]);
+
   const routePoints = useMemo(() => {
     if (!selected) return [] as Array<[number, number]>;
     const pts: Array<[number, number]> = [[PLAN_ENTRANCE.x, PLAN_ENTRANCE.y]];
