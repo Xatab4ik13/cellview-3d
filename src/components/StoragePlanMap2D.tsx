@@ -62,16 +62,18 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
       const r1 = Math.max(0, Math.floor((y1 - gy0) / STEP)), r2 = Math.min(rows - 1, Math.ceil((y2 - gy0) / STEP));
       for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) blocked[r * cols + c] = v;
     };
-    const PAD = 0.15;
+    const PAD = 0.08;
     PLAN_WALLS.forEach(([x, y, w2, h2]) => {
       if (isDoor(w2, h2)) return;
-      const pad = Math.min(w2, h2) < 0.12 ? 0 : PAD;
-      mark(x - pad, y - pad, x + w2 + pad, y + h2 + pad, 1);
+      // Thin locker partitions are strongly avoided but not hard walls
+      // (the drawing does not always leave a gap at the aisle end).
+      if (Math.min(w2, h2) < 0.12) mark(x, y, x + w2, y + h2, 2);
+      else mark(x - PAD, y - PAD, x + w2 + PAD, y + h2 + PAD, 1);
     });
     PLAN_CELLS.forEach((c) => {
       const isV = c.orientation === 'v';
       const fw = (isV ? CELL_LONG : CELL_SHORT) / 2, fh = (isV ? CELL_SHORT : CELL_LONG) / 2;
-      mark(c.x - fw - PAD, c.y - fh - PAD, c.x + fw + PAD, c.y + fh + PAD, 1);
+      mark(c.x - fw, c.y - fh, c.x + fw, c.y + fh, 1);
     });
     return { STEP, gx0, gy0, cols, rows, blocked };
   }, [minX, maxX, maxY, topY]);
@@ -90,7 +92,7 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
         for (let r = r0 - d; r <= r0 + d; r++) for (let c = c0 - d; c <= c0 + d; c++) {
           if (r < 0 || c < 0 || r >= rows || c >= cols) continue;
           if (Math.max(Math.abs(r - r0), Math.abs(c - c0)) !== d) continue;
-          if (!blocked[r * cols + c]) { const dd = (r - r0) ** 2 + (c - c0) ** 2; if (dd < bd) { bd = dd; best = r * cols + c; } }
+          if (blocked[r * cols + c] !== 1) { const dd = (r - r0) ** 2 + (c - c0) ** 2; if (dd < bd) { bd = dd; best = r * cols + c; } }
         }
         if (best >= 0) return best;
       }
@@ -127,8 +129,8 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
         const nc = c + DC[nd], nr = r + DR[nd];
         if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
         const nn = nr * cols + nc;
-        if (blocked[nn]) continue;
-        const cost = d + 1 + (nd !== dir ? 8 : 0);
+        if (blocked[nn] === 1) continue;
+        const cost = d + 1 + (nd !== dir ? 8 : 0) + (blocked[nn] === 2 ? 60 : 0);
         const ns = nn * 4 + nd;
         if (cost < dist[ns]) { dist[ns] = cost; prev[ns] = s; push(cost, ns); }
       }
