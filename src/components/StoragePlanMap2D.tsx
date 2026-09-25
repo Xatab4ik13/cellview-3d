@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PLAN_BOUNDS, PLAN_CELLS, PLAN_ENTRANCE, PLAN_WALLS } from '@/data/storagePlanMap';
+import { PLAN_AREAS, PLAN_BOUNDS, PLAN_CELLS, PLAN_ENTRANCE, PLAN_WALLS } from '@/data/storagePlanMap';
 
 type Status = 'available' | 'reserved' | 'occupied' | 'unknown';
 
@@ -62,6 +62,13 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
       const r1 = Math.max(0, Math.floor((y1 - gy0) / STEP)), r2 = Math.min(rows - 1, Math.ceil((y2 - gy0) / STEP));
       for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) blocked[r * cols + c] = Math.max(blocked[r * cols + c], v) === 2 && blocked[r * cols + c] === 1 ? 1 : v === 1 ? 1 : Math.max(blocked[r * cols + c], v);
     };
+    // Only the inside of the building is walkable.
+    blocked.fill(1);
+    PLAN_AREAS.forEach(([x, y, w2, h2]) => {
+      const c1 = Math.max(0, Math.ceil((x - gx0) / STEP)), c2 = Math.min(cols - 1, Math.floor((x + w2 - gx0) / STEP));
+      const r1 = Math.max(0, Math.ceil((y - gy0) / STEP)), r2 = Math.min(rows - 1, Math.floor((y + h2 - gy0) / STEP));
+      for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) blocked[r * cols + c] = 0;
+    });
     const PAD = 0.08;
     PLAN_WALLS.forEach(([x, y, w2, h2]) => {
       if (isDoor(w2, h2)) return;
