@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PLAN_BOUNDS, PLAN_CELLS, PLAN_ENTRANCE, PLAN_MAIN_CORRIDOR_Y, PLAN_WALLS } from '@/data/storagePlanMap';
+import { PLAN_BOUNDS, PLAN_CELLS, PLAN_ENTRANCE, PLAN_WALLS } from '@/data/storagePlanMap';
 
 type Status = 'available' | 'reserved' | 'occupied' | 'unknown';
 
@@ -36,85 +36,119 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
   const cells = useMemo(() => PLAN_CELLS.filter((c) => c.tier === tier), [tier]);
   const selected = PLAN_CELLS.find((c) => c.number === selectedNumber) || null;
 
-  // Drawn cell rects: slightly inset from the real footprint, then relaxed so
-  // neighbours whose real pitch is tighter than MIN_GAP are pushed apart —
-  // every aisle between lockers stays visible and readable on screen.
+  // Drawn cell rects: real footprint with a thin gap so neighbours stay distinct.
   const rects = useMemo(() => {
-    const INSET = 0.16;
-    const MIN_GAP = 0.38;
-    type R = { x1: number; y1: number; x2: number; y2: number; fw: number; fh: number; cx: number; cy: number };
-    const list: R[] = cells.map((c) => {
+    const INSET = 0.05;
+    return cells.map((c) => {
       const isV = c.orientation === 'v';
       const fw = isV ? CELL_LONG : CELL_SHORT;
       const fh = isV ? CELL_SHORT : CELL_LONG;
-      return {
-        x1: c.x - fw / 2 + INSET,
-        y1: c.y - fh / 2 + INSET,
-        x2: c.x + fw / 2 - INSET,
-        y2: c.y + fh / 2 - INSET,
-        fw,
-        fh,
-        cx: c.x,
-        cy: c.y,
-      };
+      return { x1: c.x - fw / 2 + INSET, y1: c.y - fh / 2 + INSET, x2: c.x + fw / 2 - INSET, y2: c.y + fh / 2 - INSET };
     });
-    // Pull one edge of a cell toward its centre by `amount`, never shrinking
-    // it below 55% of its real footprint. Returns the applied distance.
-    const shrink = (r: R, axis: 'x' | 'y', side: 1 | -1, amount: number) => {
-      const full = axis === 'x' ? r.fw : r.fh;
-      const len = axis === 'x' ? r.x2 - r.x1 : r.y2 - r.y1;
-      const use = Math.min(Math.max(0, amount), Math.max(0, len - full * 0.55));
-      if (axis === 'x') {
-        if (side === 1) r.x2 -= use;
-        else r.x1 += use;
-      } else if (side === 1) r.y2 -= use;
-      else r.y1 += use;
-      return use;
-    };
-    for (let i = 0; i < list.length; i++) {
-      for (let j = i + 1; j < list.length; j++) {
-        const a = list[i];
-        const b = list[j];
-        // Neighbours in the same row share their centre Y: widen the gap
-        // between them horizontally.
-        if (Math.abs(a.cy - b.cy) < 0.05) {
-          const left = a.cx <= b.cx ? a : b;
-          const right = left === a ? b : a;
-          const gap = right.x1 - left.x2;
-          if (gap < MIN_GAP) {
-            const need = MIN_GAP - gap;
-            const useL = shrink(left, 'x', 1, need / 2);
-            shrink(right, 'x', -1, need - useL);
-          }
-        }
-        // Neighbours in the same column share their centre X: widen the gap
-        // between them vertically.
-        if (Math.abs(a.cx - b.cx) < 0.05) {
-          const top = a.cy <= b.cy ? a : b;
-          const bottom = top === a ? b : a;
-          const gap = bottom.y1 - top.y2;
-          if (gap < MIN_GAP) {
-            const need = MIN_GAP - gap;
-            const useT = shrink(top, 'y', 1, need / 2);
-            shrink(bottom, 'y', -1, need - useT);
-          }
-        }
-      }
-    }
-    return list;
   }, [cells]);
+
+  // Walkable grid: walls and all lockers are obstacles; the route is found
+  // through the free aisles only (orthogonal moves, penalised turns).
+  const grid = useMemo(() => {
+    const STEP = 0.1;
+    const gx0 = minX, gy0 = topY;
+    const cols = Math.ceil((maxX - minX) / STEP) + 1;
+    const rows = Math.ceil((maxY - topY) / STEP) + 1;
+    const blocked = new Uint8Array(cols * rows);
+    const mark = (x1: number, y1: number, x2: number, y2: number, v: number) => {
+      const c1 = Math.max(0, Math.floor((x1 - gx0) / STEP)), c2 = Math.min(cols - 1, Math.ceil((x2 - gx0) / STEP));
+      const r1 = Math.max(0, Math.floor((y1 - gy0) / STEP)), r2 = Math.min(rows - 1, Math.ceil((y2 - gy0) / STEP));
+      for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) blocked[r * cols + c] = v;
+    };
+    const PAD = 0.15;
+    PLAN_WALLS.forEach(([x, y, w2, h2]) => mark(x - PAD, y - PAD, x + w2 + PAD, y + h2 + PAD, 1));
+    PLAN_CELLS.forEach((c) => {
+      const isV = c.orientation === 'v';
+      const fw = (isV ? CELL_LONG : CELL_SHORT) / 2, fh = (isV ? CELL_SHORT : CELL_LONG) / 2;
+      mark(c.x - fw - PAD, c.y - fh - PAD, c.x + fw + PAD, c.y + fh + PAD, 1);
+    });
+    return { STEP, gx0, gy0, cols, rows, blocked };
+  }, [minX, maxX, maxY, topY]);
 
   const routePoints = useMemo(() => {
     if (!selected) return [] as Array<[number, number]>;
-    const pts: Array<[number, number]> = [[PLAN_ENTRANCE.x, PLAN_ENTRANCE.y]];
-    const nearEntranceZone = selected.y < PLAN_MAIN_CORRIDOR_Y && selected.x < 14.5;
-    if (nearEntranceZone) {
-      pts.push([PLAN_ENTRANCE.x, selected.y]);
-    } else {
-      pts.push([PLAN_ENTRANCE.x, PLAN_MAIN_CORRIDOR_Y], [selected.x, PLAN_MAIN_CORRIDOR_Y], [selected.x, selected.y]);
+    const { STEP, gx0, gy0, cols, rows, blocked } = grid;
+    const toC = (x: number) => Math.min(cols - 1, Math.max(0, Math.round((x - gx0) / STEP)));
+    const toR = (y: number) => Math.min(rows - 1, Math.max(0, Math.round((y - gy0) / STEP)));
+    const N = cols * rows;
+    // Nearest free node to a point (spiral search).
+    const nearestFree = (x: number, y: number) => {
+      const c0 = toC(x), r0 = toR(y);
+      for (let d = 0; d < 40; d++) {
+        let best = -1, bd = Infinity;
+        for (let r = r0 - d; r <= r0 + d; r++) for (let c = c0 - d; c <= c0 + d; c++) {
+          if (r < 0 || c < 0 || r >= rows || c >= cols) continue;
+          if (Math.max(Math.abs(r - r0), Math.abs(c - c0)) !== d) continue;
+          if (!blocked[r * cols + c]) { const dd = (r - r0) ** 2 + (c - c0) ** 2; if (dd < bd) { bd = dd; best = r * cols + c; } }
+        }
+        if (best >= 0) return best;
+      }
+      return -1;
+    };
+    const start = nearestFree(PLAN_ENTRANCE.x, PLAN_ENTRANCE.y + 0.6);
+    const goal = nearestFree(selected.x, selected.y);
+    if (start < 0 || goal < 0) return [[PLAN_ENTRANCE.x, PLAN_ENTRANCE.y], [selected.x, selected.y]] as Array<[number, number]>;
+    // Dijkstra over (node, direction) with a turn penalty.
+    const DC = [1, -1, 0, 0], DR = [0, 0, 1, -1];
+    const dist = new Float32Array(N * 4).fill(Infinity);
+    const prev = new Int32Array(N * 4).fill(-1);
+    const heap: Array<[number, number]> = [];
+    const push = (d: number, s: number) => {
+      heap.push([d, s]); let i = heap.length - 1;
+      while (i > 0) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; }
+    };
+    const pop = () => {
+      const top = heap[0]; const last = heap.pop()!;
+      if (heap.length) { heap[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i;
+        if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r;
+        if (m === i) break; [heap[m], heap[i]] = [heap[i], heap[m]]; i = m; } }
+      return top;
+    };
+    for (let d = 0; d < 4; d++) { dist[start * 4 + d] = 0; push(0, start * 4 + d); }
+    let end = -1;
+    while (heap.length) {
+      const [d, s] = pop();
+      if (d > dist[s]) continue;
+      const node = s >> 2, dir = s & 3;
+      if (node === goal) { end = s; break; }
+      const c = node % cols, r = (node / cols) | 0;
+      for (let nd = 0; nd < 4; nd++) {
+        const nc = c + DC[nd], nr = r + DR[nd];
+        if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
+        const nn = nr * cols + nc;
+        if (blocked[nn]) continue;
+        const cost = d + 1 + (nd !== dir ? 8 : 0);
+        const ns = nn * 4 + nd;
+        if (cost < dist[ns]) { dist[ns] = cost; prev[ns] = s; push(cost, ns); }
+      }
     }
+    if (end < 0) return [] as Array<[number, number]>;
+    const nodes: number[] = [];
+    for (let s = end; s >= 0; s = prev[s]) nodes.push(s >> 2);
+    nodes.reverse();
+    const pts: Array<[number, number]> = [[PLAN_ENTRANCE.x, PLAN_ENTRANCE.y]];
+    const pt = (n: number): [number, number] => [gx0 + (n % cols) * STEP, gy0 + ((n / cols) | 0) * STEP];
+    nodes.forEach((n, i) => {
+      const p = pt(n);
+      if (i === 0 || i === nodes.length - 1) { pts.push(p); return; }
+      const a = pt(nodes[i - 1]), b = pt(nodes[i + 1]);
+      const straight = (Math.abs(a[0] - b[0]) < 1e-6) || (Math.abs(a[1] - b[1]) < 1e-6);
+      if (!straight) pts.push(p);
+    });
+    // Final short step to the locker door.
+    const last = pts[pts.length - 1];
+    const isV = selected.orientation === 'v';
+    const hw = (isV ? CELL_LONG : CELL_SHORT) / 2, hh = (isV ? CELL_SHORT : CELL_LONG) / 2;
+    const ex = Math.min(selected.x + hw, Math.max(selected.x - hw, last[0]));
+    const ey = Math.min(selected.y + hh, Math.max(selected.y - hh, last[1]));
+    if (Math.abs(ex - last[0]) < 0.6 && Math.abs(ey - last[1]) < 0.6) pts.push([ex, ey]);
     return pts;
-  }, [selected, vertical]);
+  }, [selected, grid]);
 
   const route = useMemo(
     () => routePoints.map(([x, y], i) => { const p = tr(x, y); return `${i ? 'L' : 'M'}${p.x.toFixed(2)},${p.y.toFixed(2)}`; }).join(' '),
@@ -146,7 +180,7 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
       <rect x={0} y={0} width={vbW} height={vbH} fill={`url(#plan-grid-${tier})`} />
 
       {PLAN_WALLS.map(([x, y, rw, rh], i) => (
-        <rect key={i} {...rect(x, y, rw, rh)} className="fill-foreground/40" />
+        <rect key={i} {...rect(x, y, rw, rh)} className={Math.min(rw, rh) < 0.12 ? 'fill-foreground/15' : 'fill-foreground/40'} />
       ))}
 
       {route && (
@@ -175,7 +209,7 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
         const isSel = c.number === selectedNumber;
         const dim = !visibleNumbers.has(c.number);
         const isLight = getStatus(c.number) === 'available';
-        const fontSize = Math.min(0.4, Math.max(0.3, Math.min(cellW, cellH) * 0.62));
+        const fontSize = Math.min(0.46, Math.max(0.3, Math.min(cellW, cellH) * 0.55));
         return (
           <g
             key={c.number}
