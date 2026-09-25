@@ -78,7 +78,7 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
       <rect x={0} y={0} width={vbW} height={vbH} fill={`url(#plan-grid-${tier})`} />
 
       {PLAN_WALLS.map(([x, y, rw, rh], i) => (
-        <rect key={i} {...rect(x, y, rw, rh)} className="fill-foreground/55" />
+        <rect key={i} {...rect(x, y, rw, rh)} className="fill-foreground/40" />
       ))}
 
       {route && (
