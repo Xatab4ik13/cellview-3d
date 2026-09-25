@@ -15,7 +15,7 @@ type Props = {
 const fillByStatus: Record<Status, string> = {
   available: 'fill-secondary',
   reserved: 'fill-accent',
-  occupied: 'fill-primary',
+  occupied: 'fill-destructive',
   unknown: 'fill-muted-foreground',
 };
 
