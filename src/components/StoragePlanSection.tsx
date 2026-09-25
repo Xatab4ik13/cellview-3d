@@ -471,8 +471,13 @@ const StoragePlanSection = () => {
                   </Button>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground">Нажмите на ячейку, чтобы увидеть маршрут от входа</p>
+              <div className="flex items-center gap-3 text-[11px] font-bold text-foreground">
+                <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm border-2 border-foreground/70 bg-secondary-green" />Свободна</span>
+                <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm border-2 border-foreground/70 bg-accent" />Бронь</span>
+                <span className="inline-flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm border-2 border-foreground/70 bg-destructive" />Занята</span>
+              </div>
             </div>
+            <p className="mb-2 text-xs text-muted-foreground">Нажмите на ячейку, чтобы увидеть маршрут от входа</p>
             <div className={isMobile ? 'mx-auto max-w-[420px]' : ''}>
               <StoragePlanMap2D
                 tier={mapTier}
