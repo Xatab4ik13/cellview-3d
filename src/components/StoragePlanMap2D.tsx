@@ -224,7 +224,6 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
         const isSel = c.number === selectedNumber;
         const dim = !visibleNumbers.has(c.number);
         const fontSize = Math.min(0.46, Math.max(0.3, Math.min(cellW, cellH) * 0.55));
-        const fontSize = Math.min(0.46, Math.max(0.3, Math.min(cellW, cellH) * 0.55));
         return (
           <g
             key={c.number}
