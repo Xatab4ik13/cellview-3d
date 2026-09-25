@@ -13,7 +13,7 @@ type Props = {
 };
 
 const fillByStatus: Record<Status, string> = {
-  available: 'fill-secondary',
+  available: 'fill-emerald-500',
   reserved: 'fill-accent',
   occupied: 'fill-destructive',
   unknown: 'fill-muted-foreground',
@@ -223,7 +223,6 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
         const center = tr(c.x, c.y);
         const isSel = c.number === selectedNumber;
         const dim = !visibleNumbers.has(c.number);
-        const isLight = getStatus(c.number) === 'available';
         const fontSize = Math.min(0.46, Math.max(0.3, Math.min(cellW, cellH) * 0.55));
         return (
           <g
@@ -255,30 +254,16 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
             )}
             <text
               x={center.x}
-              y={center.y - (isLight ? fontSize * 0.28 : 0)}
+              y={center.y}
               textAnchor="middle"
               dominantBaseline="central"
               fontSize={fontSize}
               fontWeight={800}
-              className={`pointer-events-none ${isLight ? 'fill-foreground' : 'fill-background'}`}
-              style={isLight ? undefined : { paintOrder: 'stroke', stroke: 'hsl(var(--foreground))', strokeWidth: 0.03 }}
+              className="pointer-events-none fill-background"
+              style={{ paintOrder: 'stroke', stroke: 'hsl(var(--foreground))', strokeWidth: 0.03 }}
             >
               {c.number}
             </text>
-            {isLight && (
-              <text
-                x={center.x}
-                y={center.y + fontSize * 0.62}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize={Math.min(0.3, fontSize * 0.6)}
-                fontWeight={700}
-                className="pointer-events-none fill-foreground"
-                opacity={0.65}
-              >
-                Свободна
-              </text>
-            )}
           </g>
         );
       })}
