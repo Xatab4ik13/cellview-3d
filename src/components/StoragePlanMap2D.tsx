@@ -166,18 +166,16 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
         {PLAN_ENTRANCE.label}
       </text>
 
-      {cells.map((c) => {
-        const isV = c.orientation === 'v';
-        const cw = isV ? CELL_LONG : CELL_SHORT;
-        const ch = isV ? CELL_SHORT : CELL_LONG;
-        // Draw cells slightly smaller than their real footprint so the
-        // passageways between them stay visible at every scale.
-        const inset = 0.14;
-        const r = rect(c.x - (cw - inset) / 2, c.y - (ch - inset) / 2, cw - inset, ch - inset);
+      {cells.map((c, idx) => {
+        const dr = rects[idx];
+        const r = rect(dr.x1, dr.y1, dr.x2 - dr.x1, dr.y2 - dr.y1);
+        const cellW = dr.x2 - dr.x1;
+        const cellH = dr.y2 - dr.y1;
         const center = tr(c.x, c.y);
         const isSel = c.number === selectedNumber;
         const dim = !visibleNumbers.has(c.number);
         const isLight = getStatus(c.number) === 'available';
+        const fontSize = Math.min(0.4, Math.max(0.3, Math.min(cellW, cellH) * 0.62));
         return (
           <g
             key={c.number}
@@ -187,10 +185,10 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
           >
             {isSel && (
               <rect
-                x={r.x - 0.14}
-                y={r.y - 0.14}
-                width={r.width + 0.28}
-                height={r.height + 0.28}
+                x={r.x - 0.12}
+                y={r.y - 0.12}
+                width={r.width + 0.24}
+                height={r.height + 0.24}
                 rx={0.14}
                 fill="none"
                 className="stroke-accent"
@@ -211,7 +209,7 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
               y={center.y}
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize={0.4}
+              fontSize={fontSize}
               fontWeight={800}
               className={`pointer-events-none ${isLight ? 'fill-foreground' : 'fill-background'}`}
               style={isLight ? undefined : { paintOrder: 'stroke', stroke: 'hsl(var(--foreground))', strokeWidth: 0.03 }}
