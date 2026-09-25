@@ -60,7 +60,7 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
     const mark = (x1: number, y1: number, x2: number, y2: number, v: number) => {
       const c1 = Math.max(0, Math.floor((x1 - gx0) / STEP)), c2 = Math.min(cols - 1, Math.ceil((x2 - gx0) / STEP));
       const r1 = Math.max(0, Math.floor((y1 - gy0) / STEP)), r2 = Math.min(rows - 1, Math.ceil((y2 - gy0) / STEP));
-      for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) blocked[r * cols + c] = v;
+      for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) blocked[r * cols + c] = Math.max(blocked[r * cols + c], v) === 2 && blocked[r * cols + c] === 1 ? 1 : v === 1 ? 1 : Math.max(blocked[r * cols + c], v);
     };
     const PAD = 0.08;
     PLAN_WALLS.forEach(([x, y, w2, h2]) => {
