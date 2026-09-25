@@ -255,7 +255,7 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
             )}
             <text
               x={center.x}
-              y={center.y}
+              y={center.y - (isLight ? fontSize * 0.28 : 0)}
               textAnchor="middle"
               dominantBaseline="central"
               fontSize={fontSize}
@@ -265,6 +265,20 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
             >
               {c.number}
             </text>
+            {isLight && (
+              <text
+                x={center.x}
+                y={center.y + fontSize * 0.62}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={Math.min(0.3, fontSize * 0.6)}
+                fontWeight={700}
+                className="pointer-events-none fill-foreground"
+                opacity={0.65}
+              >
+                Свободна
+              </text>
+            )}
           </g>
         );
       })}
