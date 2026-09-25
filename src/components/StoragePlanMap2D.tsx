@@ -110,7 +110,7 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
           <g
             key={c.number}
             onClick={() => onSelect(c.number)}
-            className="cursor-pointer"
+            className="group cursor-pointer"
             opacity={dim && !isSel ? 0.18 : 1}
           >
             {isSel && (
