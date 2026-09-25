@@ -223,31 +223,10 @@ const StoragePlanSection = () => {
   const selectCell = (number: number) => {
     setSelectedNumber(number);
     setSelectedDuration(1);
-    planFrameRef.current?.contentWindow?.postMessage({ type: 'kladovka78:focus', cell: number }, window.location.origin);
   };
 
-  const syncPlanFrame = () => {
-    planFrameRef.current?.contentWindow?.postMessage({
-      type: 'kladovka78:statuses',
-      statuses: Object.fromEntries(Object.entries(statuses).map(([number, status]) => [number, status])),
-    }, window.location.origin);
-    planFrameRef.current?.contentWindow?.postMessage({
-      type: 'kladovka78:filter',
-      filter: {
-        cells: visibleCells.filter((cell) => !cell.generated).map((cell) => cell.number),
-        statuses: statusFilter === 'all' ? undefined : [statusFilter],
-        tiers: levelFilter === 'all' ? undefined : [levelFilter],
-      },
-    }, window.location.origin);
-  };
-
-  useEffect(() => {
-    syncPlanFrame();
-  }, [statuses]);
-
-  useEffect(() => {
-    syncPlanFrame();
-  }, [levelFilter, statusFilter, visibleCells]);
+  const visibleNumberSet = useMemo(() => new Set(visibleCells.map((c) => c.number)), [visibleCells]);
+  const mapTier = levelFilter !== 'all' ? Number(levelFilter) : (selectedCell?.tier ?? 1);
 
   const goToBooking = () => {
     if (!selectedCell || selectedStatus !== 'available') return;
@@ -472,15 +451,34 @@ const StoragePlanSection = () => {
             </Button>
           </div>
 
-          <div className="order-1 overflow-hidden rounded-2xl border-2 border-border bg-card p-2 shadow-card sm:p-3 xl:order-2">
-            <iframe
-              ref={planFrameRef}
-              title="Карта кладовок сверху"
-              aria-label="Карта кладовок сверху"
-              src="/plan/index.html?view=top&panel=0&legend=0&numbers=1&refresh=0"
-              onLoad={syncPlanFrame}
-              className="h-[520px] w-full rounded-xl bg-muted md:h-[640px]"
-            />
+          <div className="order-1 rounded-2xl border-2 border-border bg-card p-3 shadow-card xl:order-2">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="grid grid-cols-2 gap-2">
+                {[1, 2].map((t) => (
+                  <Button
+                    key={t}
+                    type="button"
+                    size="sm"
+                    variant={mapTier === t ? 'default' : 'outline'}
+                    className="px-3 text-xs"
+                    onClick={() => setLevelFilter(String(t) as LevelFilter)}
+                  >
+                    {t} ярус
+                  </Button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">Нажмите на ячейку, чтобы увидеть маршрут от входа</p>
+            </div>
+            <div className={isMobile ? 'mx-auto max-w-[420px]' : ''}>
+              <StoragePlanMap2D
+                tier={mapTier}
+                vertical={isMobile}
+                selectedNumber={selectedNumber}
+                visibleNumbers={visibleNumberSet}
+                getStatus={(n) => getCellStatus(n, statuses)}
+                onSelect={selectCell}
+              />
+            </div>
           </div>
         </div>
       </div>
