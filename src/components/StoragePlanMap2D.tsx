@@ -15,7 +15,7 @@ type Props = {
 const fillByStatus: Record<Status, string> = {
   available: 'fill-secondary',
   reserved: 'fill-accent',
-  occupied: 'fill-primary',
+  occupied: 'fill-destructive',
   unknown: 'fill-muted-foreground',
 };
 
@@ -35,6 +35,74 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
 
   const cells = useMemo(() => PLAN_CELLS.filter((c) => c.tier === tier), [tier]);
   const selected = PLAN_CELLS.find((c) => c.number === selectedNumber) || null;
+
+  // Drawn cell rects: slightly inset from the real footprint, then relaxed so
+  // neighbours whose real pitch is tighter than MIN_GAP are pushed apart —
+  // every aisle between lockers stays visible and readable on screen.
+  const rects = useMemo(() => {
+    const INSET = 0.16;
+    const MIN_GAP = 0.38;
+    type R = { x1: number; y1: number; x2: number; y2: number; fw: number; fh: number; cx: number; cy: number };
+    const list: R[] = cells.map((c) => {
+      const isV = c.orientation === 'v';
+      const fw = isV ? CELL_LONG : CELL_SHORT;
+      const fh = isV ? CELL_SHORT : CELL_LONG;
+      return {
+        x1: c.x - fw / 2 + INSET,
+        y1: c.y - fh / 2 + INSET,
+        x2: c.x + fw / 2 - INSET,
+        y2: c.y + fh / 2 - INSET,
+        fw,
+        fh,
+        cx: c.x,
+        cy: c.y,
+      };
+    });
+    // Pull one edge of a cell toward its centre by `amount`, never shrinking
+    // it below 55% of its real footprint. Returns the applied distance.
+    const shrink = (r: R, axis: 'x' | 'y', side: 1 | -1, amount: number) => {
+      const full = axis === 'x' ? r.fw : r.fh;
+      const len = axis === 'x' ? r.x2 - r.x1 : r.y2 - r.y1;
+      const use = Math.min(Math.max(0, amount), Math.max(0, len - full * 0.55));
+      if (axis === 'x') {
+        if (side === 1) r.x2 -= use;
+        else r.x1 += use;
+      } else if (side === 1) r.y2 -= use;
+      else r.y1 += use;
+      return use;
+    };
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        const a = list[i];
+        const b = list[j];
+        // Neighbours in the same row share their centre Y: widen the gap
+        // between them horizontally.
+        if (Math.abs(a.cy - b.cy) < 0.05) {
+          const left = a.cx <= b.cx ? a : b;
+          const right = left === a ? b : a;
+          const gap = right.x1 - left.x2;
+          if (gap < MIN_GAP) {
+            const need = MIN_GAP - gap;
+            const useL = shrink(left, 'x', 1, need / 2);
+            shrink(right, 'x', -1, need - useL);
+          }
+        }
+        // Neighbours in the same column share their centre X: widen the gap
+        // between them vertically.
+        if (Math.abs(a.cx - b.cx) < 0.05) {
+          const top = a.cy <= b.cy ? a : b;
+          const bottom = top === a ? b : a;
+          const gap = bottom.y1 - top.y2;
+          if (gap < MIN_GAP) {
+            const need = MIN_GAP - gap;
+            const useT = shrink(top, 'y', 1, need / 2);
+            shrink(bottom, 'y', -1, need - useT);
+          }
+        }
+      }
+    }
+    return list;
+  }, [cells]);
 
   const routePoints = useMemo(() => {
     if (!selected) return [] as Array<[number, number]>;
@@ -98,18 +166,16 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
         {PLAN_ENTRANCE.label}
       </text>
 
-      {cells.map((c) => {
-        const isV = c.orientation === 'v';
-        const cw = isV ? CELL_LONG : CELL_SHORT;
-        const ch = isV ? CELL_SHORT : CELL_LONG;
-        // Draw cells slightly smaller than their real footprint so the
-        // passageways between them stay visible at every scale.
-        const inset = 0.14;
-        const r = rect(c.x - (cw - inset) / 2, c.y - (ch - inset) / 2, cw - inset, ch - inset);
+      {cells.map((c, idx) => {
+        const dr = rects[idx];
+        const r = rect(dr.x1, dr.y1, dr.x2 - dr.x1, dr.y2 - dr.y1);
+        const cellW = dr.x2 - dr.x1;
+        const cellH = dr.y2 - dr.y1;
         const center = tr(c.x, c.y);
         const isSel = c.number === selectedNumber;
         const dim = !visibleNumbers.has(c.number);
         const isLight = getStatus(c.number) === 'available';
+        const fontSize = Math.min(0.4, Math.max(0.3, Math.min(cellW, cellH) * 0.62));
         return (
           <g
             key={c.number}
@@ -119,10 +185,10 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
           >
             {isSel && (
               <rect
-                x={r.x - 0.14}
-                y={r.y - 0.14}
-                width={r.width + 0.28}
-                height={r.height + 0.28}
+                x={r.x - 0.12}
+                y={r.y - 0.12}
+                width={r.width + 0.24}
+                height={r.height + 0.24}
                 rx={0.14}
                 fill="none"
                 className="stroke-accent"
@@ -143,7 +209,7 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
               y={center.y}
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize={0.4}
+              fontSize={fontSize}
               fontWeight={800}
               className={`pointer-events-none ${isLight ? 'fill-foreground' : 'fill-background'}`}
               style={isLight ? undefined : { paintOrder: 'stroke', stroke: 'hsl(var(--foreground))', strokeWidth: 0.03 }}
