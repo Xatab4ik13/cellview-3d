@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { calculatePrice, CELL_STATUS_LABELS, type CellStatus } from '@/types/storage';
 import { useDiscounts } from '@/hooks/useSettings';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { PLAN_CELLS } from '@/data/storagePlanMap';
+import StoragePlanMap2D from '@/components/StoragePlanMap2D';
 
 const API_BASE = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || 'https://api.kladovka78.ru');
 
@@ -98,7 +101,8 @@ const StoragePlanSection = () => {
   const planFrameRef = useRef<HTMLIFrameElement | null>(null);
   const [statuses, setStatuses] = useState<Record<number, PlanStatus>>({});
   const [cellDetails, setCellDetails] = useState<Record<number, PublicCellInfo>>({});
-  const [modelCells, setModelCells] = useState<DisplayPlanCell[]>([]);
+  const [modelCells, setModelCells] = useState<DisplayPlanCell[]>(() => PLAN_CELLS.map((c) => ({ number: c.number, tier: c.tier })));
+  const isMobile = useIsMobile();
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
   const [query, setQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState<LevelFilter>('all');
@@ -176,7 +180,7 @@ const StoragePlanSection = () => {
             tier: String(cell.tier || '').includes('верх') ? 2 : 1,
           }))
           .filter((cell): cell is DisplayPlanCell => Number.isFinite(cell.number));
-        setModelCells(cells);
+        if (cells.length === 0) setModelCells(cells);
       }
     };
     window.addEventListener('message', onMessage);
@@ -253,7 +257,7 @@ const StoragePlanSection = () => {
         <div className="max-w-2xl mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-3">План склада</h2>
           <p className="text-muted-foreground">
-            Выберите номер кладовки — маршрут от входа появится на плане.
+            Выберите ярус и нажмите на ячейку — маршрут от входа появится на плане.
           </p>
         </div>
 
