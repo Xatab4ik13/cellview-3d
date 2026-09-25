@@ -13,9 +13,9 @@ type Props = {
 };
 
 const fillByStatus: Record<Status, string> = {
-  available: 'fill-secondary-green',
+  available: 'fill-secondary',
   reserved: 'fill-accent',
-  occupied: 'fill-destructive',
+  occupied: 'fill-primary',
   unknown: 'fill-muted-foreground',
 };
 
@@ -78,22 +78,22 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
       <rect x={0} y={0} width={vbW} height={vbH} fill={`url(#plan-grid-${tier})`} />
 
       {PLAN_WALLS.map(([x, y, rw, rh], i) => (
-        <rect key={i} {...rect(x, y, rw, rh)} className="fill-foreground/55" />
+        <rect key={i} {...rect(x, y, rw, rh)} className="fill-foreground/40" />
       ))}
 
       {route && (
         <>
-          <path d={route} fill="none" className="stroke-background" strokeWidth={0.44} strokeLinecap="round" strokeLinejoin="round" />
-          <path d={route} fill="none" className="stroke-accent" strokeWidth={0.26} strokeDasharray="0.6 0.34" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={route} fill="none" className="stroke-background" strokeWidth={0.3} strokeLinecap="round" strokeLinejoin="round" />
+          <path d={route} fill="none" className="stroke-accent" strokeWidth={0.16} strokeDasharray="0.5 0.3" strokeLinecap="round" strokeLinejoin="round" />
           {(() => {
             const [ex, ey] = routePoints[routePoints.length - 1];
             const p = tr(ex, ey);
-            return <circle cx={p.x} cy={p.y} r={0.3} className="fill-accent stroke-foreground" strokeWidth={0.08} />;
+            return <circle cx={p.x} cy={p.y} r={0.22} className="fill-accent stroke-foreground" strokeWidth={0.05} />;
           })()}
         </>
       )}
 
-      <rect x={entrance.x - 1.7} y={entrance.y - 0.55} width={3.4} height={1.1} rx={0.2} className="fill-accent stroke-foreground" strokeWidth={0.1} />
+      <rect x={entrance.x - 1.7} y={entrance.y - 0.55} width={3.4} height={1.1} rx={0.2} className="fill-accent stroke-foreground" strokeWidth={0.05} />
       <text x={entrance.x} y={entrance.y} textAnchor="middle" dominantBaseline="middle" fontSize={0.7} fontWeight={800} className="pointer-events-none fill-foreground">
         {PLAN_ENTRANCE.label}
       </text>
@@ -102,10 +102,14 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
         const isV = c.orientation === 'v';
         const cw = isV ? CELL_LONG : CELL_SHORT;
         const ch = isV ? CELL_SHORT : CELL_LONG;
-        const r = rect(c.x - cw / 2, c.y - ch / 2, cw, ch);
+        // Draw cells slightly smaller than their real footprint so the
+        // passageways between them stay visible at every scale.
+        const inset = 0.14;
+        const r = rect(c.x - (cw - inset) / 2, c.y - (ch - inset) / 2, cw - inset, ch - inset);
         const center = tr(c.x, c.y);
         const isSel = c.number === selectedNumber;
         const dim = !visibleNumbers.has(c.number);
+        const isLight = getStatus(c.number) === 'available';
         return (
           <g
             key={c.number}
@@ -115,34 +119,34 @@ const StoragePlanMap2D = ({ tier, vertical, selectedNumber, visibleNumbers, getS
           >
             {isSel && (
               <rect
-                x={r.x - 0.18}
-                y={r.y - 0.18}
-                width={r.width + 0.36}
-                height={r.height + 0.36}
-                rx={0.16}
+                x={r.x - 0.14}
+                y={r.y - 0.14}
+                width={r.width + 0.28}
+                height={r.height + 0.28}
+                rx={0.14}
                 fill="none"
                 className="stroke-accent"
-                strokeWidth={0.14}
+                strokeWidth={0.08}
               />
             )}
             <rect
               {...r}
-              rx={0.1}
+              rx={0.08}
               className={`${fillByStatus[getStatus(c.number)]} ${isSel ? 'stroke-accent' : 'stroke-foreground'}`}
-              strokeWidth={isSel ? 0.24 : 0.1}
+              strokeWidth={isSel ? 0.14 : 0.045}
             />
             {!isSel && (
-              <rect {...r} rx={0.1} fill="none" className="pointer-events-none fill-primary opacity-0 transition-opacity group-hover:opacity-25" strokeWidth={0} />
+              <rect {...r} rx={0.08} fill="none" className="pointer-events-none fill-primary opacity-0 transition-opacity group-hover:opacity-25" strokeWidth={0} />
             )}
             <text
               x={center.x}
               y={center.y}
               textAnchor="middle"
               dominantBaseline="central"
-              fontSize={0.42}
+              fontSize={0.4}
               fontWeight={800}
-              className="pointer-events-none fill-background"
-              style={{ paintOrder: 'stroke', stroke: 'hsl(var(--foreground))', strokeWidth: 0.04 }}
+              className={`pointer-events-none ${isLight ? 'fill-foreground' : 'fill-background'}`}
+              style={isLight ? undefined : { paintOrder: 'stroke', stroke: 'hsl(var(--foreground))', strokeWidth: 0.03 }}
             >
               {c.number}
             </text>
